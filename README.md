@@ -1,6 +1,6 @@
 # PDF Tools (SPA)
 
-![PDF Tools Header](readme-archivos/header.svg)
+![PDF Tools Header](readme-files/header.svg)
 
 **Una suite completa de herramientas PDF que se ejecuta directamente en tu navegador.**
 
@@ -10,7 +10,7 @@
 
 ## 🚀 Demo
 
-![Demo de la aplicación](readme-archivos/demo.gif)
+![Demo de la aplicación](readme-files/demo.gif)
 
 ## 📖 Descripción
 
@@ -43,22 +43,22 @@ Esta versión (SPA) y la extensión original comparten el mismo núcleo de priva
 ## 📸 Capturas de Pantalla
 
 ### Unir Archivos
-![Unir](readme-archivos/pdftools1.png)
+![Unir](readme-files/pdftools1.png)
 
 ### Dividir PDF
-![Dividir](readme-archivos/pdftools2.png)
+![Dividir](readme-files/pdftools2.png)
 
 ### Organizar Páginas
-![Organizar](readme-archivos/pdftools3.png)
+![Organizar](readme-files/pdftools3.png)
 
 ### Exportar como imagen
-![Imágenes](readme-archivos/pdftools4.png)
+![Imágenes](readme-files/pdftools4.png)
 
 ### Descarga individual
-![Opciones](readme-archivos/pdftools5.png)
+![Opciones](readme-files/pdftools5.png)
 
 ### Zoom de página
-![Zoom](readme-archivos/pdftools6.png)
+![Zoom](readme-files/pdftools6.png)
 
 ## 🛠️ Tecnologías
 
