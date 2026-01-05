@@ -32,7 +32,7 @@ Esta versión (SPA) y la extensión original comparten el mismo núcleo de priva
 
 | Característica | Versión SPA (Web) | Versión Extensión Chrome |
 | :--- | :--- | :--- |
-| **Acceso** | Accesible desde cualquier navegador moderno (URL). | Requiere instalación en Chrome/Edge. |
+| **Acceso** | Accesible desde cualquier navegador moderno (URL). | Requiere instalación en Chrome, Edge (y otros). |
 | **Conectividad** | **Requiere conexión inicial** para cargar las librerías vía CDN. | **Funciona 100% Offline**. Todas las librerías están empaquetadas. |
 | **Interfaz** | Interfaz completa y visual con previsualización de páginas. | Interfaz compacta en panel lateral (SidePanel). |
 | **Privacidad** | ✅ **Privacidad Total** (Procesamiento Local). | ✅ **Privacidad Total** (Procesamiento Local). |
