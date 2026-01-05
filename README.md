@@ -51,13 +51,13 @@ Esta versión (SPA) y la extensión original comparten el mismo núcleo de priva
 ### Organizar Páginas
 ![Organizar](readme-files/pdftools3.png)
 
-### Exportar como imagen
+### Zoom de página
 ![Imágenes](readme-files/pdftools4.png)
 
-### Descarga individual
+### Exportar páginas como imágenes
 ![Opciones](readme-files/pdftools5.png)
 
-### Zoom de página
+### Descarga de páginas independientes
 ![Zoom](readme-files/pdftools6.png)
 
 ## 🛠️ Tecnologías
