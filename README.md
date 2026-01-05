@@ -42,17 +42,23 @@ Esta versión (SPA) y la extensión original comparten el mismo núcleo de priva
 
 ## 📸 Capturas de Pantalla
 
-| Unir Archivos | Dividir PDF |
-| :---: | :---: |
-| ![Unir](readme-archivos/pdftools1.png) | ![Dividir](readme-archivos/pdftools2.png) |
+### Unir Archivos
+![Unir](readme-archivos/pdftools1.png)
 
-| Organizar Páginas | Exportar a Imágenes |
-| :---: | :---: |
-| ![Organizar](readme-archivos/pdftools3.png) | ![Imágenes](readme-archivos/pdftools4.png) |
+### Dividir PDF
+![Dividir](readme-archivos/pdftools2.png)
 
-| Modales y Opciones | Zoom Universal |
-| :---: | :---: |
-| ![Opciones](readme-archivos/pdftools5.png) | ![Zoom](readme-archivos/pdftools6.png) |
+### Organizar Páginas
+![Organizar](readme-archivos/pdftools3.png)
+
+### Exportar como imagen
+![Imágenes](readme-archivos/pdftools4.png)
+
+### Descarga individual
+![Opciones](readme-archivos/pdftools5.png)
+
+### Zoom de página
+![Zoom](readme-archivos/pdftools6.png)
 
 ## 🛠️ Tecnologías
 
