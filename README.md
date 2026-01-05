@@ -70,9 +70,10 @@ Esta versión (SPA) y la extensión original comparten el mismo núcleo de priva
 *   **Sortable.js:** Para las interacciones de arrastrar y soltar.
 *   **Lucide:** Para la iconografía.
 
+## 👥 Créditos
+
+Este proyecto ha sido creado y es mantenido por **[Pablo Felip](https://www.linkedin.com/in/pfelipm/)**.
+
 ## 📄 Licencia
 
 Este proyecto está distribuido bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
-
----
-*Desarrollado por [Pablo Felip](https://www.linkedin.com/in/pfelipm/)*
