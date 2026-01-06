@@ -42,13 +42,13 @@ Esta versión (SPA) y la extensión original comparten el mismo núcleo de priva
 
 ## 📸 Capturas de Pantalla
 
-### Unir Archivos
+### Unir archivos
 ![Unir](readme-files/pdftools1.png)
 
 ### Dividir PDF
 ![Dividir](readme-files/pdftools2.png)
 
-### Organizar Páginas
+### Organizar páginas
 ![Organizar](readme-files/pdftools3.png)
 
 ### Zoom de página
