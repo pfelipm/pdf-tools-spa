@@ -25,6 +25,7 @@ La interfaz ha sido completamente rediseñada respecto a la extensión original 
 *   **Organizar PDF:** Una vista visual tipo "mesa de luz" para rotar, eliminar y reordenar páginas de un PDF existente.
 *   **PDF a Imágenes:** Convierte páginas de tus documentos a formatos JPG o PNG de alta calidad, con opción de descarga en ZIP.
 *   **Flujo Continuo:** Los resultados de una operación (ej. Unir) se pueden enviar directamente a otra herramienta (ej. Organizar) sin necesidad de descargar y volver a subir el archivo.
+*   **Modo Oscuro:** Interfaz adaptativa que detecta automáticamente la configuración del sistema operativo y permite alternar manualmente, recordando la preferencia del usuario.
 
 ## 🆚 SPA vs Extensión de Chrome
 
