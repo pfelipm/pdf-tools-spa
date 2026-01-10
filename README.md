@@ -69,6 +69,9 @@ Esta versión (SPA) y la extensión original comparten el mismo núcleo de priva
 ### Editor visual
 ![Editor visual](readme-files/pdftools7.png)
 
+### Aplanado seguro
+![Aplanado seguro](readme-files/pdftools8.png)
+
 ## 🛠️ Tecnologías
 
 *   **HTML5 / JS (ES6+):** Vanilla JavaScript para la lógica principal.
