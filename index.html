@@ -771,6 +771,15 @@
                     editorState.canvas = null;
                 }
                 initFabric();
+                setEditorMode('select'); // Always start with selection tool
+                
+                // Clear properties panel
+                document.getElementById('editor-properties').innerHTML = `
+                    <div class="text-center text-gray-400 mt-10 text-sm">
+                        <i data-lucide="mouse-pointer-click" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                        <p>Selecciona un objeto para editarlo</p>
+                    </div>`;
+                lucide.createIcons();
                 
                 await renderEditorSidebar();
                 await loadEditorPage(1);
@@ -933,14 +942,18 @@
         }
 
         async function loadEditorPage(pageNum) {
+            // Optimization: Don't reload if clicking current page
+            if (editorState.currentPage === pageNum && editorState.canvas.getObjects().length > 0) return;
+
             editorState.historyProcessing = true; // Block history events during transition
 
-            // 1. Save current page state
-            if(editorState.canvas.getObjects().length > 0) {
-                 const json = editorState.canvas.toJSON(['id', 'isGlobal', 'isNoise', 'isPageNumber', 'textTemplate', 'startPage', 'startValue']);
-                 editorState.pagesData[editorState.currentPage] = json;
-                 // Update globals
-                 editorState.globalObjects = json.objects.filter(o => o.isGlobal);
+            // 1. Save PREVIOUS page state (if valid)
+            if(editorState.currentPage !== pageNum && editorState.canvas) {
+                // Only save if we are navigating AWAY from a loaded page
+                const json = editorState.canvas.toJSON(['id', 'isGlobal', 'isNoise', 'isPageNumber', 'textTemplate', 'startPage', 'startValue']);
+                editorState.pagesData[editorState.currentPage] = json;
+                // Update globals
+                editorState.globalObjects = json.objects.filter(o => o.isGlobal);
             }
 
             // 2. Update UI
@@ -952,32 +965,48 @@
             editorState.historyUndo = [];
             editorState.historyRedo = [];
 
-            // 3. Clear & Resize Canvas
+            // 3. Prepare Dimensions & Zoom (Pre-calculation to avoid glitch)
             editorState.canvas.clear();
             const page = await editorState.pdfJsDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1.5 }); // Base render quality
             
-            // Store Base Dimensions for Zooming
-            editorState.baseWidth = viewport.width;
-            editorState.baseHeight = viewport.height;
-            
-            editorState.canvas.setWidth(viewport.width);
-            editorState.canvas.setHeight(viewport.height);
-            // Wrapper size set by zoom function later, start with base
-            document.getElementById('canvas-wrapper').style.width = `${viewport.width}px`;
-            document.getElementById('canvas-wrapper').style.height = `${viewport.height}px`;
-            // Remove transform if any
-            document.getElementById('canvas-wrapper').style.transform = 'none';
+            // Base resolution (High quality)
+            const baseViewport = page.getViewport({ scale: 1.5 }); 
+            editorState.baseWidth = baseViewport.width;
+            editorState.baseHeight = baseViewport.height;
 
-            // 4. Render Background (PDF.js)
+            // Calculate Fit-to-Page Scale IMMEDIATELY
+            const container = document.getElementById('editor-scroll-area');
+            const cWidth = container.clientWidth || window.innerWidth;
+            const cHeight = container.clientHeight || window.innerHeight;
+            
+            const wRatio = (cWidth - 80) / editorState.baseWidth;
+            const hRatio = (cHeight - 80) / editorState.baseHeight;
+            editorState.scale = Math.min(1.5, Math.max(0.1, Math.min(wRatio, hRatio)));
+
+            // Apply calculated dimensions
+            const w = editorState.baseWidth * editorState.scale;
+            const h = editorState.baseHeight * editorState.scale;
+
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.style.width = `${w}px`;
+            wrapper.style.height = `${h}px`;
+            wrapper.style.transform = 'none';
+
+            editorState.canvas.setDimensions({ width: w, height: h });
+            editorState.canvas.setZoom(editorState.scale);
+            document.getElementById('editor-zoom-display').innerText = `${Math.round(editorState.scale*100)}%`;
+
+            // 4. Render Background (PDF.js) - Single Pass at correct scale
             const bgCvs = document.getElementById('pdf-render');
-            bgCvs.width = viewport.width; bgCvs.height = viewport.height;
-            await page.render({ canvasContext: bgCvs.getContext('2d'), viewport: viewport }).promise;
+            bgCvs.width = w; bgCvs.height = h;
+            
+            const renderViewport = page.getViewport({ scale: 1.5 * editorState.scale });
+            await page.render({ canvasContext: bgCvs.getContext('2d'), viewport: renderViewport }).promise;
 
             // 5. Load Objects
             const savedJson = editorState.pagesData[pageNum];
             
-            // Filter out globals from savedJson (stale cache) - rely on editorState.globalObjects (fresh)
+            // Filter out globals from savedJson
             let objectsToLoad = savedJson ? savedJson.objects.filter(o => !o.isGlobal) : [];
             const currentIds = new Set(objectsToLoad.map(o => o.id));
             
@@ -992,7 +1021,16 @@
                             // Dynamic Page Number Logic
                             if(o.isPageNumber && o.textTemplate) {
                                 const t = editorState.pdfJsDoc.numPages;
-                                o.text = o.textTemplate.replace('{n}', pageNum).replace('{t}', t);
+                                const startPage = o.startPage || 1;
+                                
+                                if(pageNum < startPage) {
+                                    o.set('opacity', 0.5); // Ghost
+                                } else {
+                                    o.set('opacity', 1);
+                                    const n = (pageNum - startPage) + (o.startValue || 1);
+                                    o.set('text', o.textTemplate.replace('{n}', n).replace('{t}', t));
+                                    o.bringToFront(); 
+                                }
                             }
                             editorState.canvas.add(o);
                         });
@@ -1009,13 +1047,10 @@
                     const startPage = o.startPage || 1;
                     
                     if(pageNum < startPage) {
-                        o.set('opacity', 0);
-                        o.set('evented', false); // Disable interactions if hidden
-                        o.set('selectable', false);
+                        o.set('opacity', 0.5); // Ghost mode
+                        o.set('text', o.textTemplate); // Show template as placeholder
                     } else {
                         o.set('opacity', 1);
-                        o.set('evented', true);
-                        o.set('selectable', true);
                         const n = (pageNum - startPage) + (o.startValue || 1);
                         o.set('text', o.textTemplate.replace('{n}', n).replace('{t}', t));
                         o.bringToFront(); 
@@ -1026,8 +1061,7 @@
             
             editorState.historyProcessing = false;
             saveHistory(); // Save baseline state
-            
-            setTimeout(() => editorFitPage(), 10);
+            // No setTimeout needed
         }
 
         // --- Tools & Actions ---
@@ -1437,13 +1471,13 @@
             
             if (currentRealPage < startPage) {
                 obj.set('opacity', 0.5); // Ghost mode
+                obj.set('text', newTemplate); // Show raw template
             } else {
                 obj.set('opacity', 1);
+                const n = (currentRealPage - startPage) + (obj.startValue || 1);
+                const t = editorState.pdfJsDoc.numPages;
+                obj.set('text', newTemplate.replace('{n}', n).replace('{t}', t));
             }
-            
-            const n = (currentRealPage - startPage) + (obj.startValue || 1);
-            const t = editorState.pdfJsDoc.numPages;
-            obj.set('text', newTemplate.replace('{n}', n).replace('{t}', t));
             
             if(currentRealPage >= startPage) obj.bringToFront();
             
