@@ -236,12 +236,12 @@
                     </div>
 
                     <!-- Workspace (Canvas) -->
-                    <div class="flex-1 bg-gray-200 overflow-auto flex items-center justify-center p-8 relative custom-scroll dark:bg-gray-900/50" id="editor-scroll-area">
-                        <div id="canvas-wrapper" class="bg-white shadow-2xl relative transition-transform origin-center">
+                    <div class="flex-1 bg-gray-200 overflow-auto flex p-8 relative custom-scroll dark:bg-gray-900/50" id="editor-scroll-area">
+                        <div id="canvas-wrapper" class="bg-white shadow-2xl relative m-auto flex-shrink-0">
                             <!-- Background Canvas (PDF.js) -->
-                            <canvas id="pdf-render" class="absolute inset-0 pointer-events-none"></canvas>
+                            <canvas id="pdf-render" class="absolute inset-0 pointer-events-none w-full h-full"></canvas>
                             <!-- Foreground Canvas (Fabric.js) -->
-                            <canvas id="fabric-canvas"></canvas>
+                            <canvas id="fabric-canvas" class="w-full h-full"></canvas>
                         </div>
                     </div>
 
@@ -765,8 +765,12 @@
                 document.getElementById('editor-workspace').classList.remove('hidden');
                 document.getElementById('editor-workspace').classList.add('flex');
                 
-                // Init Fabric if not ready
-                if(!editorState.canvas) initFabric();
+                // Clean Init Fabric
+                if(editorState.canvas) {
+                    editorState.canvas.dispose();
+                    editorState.canvas = null;
+                }
+                initFabric();
                 
                 await renderEditorSidebar();
                 await loadEditorPage(1);
@@ -953,10 +957,17 @@
             const page = await editorState.pdfJsDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: 1.5 }); // Base render quality
             
+            // Store Base Dimensions for Zooming
+            editorState.baseWidth = viewport.width;
+            editorState.baseHeight = viewport.height;
+            
             editorState.canvas.setWidth(viewport.width);
             editorState.canvas.setHeight(viewport.height);
+            // Wrapper size set by zoom function later, start with base
             document.getElementById('canvas-wrapper').style.width = `${viewport.width}px`;
             document.getElementById('canvas-wrapper').style.height = `${viewport.height}px`;
+            // Remove transform if any
+            document.getElementById('canvas-wrapper').style.transform = 'none';
 
             // 4. Render Background (PDF.js)
             const bgCvs = document.getElementById('pdf-render');
@@ -1522,22 +1533,41 @@
         }
 
         // --- Helper Logic (Zoom, Keys, Save) ---
-        function editorZoom(delta) {
-            editorState.scale = Math.max(0.5, Math.min(3, editorState.scale + delta));
-            document.getElementById('canvas-wrapper').style.transform = `scale(${editorState.scale})`;
+        async function applyEditorZoom() {
+            const w = editorState.baseWidth * editorState.scale;
+            const h = editorState.baseHeight * editorState.scale;
+            
+            // 1. Resize Wrapper
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.style.width = `${w}px`;
+            wrapper.style.height = `${h}px`;
+            
+            // 2. Resize & Zoom Fabric
+            editorState.canvas.setDimensions({ width: w, height: h });
+            editorState.canvas.setZoom(editorState.scale);
+            
+            // 3. Re-render PDF Background
+            const page = await editorState.pdfJsDoc.getPage(editorState.currentPage);
+            const viewport = page.getViewport({ scale: 1.5 * editorState.scale });
+            
+            const bgCvs = document.getElementById('pdf-render');
+            bgCvs.width = w; bgCvs.height = h;
+            await page.render({ canvasContext: bgCvs.getContext('2d'), viewport: viewport }).promise;
+            
             document.getElementById('editor-zoom-display').innerText = `${Math.round(editorState.scale*100)}%`;
         }
+
+        function editorZoom(delta) {
+            editorState.scale = Math.max(0.1, Math.min(5, editorState.scale + delta));
+            applyEditorZoom();
+        }
+        
         function editorFitPage() {
-            // Calc best fit
-            const wrapper = document.getElementById('canvas-wrapper');
             const container = document.getElementById('editor-scroll-area');
-            const wRatio = (container.clientWidth - 80) / wrapper.clientWidth;
-            const hRatio = (container.clientHeight - 80) / wrapper.clientHeight;
-            const bestScale = Math.min(wRatio, hRatio);
-            
-            editorState.scale = Math.min(1.5, Math.max(0.5, bestScale)); // Clamp
-            wrapper.style.transform = `scale(${editorState.scale})`;
-            document.getElementById('editor-zoom-display').innerText = `${Math.round(editorState.scale*100)}%`;
+            const wRatio = (container.clientWidth - 80) / editorState.baseWidth;
+            const hRatio = (container.clientHeight - 80) / editorState.baseHeight;
+            editorState.scale = Math.min(1.5, Math.max(0.1, Math.min(wRatio, hRatio)));
+            applyEditorZoom();
         }
         function saveHistory() {
             if(editorState.historyProcessing) return;
