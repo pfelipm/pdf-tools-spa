@@ -12,6 +12,9 @@
 
 ![Demo de la aplicación](readme-files/demo.gif)
 
+> [!NOTE]
+> Esta demostración fue capturada en la versión 1, antes de la implementación del modo oscuro, los iconos en el menú superior y el editor visual.
+
 ## 📖 Descripción
 
 **PDF Tools (SPA)** es una aplicación web moderna diseñada para manipular archivos PDF de forma segura y privada. A diferencia de los conversores online tradicionales, esta herramienta procesa todos tus documentos localmente en tu dispositivo utilizando tecnologías web avanzadas (WASM, Canvas API), lo que garantiza que **tus archivos nunca salen de tu ordenador**.
