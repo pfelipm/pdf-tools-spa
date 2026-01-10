@@ -23,7 +23,9 @@ La interfaz ha sido completamente rediseñada respecto a la extensión original 
 *   **Unir PDF:** Combina múltiples archivos PDF e imágenes en un solo documento. Reordena las páginas fácilmente antes de fusionar.
 *   **Dividir PDF:** Extrae rangos de páginas específicos o separa un documento en múltiples archivos individuales.
 *   **Organizar PDF:** Una vista visual tipo "mesa de luz" para rotar, eliminar y reordenar páginas de un PDF existente.
-*   **PDF a Imágenes:** Convierte páginas de tus documentos a formatos JPG o PNG de alta calidad, con opción de descarga en ZIP.
+*   **Editor visual PDF:** Herramienta completa para superponer texto, imágenes, formas geométricas (rectángulos, círculos, flechas, estrellas) y dibujo a mano alzada. Incluye un sistema de **numeración de páginas** dinámica y una función de **pixelado** para censura.
+*   **Aplanado seguro:** Opción de exportación que rasteriza las ediciones para garantizar que la información oculta sea totalmente irrecuperable.
+*   **A imágenes:** Convierte páginas de tus documentos a formatos JPG o PNG de alta calidad, con opción de descarga en ZIP.
 *   **Flujo Continuo:** Los resultados de una operación (ej. Unir) se pueden enviar directamente a otra herramienta (ej. Organizar) sin necesidad de descargar y volver a subir el archivo.
 *   **Modo Oscuro:** Interfaz adaptativa que detecta automáticamente la configuración del sistema operativo y permite alternar manualmente, recordando la preferencia del usuario.
 
