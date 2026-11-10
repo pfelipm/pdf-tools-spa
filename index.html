@@ -38,7 +38,7 @@
         }
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        const { PDFDocument, degrees, rgb } = PDFLib;
+        const { PDFDocument, PDFName, PDFDict, degrees, rgb } = PDFLib;
     </script>
 
     <style>
@@ -124,6 +124,17 @@
             }
         }
         [popover] + [popover] { margin-top: 1rem; }
+
+        /* Native Modal Dialogs (Scroll Containment & Backdrop) */
+        dialog:modal {
+            overscroll-behavior: contain;
+        }
+        dialog::backdrop {
+            overflow: hidden;
+            overscroll-behavior: contain;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
     </style>
 </head>
 <body class="bg-gray-50 h-screen flex flex-col font-sans text-gray-800 overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
@@ -309,31 +320,6 @@
                     </div>
 
                     <div id="mergeList" class="space-y-3"></div>
-
-                    <div id="merge-result-actions" class="hidden mt-6 bg-green-50 p-6 rounded-xl border border-green-200 animate-fade-in text-center dark:bg-green-900/20 dark:border-green-800">
-                        <div class="flex flex-col items-center justify-center gap-2 mb-4">
-                            <i data-lucide="check-circle-2" class="w-10 h-10 text-green-600 dark:text-green-400"></i>
-                            <span class="text-lg font-bold text-green-800 dark:text-green-300">¡Archivos unidos con éxito!</span>
-                        </div>
-                        <div class="flex flex-wrap justify-center gap-3">
-                            <button id="merge-download-btn" class="px-5 py-2.5 bg-green-600 text-white hover:bg-green-700 rounded-lg font-medium transition shadow-sm flex items-center gap-2 dark:bg-green-500 dark:hover:bg-green-600">
-                                <i data-lucide="download" class="w-4 h-4"></i> Descargar
-                            </button>
-                            <span class="border-r border-green-300 mx-2 dark:border-green-700"></span>
-                            <button id="merge-to-organize-btn" class="px-4 py-2 bg-white border border-green-300 text-green-700 hover:bg-green-100 rounded-lg font-medium transition text-sm flex items-center gap-2 dark:bg-gray-800 dark:border-gray-600 dark:text-green-400 dark:hover:bg-gray-700">
-                                <i data-lucide="layout-grid" class="w-4 h-4"></i> Organizar
-                            </button>
-                            <button id="merge-to-editor-btn" class="px-4 py-2 bg-white border border-green-300 text-green-700 hover:bg-green-100 rounded-lg font-medium transition text-sm flex items-center gap-2 dark:bg-gray-800 dark:border-gray-600 dark:text-green-400 dark:hover:bg-gray-700">
-                                <i data-lucide="pencil" class="w-4 h-4"></i> Editar
-                            </button>
-                            <button id="merge-to-images-btn" class="px-4 py-2 bg-white border border-green-300 text-green-700 hover:bg-green-100 rounded-lg font-medium transition text-sm flex items-center gap-2 dark:bg-gray-800 dark:border-gray-600 dark:text-green-400 dark:hover:bg-gray-700">
-                                <i data-lucide="images" class="w-4 h-4"></i> A imágenes
-                            </button>
-                            <button id="merge-to-split-btn" class="px-4 py-2 bg-white border border-green-300 text-green-700 hover:bg-green-100 rounded-lg font-medium transition text-sm flex items-center gap-2 dark:bg-gray-800 dark:border-gray-600 dark:text-green-400 dark:hover:bg-gray-700">
-                                <i data-lucide="scissors" class="w-4 h-4"></i> Dividir
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -595,6 +581,64 @@
         </div>
     </div>
 
+    <!-- Modal Éxito Unir (Native Dialog) -->
+    <dialog id="merge-success-modal" closedby="any" aria-labelledby="merge-success-title" class="bg-white rounded-2xl shadow-2xl max-w-md w-[calc(100%-2rem)] p-8 relative animate-fade-in text-center border-0 outline-none dark:bg-gray-800">
+        <form method="dialog">
+            <button type="submit" value="close" aria-label="Cerrar" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </form>
+        <div class="flex justify-center mb-4">
+            <div class="bg-blue-100 p-3 rounded-full dark:bg-blue-900/30">
+                <i data-lucide="check" class="w-8 h-8 text-blue-600 dark:text-blue-400"></i>
+            </div>
+        </div>
+        <h3 id="merge-success-title" class="text-xl font-bold text-gray-800 mb-2 dark:text-white">¡Archivos unidos con éxito!</h3>
+        <p class="text-gray-500 mb-6 text-sm dark:text-gray-400">El documento combinado está listo. ¿Qué quieres hacer ahora?</p>
+
+        <div class="flex flex-col gap-3">
+            <button id="merge-download-btn" type="button" autofocus class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2 dark:bg-blue-500 dark:hover:bg-blue-600">
+                <i data-lucide="download" class="w-5 h-5"></i> Descargar PDF
+            </button>
+            <div class="grid grid-cols-2 gap-2.5">
+                <button id="merge-to-organize-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-sm flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i> Organizar
+                </button>
+                <button id="merge-to-editor-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-sm flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="pencil" class="w-4 h-4"></i> Editar
+                </button>
+                <button id="merge-to-images-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-sm flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="images" class="w-4 h-4"></i> A imágenes
+                </button>
+                <button id="merge-to-split-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-sm flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="scissors" class="w-4 h-4"></i> Dividir
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Modal Aviso de Firmas / Anotaciones en Editor (Native Dialog) -->
+    <dialog id="annot-warning-modal" closedby="any" aria-labelledby="annot-warning-title" class="bg-white rounded-2xl shadow-2xl max-w-md w-[calc(100%-2rem)] p-7 relative animate-fade-in text-left border-0 outline-none dark:bg-gray-800">
+        <form method="dialog">
+            <button type="submit" value="close" aria-label="Cerrar" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </form>
+        <div class="flex items-center gap-3 mb-4">
+            <div class="bg-amber-100 p-3 rounded-full flex-shrink-0 dark:bg-amber-900/30">
+                <i data-lucide="shield-alert" class="w-7 h-7 text-amber-600 dark:text-amber-400"></i>
+            </div>
+            <h3 id="annot-warning-title" class="text-lg font-bold text-gray-800 pr-6 dark:text-white">Firmas o anotaciones detectadas</h3>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-6 dark:text-gray-300">
+            Este PDF contiene <strong>firmas digitales visibles o anotaciones</strong> en páginas editadas. Según el estándar PDF, al guardar por capas los visores dibujan siempre las firmas <strong>por encima</strong> del contenido (por lo que una censura o forma no las tapará) y cualquier cambio invalida criptográficamente la firma.
+        </p>
+        <div class="flex flex-col gap-2.5">
+            <button id="annot-warn-flatten-btn" type="button" autofocus class="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 dark:bg-purple-500 dark:hover:bg-purple-600">
+                <i data-lucide="layers" class="w-5 h-5"></i> Aplanar PDF (recomendado)
+            </button>
+            <button id="annot-warn-layered-btn" type="button" class="w-full py-2.5 px-4 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-sm transition dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                Guardar por capas igualmente
+            </button>
+        </div>
+    </dialog>
+
     <!-- Modal Éxito Organizar -->
     <div id="organize-success-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-fade-in text-center dark:bg-gray-800">
@@ -788,8 +832,32 @@
             }
         };
 
+        const EDITOR_SERIALIZE_PROPS = ['id', 'isGlobal', 'isNoise', 'isPageNumber', 'textTemplate', 'startPage', 'startValue'];
+
+        function syncCurrentEditorPage() {
+            if (!editorState.canvas || !editorState.currentPage) return;
+            const json = editorState.canvas.toJSON(EDITOR_SERIALIZE_PROPS);
+            editorState.pagesData[editorState.currentPage] = json;
+            editorState.globalObjects = json.objects.filter(o => o.isGlobal);
+        }
+
+        function getEffectivePageObjects(pageNum) {
+            const json = editorState.pagesData[pageNum];
+            const localObjs = json ? json.objects.filter(o => !o.isGlobal) : [];
+            const currentIds = new Set(localObjs.map(o => o.id));
+            const combined = [...localObjs];
+            editorState.globalObjects.forEach(g => {
+                if (!currentIds.has(g.id)) combined.push(g);
+            });
+            return combined;
+        }
+
         // --- Init & Upload ---
-        document.getElementById('editorInput').addEventListener('change', (e) => loadEditorPdf(e.target.files[0]));
+        document.getElementById('editorInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            e.target.value = '';
+            if (file) loadEditorPdf(file);
+        });
         
         async function loadEditorPdf(file, bytes=null, name=null) {
             if(!file && !bytes) return;
@@ -802,7 +870,7 @@
                 }
 
                 editorState.pdfJsDoc = await pdfjsLib.getDocument(editorState.pdfData.slice(0)).promise;
-                editorState.doc = await PDFDocument.load(editorState.pdfData.slice(0));
+                editorState.doc = await PDFDocument.load(editorState.pdfData.slice(0), { ignoreEncryption: true });
                 
                 // Reset State
                 editorState.pagesData = {};
@@ -839,7 +907,7 @@
                 lucide.createIcons();
                 
                 await renderEditorSidebar();
-                await loadEditorPage(1);
+                await loadEditorPage(1, true);
                 
             } catch(e) { console.error(e); alert('Error cargando PDF en editor'); }
             finally { hideProgress(); }
@@ -965,9 +1033,6 @@
                     }
                 }
             });
-            
-            // Keyboard Shortcuts
-            window.addEventListener('keydown', handleEditorKeys);
         }
 
         // --- Sidebar & Navigation ---
@@ -998,19 +1063,15 @@
             }
         }
 
-        async function loadEditorPage(pageNum) {
+        async function loadEditorPage(pageNum, force = false) {
             // Optimization: Don't reload if clicking current page
-            if (editorState.currentPage === pageNum && editorState.canvas.getObjects().length > 0) return;
+            if (!force && editorState.currentPage === pageNum) return;
 
             editorState.historyProcessing = true; // Block history events during transition
 
-            // 1. Save PREVIOUS page state (if valid)
-            if(editorState.currentPage !== pageNum && editorState.canvas) {
-                // Only save if we are navigating AWAY from a loaded page
-                const json = editorState.canvas.toJSON(['id', 'isGlobal', 'isNoise', 'isPageNumber', 'textTemplate', 'startPage', 'startValue']);
-                editorState.pagesData[editorState.currentPage] = json;
-                // Update globals
-                editorState.globalObjects = json.objects.filter(o => o.isGlobal);
+            // 1. Save PREVIOUS page state unconditionally (including emptied pages & globals)
+            if (!force && editorState.currentPage !== pageNum && editorState.canvas) {
+                syncCurrentEditorPage();
             }
 
             // 2. Update UI
@@ -1166,13 +1227,15 @@
 
         function handleAddImage(input) {
             const file = input.files[0];
+            input.value = ''; // Reset immediately for next use (even if same file)
             if(!file) return;
             
             const reader = new FileReader();
             reader.onload = (e) => {
                 fabric.Image.fromURL(e.target.result, (img) => {
-                    // Smart Scaling: Max 50% of canvas width
-                    const maxWidth = editorState.canvas.getWidth() * 0.5;
+                    // Smart Scaling: Max 50% of logical page width (independent of zoom)
+                    const logicalWidth = editorState.baseWidth || editorState.canvas.getWidth();
+                    const maxWidth = logicalWidth * 0.5;
                     const scale = img.width > maxWidth ? maxWidth / img.width : 1;
                     
                     img.set({
@@ -1184,15 +1247,16 @@
                     editorState.canvas.setActiveObject(img);
                     setEditorMode('select');
                     saveHistory();
-                    input.value = ''; // Reset for next use
                 });
             };
             reader.readAsDataURL(file);
         }
 
         function addPageNumber() {
-            const canvasCenter = editorState.canvas.getWidth() / 2;
-            const canvasBottom = editorState.canvas.getHeight() - 50;
+            const logicalWidth = editorState.baseWidth || editorState.canvas.getWidth();
+            const logicalHeight = editorState.baseHeight || editorState.canvas.getHeight();
+            const canvasCenter = logicalWidth / 2;
+            const canvasBottom = logicalHeight - 50;
             
             const text = new fabric.Text('Pág {n} de {t}', {
                 left: canvasCenter, 
@@ -1201,6 +1265,7 @@
                 fill: '#000000',
                 fontFamily: 'Arial',
                 originX: 'center',
+                originY: 'bottom',
                 isPageNumber: true,
                 isGlobal: true,
                 startPage: 1, // Physical page where numbering starts
@@ -1217,6 +1282,7 @@
 
             editorState.canvas.add(text);
             editorState.canvas.setActiveObject(text);
+            syncCurrentEditorPage();
             setEditorMode('select');
         }
 
@@ -1480,13 +1546,19 @@
         function updateActiveObj(prop, val) {
             const obj = editorState.canvas.getActiveObject();
             if(obj) {
-                if(obj.type === 'activeSelection') {
-                    obj.getObjects().forEach(o => {
-                        o.set(prop, val);
-                    });
-                } else {
-                    obj.set(prop, val);
-                    
+                const targets = obj.type === 'activeSelection' ? obj.getObjects() : [obj];
+                targets.forEach(o => {
+                    o.set(prop, val);
+                    if (prop === 'isGlobal' && !val) {
+                        Object.values(editorState.pagesData).forEach(pageJson => {
+                            if (pageJson && Array.isArray(pageJson.objects)) {
+                                pageJson.objects = pageJson.objects.filter(item => !(item.id === o.id && item.isGlobal));
+                            }
+                        });
+                    }
+                });
+
+                if (obj.type !== 'activeSelection') {
                     // Update Defaults based on type
                     if (obj.type === 'i-text' || obj.type === 'text') {
                         if (prop in editorState.defaults.text) editorState.defaults.text[prop] = val;
@@ -1506,6 +1578,7 @@
                     }
                 }
                 editorState.canvas.requestRenderAll();
+                syncCurrentEditorPage();
                 saveHistory();
             }
         }
@@ -1548,8 +1621,8 @@
             const obj = editorState.canvas.getActiveObject();
             if (!obj || !obj.isPageNumber) return;
             
-            const w = editorState.canvas.getWidth();
-            const h = editorState.canvas.getHeight();
+            const w = editorState.baseWidth || editorState.canvas.getWidth();
+            const h = editorState.baseHeight || editorState.canvas.getHeight();
             const margin = 50;
             
             let left = w / 2;
@@ -1564,6 +1637,7 @@
             });
             obj.setCoords();
             editorState.canvas.requestRenderAll();
+            syncCurrentEditorPage();
             saveHistory();
         }
 
@@ -1610,15 +1684,23 @@
         function editorDelete() {
             const list = editorState.canvas.getActiveObjects();
             if(list.length) {
+                const removedIds = new Set(list.map(o => o.id).filter(Boolean));
                 editorState.canvas.discardActiveObject();
                 list.forEach(o => {
                     editorState.canvas.remove(o);
-                    // Remove from globals if present
                     if(o.isGlobal) {
                         editorState.globalObjects = editorState.globalObjects.filter(g => g.id !== o.id);
                     }
                 });
+                if (removedIds.size > 0) {
+                    Object.values(editorState.pagesData).forEach(pageJson => {
+                        if (pageJson && Array.isArray(pageJson.objects)) {
+                            pageJson.objects = pageJson.objects.filter(item => !(item.isGlobal && removedIds.has(item.id)));
+                        }
+                    });
+                }
                 editorState.canvas.requestRenderAll();
+                syncCurrentEditorPage();
                 saveHistory();
             }
         }
@@ -1663,7 +1745,7 @@
         function saveHistory() {
             if(editorState.historyProcessing) return;
             if(editorState.historyUndo.length > 20) editorState.historyUndo.shift(); // Limit
-            editorState.historyUndo.push(JSON.stringify(editorState.canvas.toJSON(['id','isGlobal','isNoise', 'isPageNumber', 'textTemplate', 'startPage', 'startValue'])));
+            editorState.historyUndo.push(JSON.stringify(editorState.canvas.toJSON(EDITOR_SERIALIZE_PROPS)));
             editorState.historyRedo = []; // Clear redo on new action
         }
         
@@ -1677,6 +1759,7 @@
             editorState.canvas.loadFromJSON(JSON.parse(prevState), () => {
                 editorState.canvas.renderAll();
                 editorState.historyProcessing = false;
+                syncCurrentEditorPage();
                 updateEditorProperties();
             });
         }
@@ -1691,156 +1774,225 @@
             editorState.canvas.loadFromJSON(JSON.parse(nextState), () => {
                 editorState.canvas.renderAll();
                 editorState.historyProcessing = false;
+                syncCurrentEditorPage();
                 updateEditorProperties();
             });
         }
 
         function handleEditorKeys(e) {
-            if(document.getElementById('content-editor').classList.contains('active')) {
-                // Undo / Redo
-                if(e.ctrlKey && e.key === 'z') { e.preventDefault(); editorUndo(); }
-                if(e.ctrlKey && e.key === 'y') { e.preventDefault(); editorRedo(); }
+            if (!document.getElementById('content-editor').classList.contains('active')) return;
+            if (document.getElementById('editor-workspace').classList.contains('hidden') || !editorState.canvas) return;
+            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
 
-                // Delete
-                if(e.key === 'Delete') editorDelete();
-                
-                // Copy (Ctrl+C)
-                if(e.ctrlKey && e.key === 'c') {
-                    const obj = editorState.canvas.getActiveObject();
-                    if(obj) {
-                        obj.clone(cloned => editorState.clipboard = cloned);
-                    }
+            // Ignore canvas shortcuts while typing in form inputs or editing Fabric text
+            const activeEl = document.activeElement;
+            if (activeEl && (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName) || activeEl.isContentEditable)) return;
+
+            const activeObj = editorState.canvas.getActiveObject();
+            if (activeObj && activeObj.isEditing) return;
+
+            const modKey = e.ctrlKey || e.metaKey;
+            const key = e.key.toLowerCase();
+
+            // Undo / Redo
+            if (modKey && !e.shiftKey && key === 'z') { e.preventDefault(); editorUndo(); return; }
+            if ((modKey && key === 'y') || (modKey && e.shiftKey && key === 'z')) { e.preventDefault(); editorRedo(); return; }
+
+            // Delete
+            if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); editorDelete(); return; }
+
+            // Copy (Ctrl/Cmd+C)
+            if (modKey && key === 'c') {
+                if (activeObj) {
+                    activeObj.clone(cloned => { editorState.clipboard = cloned; }, EDITOR_SERIALIZE_PROPS);
                 }
-                // Paste (Ctrl+V)
-                if(e.ctrlKey && e.key === 'v' && editorState.clipboard) {
-                    editorState.clipboard.clone(cloned => {
-                        editorState.canvas.discardActiveObject();
-                        cloned.set({
-                            left: cloned.left + 10,
-                            top: cloned.top + 10,
-                            evented: true, id: crypto.randomUUID()
+                return;
+            }
+            // Paste (Ctrl/Cmd+V)
+            if (modKey && key === 'v' && editorState.clipboard) {
+                editorState.clipboard.clone(cloned => {
+                    editorState.canvas.discardActiveObject();
+                    cloned.set({
+                        left: cloned.left + 10,
+                        top: cloned.top + 10,
+                        evented: true,
+                        id: crypto.randomUUID()
+                    });
+                    if (cloned.type === 'activeSelection') {
+                        cloned.canvas = editorState.canvas;
+                        cloned.forEachObject(o => {
+                            o.id = crypto.randomUUID();
+                            editorState.canvas.add(o);
                         });
-                        if (cloned.type === 'activeSelection') {
-                            cloned.canvas = editorState.canvas;
-                            cloned.forEachObject(o => editorState.canvas.add(o));
-                            cloned.setCoords();
-                        } else {
-                            editorState.canvas.add(cloned);
-                        }
+                        cloned.setCoords();
+                    } else {
+                        editorState.canvas.add(cloned);
+                    }
+                    editorState.canvas.setActiveObject(cloned);
+                    editorState.canvas.requestRenderAll();
+                    syncCurrentEditorPage();
+                    saveHistory();
+                }, EDITOR_SERIALIZE_PROPS);
+                return;
+            }
+            // Duplicate (Ctrl/Cmd+D)
+            if (modKey && key === 'd') {
+                e.preventDefault();
+                if (activeObj) {
+                    activeObj.clone(cloned => {
+                        editorState.canvas.discardActiveObject();
+                        cloned.set({ left: activeObj.left + 10, top: activeObj.top + 10, id: crypto.randomUUID() });
+                        editorState.canvas.add(cloned);
                         editorState.canvas.setActiveObject(cloned);
                         editorState.canvas.requestRenderAll();
+                        syncCurrentEditorPage();
                         saveHistory();
-                    });
+                    }, EDITOR_SERIALIZE_PROPS);
                 }
-                // Duplicate (Ctrl+D)
-                if(e.ctrlKey && e.key === 'd') {
-                    e.preventDefault();
-                    const obj = editorState.canvas.getActiveObject();
-                    if(obj) {
-                        obj.clone(cloned => {
-                            editorState.canvas.discardActiveObject();
-                            cloned.set({ left: obj.left + 10, top: obj.top + 10, id: crypto.randomUUID() });
-                            editorState.canvas.add(cloned);
-                            editorState.canvas.setActiveObject(cloned);
-                            editorState.canvas.requestRenderAll();
-                            saveHistory();
-                        });
-                    }
-                }
-                // Nudge (Arrows)
-                if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
-                    const obj = editorState.canvas.getActiveObject();
-                    if(obj) {
-                        e.preventDefault();
-                        const step = e.shiftKey ? 10 : 1;
-                        if(e.key==='ArrowUp') obj.top -= step;
-                        if(e.key==='ArrowDown') obj.top += step;
-                        if(e.key==='ArrowLeft') obj.left -= step;
-                        if(e.key==='ArrowRight') obj.left += step;
-                        obj.setCoords();
-                        editorState.canvas.requestRenderAll();
-                    }
-                }
+                return;
+            }
+            // Nudge (Arrows)
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && activeObj) {
+                e.preventDefault();
+                const step = e.shiftKey ? 10 : 1;
+                if (e.key === 'ArrowUp') activeObj.top -= step;
+                if (e.key === 'ArrowDown') activeObj.top += step;
+                if (e.key === 'ArrowLeft') activeObj.left -= step;
+                if (e.key === 'ArrowRight') activeObj.left += step;
+                activeObj.setCoords();
+                editorState.canvas.requestRenderAll();
+                syncCurrentEditorPage();
+                saveHistory();
             }
         }
+        window.addEventListener('keydown', handleEditorKeys);
 
         function openFlattenModal() {
             document.getElementById('flatten-modal').classList.remove('hidden');
         }
 
-        async function generateEditedPdfBytes(progressCallback) {
-            // Save current page state first
-            if(editorState.canvas.getObjects().length > 0) {
-                 editorState.pagesData[editorState.currentPage] = editorState.canvas.toJSON(['id','isGlobal','isNoise', 'isPageNumber', 'textTemplate', 'startPage', 'startValue']);
-            }
+        function hasOverlayAnnotationsOnEditedPages() {
+            if (!editorState.doc || !editorState.pdfJsDoc) return false;
+            syncCurrentEditorPage();
+            const pages = editorState.doc.getPages();
+            const total = pages.length;
 
-            const tempCanvas = document.createElement('canvas');
-            const tempFabric = new fabric.Canvas(tempCanvas);
-            
-            const newPdf = await PDFDocument.create();
-            const srcPdf = await PDFDocument.load(editorState.pdfData);
-            const total = editorState.pdfJsDoc.numPages;
-            
-            for(let i=1; i<=total; i++) {
-                if(progressCallback) progressCallback(i, total);
-                
-                const json = editorState.pagesData[i];
-                let objects = json ? json.objects : [];
-                
-                const currentIds = new Set(objects.map(o=>o.id));
-                editorState.globalObjects.forEach(g => {
-                    if(!currentIds.has(g.id)) objects.push(g);
+            for (let i = 1; i <= total; i++) {
+                const objects = getEffectivePageObjects(i).filter(o => {
+                    if (o.isPageNumber && o.textTemplate) {
+                        return i >= (o.startPage || 1);
+                    }
+                    return true;
                 });
-                
-                const [copiedPage] = await newPdf.copyPages(srcPdf, [i-1]);
-                
-                if(objects.length > 0) {
-                    const page = await editorState.pdfJsDoc.getPage(i);
-                    const vp = page.getViewport({scale: 2.0});
-                    tempFabric.setWidth(vp.width);
-                    tempFabric.setHeight(vp.height);
-                    tempFabric.clear();
-                    
-                    const scaleFactor = 2.0 / 1.5;
+                if (objects.length === 0) continue;
 
-                    await new Promise(resolve => {
-                         fabric.util.enlivenObjects(objects, (objs) => {
-                             objs.forEach(o => {
-                                 // Dynamic Page Number Logic for Export
-                                 if(o.isPageNumber && o.textTemplate) {
-                                     const startPage = o.startPage || 1;
-                                     if (i < startPage) {
-                                         // Skip rendering this object for this page
-                                         return; 
-                                     }
-                                     const n = (i - startPage) + (o.startValue || 1);
-                                     o.text = o.textTemplate.replace('{n}', n).replace('{t}', total);
-                                 }
-                                 
-                                 o.scaleX *= scaleFactor;
-                                 o.scaleY *= scaleFactor;
-                                 o.left *= scaleFactor;
-                                 o.top *= scaleFactor;
-                                 tempFabric.add(o);
-                             });
-                             tempFabric.renderAll();
-                             resolve();
-                         });
-                    });
-                    
-                    const pngData = tempFabric.toDataURL({ format: 'png', multiplier: 1 });
-                    const pngImage = await newPdf.embedPng(pngData);
-                    
-                    copiedPage.drawImage(pngImage, {
-                        x: 0, y: 0, width: copiedPage.getWidth(), height: copiedPage.getHeight()
-                    });
+                const annots = pages[i - 1].node.Annots();
+                if (!annots || annots.size() === 0) continue;
+
+                for (let k = 0; k < annots.size(); k++) {
+                    const annotDict = annots.lookupMaybe(k, PDFDict);
+                    if (!annotDict) continue;
+                    const subtype = annotDict.lookup(PDFName.of('Subtype'));
+                    if (subtype === PDFName.of('Link') || subtype === PDFName.of('Popup')) continue;
+                    return true;
                 }
-                newPdf.addPage(copiedPage);
             }
-            return await newPdf.save();
+            return false;
         }
 
-        async function editorSave() {
+        async function renderObjectsToStaticFabric(staticFabric, objects, pageIndex, totalPages, width, height, zoomFactor) {
+            staticFabric.clear();
+            staticFabric.setDimensions({ width, height });
+            staticFabric.setZoom(zoomFactor);
+
+            let addedCount = 0;
+            await new Promise(resolve => {
+                fabric.util.enlivenObjects(objects, (objs) => {
+                    objs.forEach(o => {
+                        if (o.isPageNumber && o.textTemplate) {
+                            const startPage = o.startPage || 1;
+                            if (pageIndex < startPage) return;
+                            const n = (pageIndex - startPage) + (o.startValue || 1);
+                            o.set('text', o.textTemplate.replace('{n}', n).replace('{t}', totalPages));
+                            o.set('opacity', 1);
+                        }
+                        if (o.isNoise && (!o.fill || typeof o.fill === 'string')) {
+                            o.set('fill', createNoisePattern());
+                        }
+                        staticFabric.add(o);
+                        addedCount++;
+                    });
+                    staticFabric.renderAll();
+                    resolve();
+                });
+            });
+            return addedCount;
+        }
+
+        async function generateEditedPdfBytes(progressCallback) {
+            // Unconditionally sync active page & globals (including emptied pages)
+            syncCurrentEditorPage();
+
+            const tempCanvas = document.createElement('canvas');
+            const tempFabric = new fabric.StaticCanvas(tempCanvas, { enableRetinaScaling: false });
+            
+            try {
+                const newPdf = await PDFDocument.create();
+                const srcPdf = await PDFDocument.load(editorState.pdfData.slice(0), { ignoreEncryption: true });
+                const total = editorState.pdfJsDoc.numPages;
+                const exportScale = 2.0;
+                const zoomFactor = exportScale / 1.5;
+                
+                for(let i=1; i<=total; i++) {
+                    if(progressCallback) progressCallback(i, total);
+                    
+                    const objects = getEffectivePageObjects(i);
+                    const [copiedPage] = await newPdf.copyPages(srcPdf, [i-1]);
+                    
+                    if(objects.length > 0) {
+                        const page = await editorState.pdfJsDoc.getPage(i);
+                        const vp = page.getViewport({ scale: exportScale });
+                        const addedCount = await renderObjectsToStaticFabric(tempFabric, objects, i, total, vp.width, vp.height, zoomFactor);
+                        
+                        if (addedCount > 0) {
+                            const pngData = tempFabric.toDataURL({ format: 'png', multiplier: 1 });
+                            const pngImage = await newPdf.embedPng(pngData);
+                            
+                            // Compensate PDF /CropBox and /Rotate so scanned or rotated pages align 1:1 with PDF.js
+                            const { x: bx, y: by, width: bw, height: bh } = copiedPage.getCropBox();
+                            const rot = ((copiedPage.getRotation().angle % 360) + 360) % 360;
+                            let drawOpts;
+                            if (rot === 90)       drawOpts = { x: bx + bw, y: by,      width: bh, height: bw, rotate: degrees(90) };
+                            else if (rot === 180) drawOpts = { x: bx + bw, y: by + bh, width: bw, height: bh, rotate: degrees(180) };
+                            else if (rot === 270) drawOpts = { x: bx,      y: by + bh, width: bh, height: bw, rotate: degrees(270) };
+                            else                  drawOpts = { x: bx,      y: by,      width: bw, height: bh, rotate: degrees(0) };
+
+                            copiedPage.drawImage(pngImage, drawOpts);
+                        }
+                    }
+                    newPdf.addPage(copiedPage);
+                }
+                return await newPdf.save();
+            } finally {
+                tempFabric.dispose();
+            }
+        }
+
+        async function editorSave(forceLayered = false) {
+            if (!forceLayered && hasOverlayAnnotationsOnEditedPages()) {
+                const warnDialog = document.getElementById('annot-warning-modal');
+                document.getElementById('annot-warn-flatten-btn').onclick = () => {
+                    warnDialog.close();
+                    openFlattenModal();
+                };
+                document.getElementById('annot-warn-layered-btn').onclick = () => {
+                    warnDialog.close();
+                    editorSave(true);
+                };
+                warnDialog.showModal();
+                return;
+            }
+
             showProgress('Generando PDF...', 0);
             try {
                 const pdfBytes = await generateEditedPdfBytes((i, total) => {
@@ -1866,52 +2018,57 @@
             const fmt = document.querySelector('input[name="flatFormat"]:checked').value; // jpeg or png
             const dpi = parseInt(document.getElementById('flatDpi').value);
             const scale = dpi / 72;
+            const zoomFactor = scale / 1.5;
             
+            syncCurrentEditorPage();
             showProgress('Preparando aplanado...', 0);
-            try {
-                // 1. Generate Edited PDF in memory
-                const editedBytes = await generateEditedPdfBytes((i, total) => {
-                    showProgress(`Mezclando capas ${i}/${total}...`, (i/total)*40);
-                });
 
-                // 2. Load into PDF.js to rasterize
-                const loadingTask = pdfjsLib.getDocument(editedBytes);
-                const pdf = await loadingTask.promise;
-                const total = pdf.numPages;
-                
-                // 3. Create new PDF container
+            const tempCanvas = document.createElement('canvas');
+            const tempFabric = new fabric.StaticCanvas(tempCanvas, { enableRetinaScaling: false });
+
+            try {
+                const total = editorState.pdfJsDoc.numPages;
                 const flatPdf = await PDFDocument.create();
                 const cvs = document.createElement('canvas');
                 const ctx = cvs.getContext('2d');
 
                 for(let i=1; i<=total; i++) {
-                    showProgress(`Rasterizando pág ${i}/${total}...`, 40 + (i/total)*50);
+                    showProgress(`Rasterizando pág ${i}/${total}...`, (i/total)*90);
                     
-                    const page = await pdf.getPage(i);
-                    const viewport = page.getViewport({ scale: scale });
+                    // 1. Render original page (including visible digital signature /Widget annotations) onto 2D canvas
+                    const page = await editorState.pdfJsDoc.getPage(i);
+                    const viewport = page.getViewport({ scale });
                     cvs.width = viewport.width;
                     cvs.height = viewport.height;
 
-                    // Fill white background for JPEG/Flattening
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, cvs.width, cvs.height);
+                    await page.render({ canvasContext: ctx, viewport }).promise;
+
+                    // 2. Composite Fabric objects ON TOP so censorship/shapes permanently cover signatures & annotations
+                    const objects = getEffectivePageObjects(i);
+                    if (objects.length > 0) {
+                        const addedCount = await renderObjectsToStaticFabric(tempFabric, objects, i, total, viewport.width, viewport.height, zoomFactor);
+                        if (addedCount > 0) {
+                            ctx.drawImage(tempFabric.lowerCanvasEl, 0, 0, cvs.width, cvs.height);
+                        }
+                    }
                     
-                    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-                    
-                    // Convert to Blob
+                    // 3. Encode rasterized page & embed into clean PDF (no /Annots or hidden text remain)
                     const blob = await new Promise(r => cvs.toBlob(r, `image/${fmt}`, 0.9));
                     const arrayBuffer = await blob.arrayBuffer();
                     
-                    // Embed into new PDF
-                    let img;
-                    if(fmt === 'jpeg') img = await flatPdf.embedJpg(arrayBuffer);
-                    else img = await flatPdf.embedPng(arrayBuffer);
+                    const img = fmt === 'jpeg'
+                        ? await flatPdf.embedJpg(arrayBuffer)
+                        : await flatPdf.embedPng(arrayBuffer);
                     
-                    const newPage = flatPdf.addPage([viewport.width/scale, viewport.height/scale]);
+                    const pageWidthPts = viewport.width / scale;
+                    const pageHeightPts = viewport.height / scale;
+                    const newPage = flatPdf.addPage([pageWidthPts, pageHeightPts]);
                     newPage.drawImage(img, {
                         x: 0, y: 0,
-                        width: viewport.width/scale,
-                        height: viewport.height/scale
+                        width: pageWidthPts,
+                        height: pageHeightPts
                     });
                 }
                 
@@ -1929,7 +2086,10 @@
                 modal.classList.remove('hidden');
 
             } catch(e) { console.error(e); alert("Error al aplanar PDF"); }
-            finally { hideProgress(); }
+            finally {
+                tempFabric.dispose();
+                hideProgress();
+            }
         }
 
         // --- Init Function ---
@@ -1984,17 +2144,20 @@
         let mergeFiles = [];
         const mergeList = document.getElementById('mergeList');
         const mergeBtn = document.getElementById('mergeBtn');
-        const mergeResultActions = document.getElementById('merge-result-actions');
+        const mergeSuccessModal = document.getElementById('merge-success-modal');
         let mergeSortable;
 
-        document.getElementById('mergeInput').addEventListener('change', (e) => handleMergeFiles(e.target.files));
+        document.getElementById('mergeInput').addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            e.target.value = '';
+            if (files.length) await handleMergeFiles(files);
+        });
         const mergeDropZone = document.getElementById('merge-drop-zone');
         mergeDropZone.addEventListener('dragover', (e) => { e.preventDefault(); mergeDropZone.classList.add('border-blue-500', 'bg-blue-50', 'dark:border-blue-400', 'dark:bg-gray-700'); });
         mergeDropZone.addEventListener('dragleave', (e) => { e.preventDefault(); mergeDropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dark:border-blue-400', 'dark:bg-gray-700'); });
         mergeDropZone.addEventListener('drop', (e) => { e.preventDefault(); mergeDropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dark:border-blue-400', 'dark:bg-gray-700'); handleMergeFiles(e.dataTransfer.files); });
 
         async function handleMergeFiles(files) {
-            mergeResultActions.classList.add('hidden');
             const validFiles = Array.from(files).filter(f => f.type === 'application/pdf' || f.type.startsWith('image/'));
             for (const file of validFiles) {
                 let pageCount = 1;
@@ -2027,6 +2190,7 @@
                 mergeList.appendChild(div);
             });
             lucide.createIcons();
+            document.getElementById('merge-file-count').textContent = `${mergeFiles.length} ${mergeFiles.length === 1 ? 'archivo' : 'archivos'}`;
             mergeBtn.disabled = mergeFiles.length < 2;
             if(mergeSortable) mergeSortable.destroy();
             mergeSortable = new Sortable(mergeList, { animation: 150, ghostClass: 'merge-ghost', dragClass: 'merge-drag', onEnd: (evt) => {
@@ -2034,7 +2198,7 @@
             }});
         }
         function removeMergeItem(idx) { mergeFiles.splice(idx, 1); renderMergeList(); }
-        function clearMergeList() { mergeFiles = []; renderMergeList(); mergeResultActions.classList.add('hidden'); }
+        function clearMergeList() { mergeFiles = []; renderMergeList(); }
 
         mergeBtn.onclick = async () => {
             showProgress('Uniendo...', 0);
@@ -2062,12 +2226,13 @@
                 const pdfBytes = await mergedPdf.save();
                 const blob = new Blob([pdfBytes], {type: 'application/pdf'});
                 document.getElementById('merge-download-btn').onclick = () => saveBlob(blob, 'unido.pdf');
-                document.getElementById('merge-to-organize-btn').onclick = () => { switchTab('organize'); loadOrganizeFromBytes(new Uint8Array(pdfBytes), 'unido.pdf'); };
-                document.getElementById('merge-to-editor-btn').onclick = () => { switchTab('editor'); loadEditorPdf(null, new Uint8Array(pdfBytes), 'unido.pdf'); };
-                document.getElementById('merge-to-images-btn').onclick = () => { switchTab('images'); loadImgPdf(null, new Uint8Array(pdfBytes), 'unido.pdf'); };
-                document.getElementById('merge-to-split-btn').onclick = () => { switchTab('split'); loadSplitPdf(null, new Uint8Array(pdfBytes), 'unido.pdf'); };
+                document.getElementById('merge-to-organize-btn').onclick = () => { mergeSuccessModal.close(); switchTab('organize'); loadOrganizeFromBytes(new Uint8Array(pdfBytes), 'unido.pdf'); };
+                document.getElementById('merge-to-editor-btn').onclick = () => { mergeSuccessModal.close(); switchTab('editor'); loadEditorPdf(null, new Uint8Array(pdfBytes), 'unido.pdf'); };
+                document.getElementById('merge-to-images-btn').onclick = () => { mergeSuccessModal.close(); switchTab('images'); loadImgPdf(null, new Uint8Array(pdfBytes), 'unido.pdf'); };
+                document.getElementById('merge-to-split-btn').onclick = () => { mergeSuccessModal.close(); switchTab('split'); loadSplitPdf(null, new Uint8Array(pdfBytes), 'unido.pdf'); };
 
-                mergeResultActions.classList.remove('hidden');
+                hideProgress();
+                mergeSuccessModal.showModal();
             } catch(e) { console.error(e); alert('Error al unir'); } finally { hideProgress(); }
         };
 
@@ -2082,7 +2247,11 @@
         const splitRangeInput = document.getElementById('split-range-input');
         const splitModeRadios = document.getElementsByName('split-mode');
 
-        document.getElementById('splitInput').onchange = (e) => loadSplitPdf(e.target.files[0]);
+        document.getElementById('splitInput').onchange = (e) => {
+            const file = e.target.files[0];
+            e.target.value = '';
+            if (file) loadSplitPdf(file);
+        };
 
         splitRangeInput.addEventListener('input', () => {
             if(document.querySelector('input[name="split-mode"]:checked').value === 'range') {
@@ -2413,7 +2582,11 @@
 
         // --- ORGANIZE LOGIC ---
         let organizeOriginalBytes = null; let organizeFilename = ""; let organizeRotations = {}; let activeOrganizePdf = null;
-        document.getElementById('organizeInput').onchange = (e) => loadOrganizeFile(e.target.files[0]);
+        document.getElementById('organizeInput').onchange = (e) => {
+            const file = e.target.files[0];
+            e.target.value = '';
+            if (file) loadOrganizeFile(file);
+        };
         async function loadOrganizeFile(file) { if(!file)return; const b=await file.arrayBuffer(); loadOrganizeFromBytes(new Uint8Array(b), file.name); }
         async function loadOrganizeFromBytes(u8, name) {
             showProgress('Cargando...', 20); organizeOriginalBytes = u8; organizeFilename = name;
@@ -2466,7 +2639,11 @@
         let imgSel = new Set(); let activeImgPdf = null; let imgName = "";
         const imgRangeInput = document.getElementById('img-range-input');
 
-        document.getElementById('imagesInput').onchange = (e) => loadImgPdf(e.target.files[0]);
+        document.getElementById('imagesInput').onchange = (e) => {
+            const file = e.target.files[0];
+            e.target.value = '';
+            if (file) loadImgPdf(file);
+        };
 
         // Sync Logic
         imgRangeInput.addEventListener('input', () => {
@@ -2624,12 +2801,31 @@
             } catch(e){console.error(e);alert('Error');} finally{hideProgress();}
         }
 
-        function resetTool(t) { document.getElementById(`${t}-upload`).classList.remove('hidden'); document.getElementById(`${t}-workspace`).classList.add('hidden'); document.getElementById(`${t}-workspace`).classList.remove('flex'); }
+        function resetTool(t) {
+            document.getElementById(`${t}-upload`).classList.remove('hidden');
+            document.getElementById(`${t}-workspace`).classList.add('hidden');
+            document.getElementById(`${t}-workspace`).classList.remove('flex');
+            const fileInput = document.getElementById(`${t}Input`);
+            if (fileInput) fileInput.value = '';
+        }
+
+        // Progressive fallback for <dialog closedby="any"> light-dismiss (e.g. Safari)
+        if (!('closedBy' in HTMLDialogElement.prototype)) {
+            const outside = (e, dialog) => {
+                const r = dialog.getBoundingClientRect();
+                return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+            };
+            for (const dialog of document.querySelectorAll('dialog[closedby="any"]')) {
+                let pressedOutside = false;
+                dialog.addEventListener('pointerdown', (e) => { pressedOutside = outside(e, dialog); });
+                dialog.addEventListener('pointerup', (e) => { if (pressedOutside && outside(e, dialog)) dialog.close(); });
+            }
+        }
 
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.1';
+        const APP_VERSION = 'v2.0.0-beta.2';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
