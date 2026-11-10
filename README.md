@@ -88,4 +88,4 @@ Este proyecto ha sido creado y es mantenido por **[Pablo Felip](https://www.link
 
 ## 📄 Licencia
 
-Este proyecto está distribuido bajo la licencia MIT. Consulta el archivo **[LICENSE](LICENSE)** para más detalles.
+Este proyecto está distribuido bajo la licencia **GNU AGPL v3.0**. Consulta el archivo **[LICENSE](LICENSE)** para más detalles.
