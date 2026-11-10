@@ -4,26 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Herramientas PDF - Suite Local</title>
-    <meta name="description" content="Suite de herramientas PDF segura y privada: Unir, Dividir, Organizar y Convertir a Imágenes. Procesamiento 100% local en tu navegador.">
+    <meta name="description" content="Suite de herramientas PDF segura y privada: Unir, Dividir, Organizar, Editar y Convertir a Imágenes. Procesamiento 100% local y sin conexión.">
     <meta name="author" content="Pablo Felip">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="theme-color" content="#2563eb">
 
-    <!-- Favicon (Emoji Documento) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
+    <!-- PWA & Icons -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.17" referrerpolicy="no-referrer"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
         }
     </script>
 
-    <!-- Librerías -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Bibliotecas (versiones fijadas + SRI) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js" integrity="sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" integrity="sha384-eeLEhtwdMwD3X9y+8P3Cn7Idl/M+w8H4uZqkgD/2eJVkWIN1yKzEj6XegJ9dL3q0" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js" integrity="sha384-sLpuECXYCB5TUyTbC06pftm/rgurDambREZmV4eRHwEqJzCQtU6lxI2Ve00z4XW5" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" integrity="sha384-hJnF5AwidE18GSWTAGHv3ByzzvfNZ1Tcx5y1UUV3WkauuMCEzBJBMSwSt/PUPXnM" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <script>
         // Init Dark Mode Immediately
@@ -92,6 +96,34 @@
         .page-thumbnail.active { border-color: #3b82f6; background-color: #eff6ff; }
         .dark .page-thumbnail.active { border-color: #60a5fa; background-color: #1e3a8a; }
         #canvas-wrapper { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+
+        /* PWA Update Toast (Popover Manual + Progressive Fallback) */
+        #pwa-update-toast {
+            display: none;
+            position: fixed;
+            inset: auto 1.25rem 1.25rem auto;
+            z-index: 60;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            opacity: 0;
+            transform: translateY(0.75rem);
+            transition: opacity 0.25s ease, transform 0.25s ease, display 0.25s ease allow-discrete, overlay 0.25s ease allow-discrete;
+        }
+        #pwa-update-toast:is(:popover-open, .\:popover-open),
+        #pwa-update-toast.pwa-toast-fallback-open {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @starting-style {
+            #pwa-update-toast:is(:popover-open, .\:popover-open) {
+                opacity: 0;
+                transform: translateY(0.75rem);
+            }
+        }
+        [popover] + [popover] { margin-top: 1rem; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen flex flex-col font-sans text-gray-800 overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
@@ -124,6 +156,9 @@
         </nav>
 
         <div class="flex items-center gap-3">
+            <button id="pwa-install-btn" class="hidden items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50" title="Instalar aplicación para uso directo y sin conexión">
+                <i data-lucide="download" class="w-4 h-4"></i> Instalar
+            </button>
             <button id="theme-toggle" class="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-blue-400" title="Cambiar tema">
                 <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
                 <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
@@ -513,17 +548,18 @@
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative animate-fade-in dark:bg-gray-800">
             <button id="close-about-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="text-center">
-                <img src="https://drive.google.com/thumbnail?id=1pbNyTrnZeZvfWLu2Lm66f9tVQ3OqTKHx&sz=w500-h500" alt="Pablo Felip" class="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-lg mb-4 object-cover dark:border-gray-700">
+                <img src="https://drive.google.com/thumbnail?id=1pbNyTrnZeZvfWLu2Lm66f9tVQ3OqTKHx&sz=w500-h500" alt="Pablo Felip" referrerpolicy="no-referrer" onerror="this.style.display='none'" class="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-lg mb-4 object-cover dark:border-gray-700">
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white">Pablo Felip</h2>
                 <p class="text-sm text-gray-500 mb-4 dark:text-gray-400">Docente de Formación Profesional y Universidad, TICnológicamente inquieto.</p>
                 <p class="text-sm text-gray-600 mb-6 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100 text-left dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
-                    Esta versión web (SPA) de <strong>PDF_Tools</strong> nace para ofrecer una alternativa ligera a quienes prefieren no instalar extensiones. La privacidad es absoluta en ambas (el procesamiento es local), pero con una diferencia técnica importante: la extensión funciona completamente <strong>sin conexión</strong> (empaqueta todas las librerías), mientras que esta SPA requiere conexión inicial para cargar las bibliotecas necesarias vía CDN.
+                    Esta aplicación web progresiva (PWA) de <strong>PDF_Tools</strong> ofrece una alternativa visual completa a quienes prefieren no instalar extensiones. La privacidad es absoluta (el procesamiento es 100% local en tu navegador) y, tras cargarla una primera vez, funciona también <strong>sin conexión a Internet</strong> e incluso puede instalarse en tu dispositivo.
                 </p>
                 <div class="space-y-3 text-left">
-                    <a href="https://www.linkedin.com/in/pfelipm/" target="_blank" class="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"><i data-lucide="linkedin" class="w-5 h-5 mr-3"></i><span class="font-medium">Perfil de LinkedIn</span></a>
-                    <a href="https://github.com/pfelipm/pdf-tools-spa" target="_blank" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-gray-700 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"><i data-lucide="github" class="w-5 h-5 mr-3"></i><span class="font-medium">Repositorio SPA (GitHub)</span></a>
-                    <div class="mt-4 pt-4 border-t border-gray-100 text-left dark:border-gray-700">
-                        <p class="text-sm text-gray-500 mb-1 dark:text-gray-400">Basado en la extensión de Chrome <a href="https://chromewebstore.google.com/detail/pdftools/amfbkjdnaalliclaenmafeohionnkmoa" target="_blank" class="text-blue-600 hover:underline font-semibold dark:text-blue-400">PDF_Tools</a>.</p>
+                    <a href="https://www.linkedin.com/in/pfelipm/" target="_blank" rel="noopener noreferrer" class="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"><i data-lucide="linkedin" class="w-5 h-5 mr-3"></i><span class="font-medium">Perfil de LinkedIn</span></a>
+                    <a href="https://github.com/pfelipm/pdf-tools-spa" target="_blank" rel="noopener noreferrer" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-gray-700 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"><i data-lucide="github" class="w-5 h-5 mr-3"></i><span class="font-medium">Repositorio SPA (GitHub)</span></a>
+                    <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-2 text-left dark:border-gray-700">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Basado en la extensión <a href="https://chromewebstore.google.com/detail/pdftools/amfbkjdnaalliclaenmafeohionnkmoa" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold dark:text-blue-400">PDF_Tools</a>.</p>
+                        <span id="app-version-badge" class="text-xs font-mono px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"></span>
                     </div>
                 </div>
             </div>
@@ -687,6 +723,27 @@
         </div>
     </div>
     <canvas id="exportCanvas" class="hidden"></canvas>
+
+    <!-- Toast de Actualización PWA (Popover Manual) -->
+    <div id="pwa-update-toast" popover="manual" role="status" aria-live="polite">
+        <div class="bg-white border border-blue-200 rounded-xl shadow-2xl p-4 max-w-sm flex items-start gap-3 dark:bg-gray-800 dark:border-blue-800">
+            <div class="bg-blue-50 text-blue-600 p-2 rounded-lg flex-shrink-0 dark:bg-blue-900/40 dark:text-blue-400">
+                <i data-lucide="rotate-cw" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-gray-800 dark:text-white">Nueva versión disponible</p>
+                <p class="text-xs text-gray-500 mt-0.5 mb-3 dark:text-gray-400">Actualiza para aplicar las últimas mejoras cuando termines tu tarea.</p>
+                <div class="flex items-center gap-2">
+                    <button id="pwa-update-apply-btn" type="button" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition shadow-sm dark:bg-blue-500 dark:hover:bg-blue-600">
+                        Actualizar ahora
+                    </button>
+                    <button id="pwa-update-close-btn" type="button" popovertarget="pwa-update-toast" popovertargetaction="hide" class="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700">
+                        Más tarde
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // --- THEME LOGIC ---
@@ -2568,6 +2625,124 @@
         }
 
         function resetTool(t) { document.getElementById(`${t}-upload`).classList.remove('hidden'); document.getElementById(`${t}-workspace`).classList.add('hidden'); document.getElementById(`${t}-workspace`).classList.remove('flex'); }
+
+        // ==========================================
+        // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
+        // ==========================================
+        const APP_VERSION = 'v2.0.0-beta.1';
+        const APP_BUILD_DATE = '11/11/2026';
+
+        const versionBadge = document.getElementById('app-version-badge');
+        if (versionBadge) {
+            versionBadge.textContent = `${APP_VERSION} · ${APP_BUILD_DATE}`;
+        }
+
+        // PWA Install Prompt
+        let deferredInstallPrompt = null;
+        const pwaInstallBtn = document.getElementById('pwa-install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            pwaInstallBtn.classList.remove('hidden');
+            pwaInstallBtn.classList.add('inline-flex');
+        });
+
+        pwaInstallBtn.addEventListener('click', async () => {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            pwaInstallBtn.classList.add('hidden');
+            pwaInstallBtn.classList.remove('inline-flex');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredInstallPrompt = null;
+            pwaInstallBtn.classList.add('hidden');
+            pwaInstallBtn.classList.remove('inline-flex');
+        });
+
+        // PWA Update Toast Helpers (Popover API + Legacy Fallback)
+        const pwaUpdateToast = document.getElementById('pwa-update-toast');
+        const pwaUpdateApplyBtn = document.getElementById('pwa-update-apply-btn');
+        const pwaUpdateCloseBtn = document.getElementById('pwa-update-close-btn');
+        let waitingServiceWorker = null;
+
+        function showPwaUpdateToast(worker) {
+            waitingServiceWorker = worker;
+            if ('popover' in HTMLElement.prototype && typeof pwaUpdateToast.showPopover === 'function') {
+                if (!pwaUpdateToast.matches(':popover-open')) {
+                    pwaUpdateToast.showPopover();
+                }
+            } else {
+                pwaUpdateToast.classList.remove('hidden');
+                pwaUpdateToast.classList.add('pwa-toast-fallback-open', 'fixed');
+            }
+        }
+
+        function hidePwaUpdateToast() {
+            if ('popover' in HTMLElement.prototype && typeof pwaUpdateToast.hidePopover === 'function') {
+                if (pwaUpdateToast.matches(':popover-open')) {
+                    pwaUpdateToast.hidePopover();
+                }
+            } else {
+                pwaUpdateToast.classList.add('hidden');
+                pwaUpdateToast.classList.remove('pwa-toast-fallback-open');
+            }
+        }
+
+        if (!('popover' in HTMLElement.prototype)) {
+            pwaUpdateCloseBtn.addEventListener('click', hidePwaUpdateToast);
+        }
+
+        pwaUpdateApplyBtn.addEventListener('click', () => {
+            if (waitingServiceWorker) {
+                pwaUpdateApplyBtn.disabled = true;
+                pwaUpdateApplyBtn.textContent = 'Actualizando...';
+                waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+        });
+
+        if ('serviceWorker' in navigator) {
+            let isRefreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (isRefreshing) return;
+                isRefreshing = true;
+                window.location.reload();
+            });
+
+            window.addEventListener('load', async () => {
+                try {
+                    const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+
+                    if (reg.waiting) {
+                        showPwaUpdateToast(reg.waiting);
+                    }
+
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        if (!newWorker) return;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showPwaUpdateToast(newWorker);
+                            }
+                        });
+                    });
+
+                    // Check for updates immediately when recovering Internet connection or returning to tab
+                    window.addEventListener('online', () => reg.update().catch(() => {}));
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible' && navigator.onLine) {
+                            reg.update().catch(() => {});
+                        }
+                    });
+                } catch (err) {
+                    console.warn('Registro de Service Worker omitido:', err);
+                }
+            });
+        }
+
         lucide.createIcons();
     </script>
 </body>
