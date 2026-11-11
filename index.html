@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Herramientas PDF - Suite Local</title>
-    <meta name="description" content="Suite de herramientas PDF segura y privada: Unir, Dividir, Organizar, Editar y Convertir a Imágenes. Procesamiento 100% local y sin conexión.">
+    <meta name="description" content="Suite de herramientas PDF segura y privada: Unir, Dividir, Organizar, Editar, Comprimir, Limpiar Metadatos y Convertir a Imágenes. Procesamiento 100% local y sin conexión.">
     <meta name="author" content="Pablo Felip">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="theme-color" content="#2563eb">
@@ -38,7 +38,7 @@
         }
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        const { PDFDocument, PDFName, PDFDict, degrees, rgb } = PDFLib;
+        const { PDFDocument, PDFName, PDFDict, PDFRef, degrees, rgb } = PDFLib;
     </script>
 
     <style>
@@ -257,6 +257,141 @@
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(4px);
         }
+
+        /* Responsive Metadata Table (Container Query + Sticky Headers) */
+        .metadata-table-wrapper {
+            overflow: auto;
+            max-inline-size: 100%;
+            container-type: inline-size;
+        }
+        .metadata-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            --meta-col-value: "Valor";
+            --meta-col-status: "Estado";
+        }
+        .metadata-table thead {
+            position: sticky;
+            inset-block-start: 0;
+            z-index: 1;
+        }
+        .metadata-table tbody th {
+            position: sticky;
+            inset-inline-start: 0;
+        }
+        @container (width < 560px) {
+            .metadata-table,
+            .metadata-table thead,
+            .metadata-table tbody,
+            .metadata-table tr,
+            .metadata-table th,
+            .metadata-table td {
+                display: block;
+            }
+            .metadata-table thead {
+                display: none;
+            }
+            .metadata-table tbody tr {
+                margin-block-end: 0.75rem;
+                border: 1px solid rgba(156, 163, 175, 0.35);
+                border-radius: 0.75rem;
+                overflow: hidden;
+            }
+            .metadata-table tbody th {
+                position: sticky;
+                inset-block-start: 0;
+                z-index: 2;
+            }
+            .metadata-table td:nth-child(2)::before {
+                content: var(--meta-col-value) ": ";
+                font-weight: 600;
+                opacity: 0.75;
+            }
+            .metadata-table td:nth-child(3)::before {
+                content: var(--meta-col-status) ": ";
+                font-weight: 600;
+                opacity: 0.75;
+            }
+        }
+
+        /* Brand-Consistent Range Slider (Compression Quality) */
+        input[type="range"].compress-range {
+            --slider-track-size: 0.5rem;
+            --slider-thumb-size: 1.15rem;
+            --slider-track-radius: 999px;
+            --slider-thumb-radius: 50%;
+            --slider-track-color: #e2e8f0;
+            --slider-fill-color: #0d9488;
+            --slider-thumb-color: var(--slider-fill-color);
+            --slider-direction: to right;
+            --attr-min: attr(min type(<number>), 40);
+            --attr-max: attr(max type(<number>), 85);
+            --control-value: attr(value type(<number>), 65);
+            --slider-progress: calc(progress(var(--control-value), var(--attr-min), var(--attr-max)) * 100%);
+            appearance: none;
+            -webkit-appearance: none;
+            inline-size: 100%;
+            block-size: 2rem;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+        }
+        .dark input[type="range"].compress-range {
+            --slider-track-color: #374151;
+            --slider-fill-color: #2dd4bf;
+        }
+        input[type="range"].compress-range:dir(rtl) {
+            --slider-direction: to left;
+        }
+        @supports not (opacity: progress(1, 0, 100)) {
+            input[type="range"].compress-range {
+                --slider-progress: calc((var(--control-value) - var(--attr-min)) / (var(--attr-max) - var(--attr-min)) * 100%);
+            }
+        }
+        input[type="range"].compress-range::-webkit-slider-runnable-track {
+            block-size: var(--slider-track-size);
+            border: 0;
+            border-radius: var(--slider-track-radius);
+            background: linear-gradient(var(--slider-direction), var(--slider-fill-color) var(--slider-progress), var(--slider-track-color) var(--slider-progress));
+        }
+        input[type="range"].compress-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            inline-size: var(--slider-thumb-size);
+            block-size: var(--slider-thumb-size);
+            margin-block-start: calc((var(--slider-track-size) - var(--slider-thumb-size)) / 2);
+            border: 0;
+            border-radius: var(--slider-thumb-radius);
+            background: var(--slider-thumb-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+        }
+        input[type="range"].compress-range::-moz-range-track {
+            block-size: var(--slider-track-size);
+            border: 0;
+            border-radius: var(--slider-track-radius);
+            background: var(--slider-track-color);
+        }
+        input[type="range"].compress-range::-moz-range-progress {
+            block-size: var(--slider-track-size);
+            border-radius: var(--slider-track-radius);
+            background: var(--slider-fill-color);
+        }
+        input[type="range"].compress-range::-moz-range-thumb {
+            inline-size: var(--slider-thumb-size);
+            block-size: var(--slider-thumb-size);
+            border: 0;
+            border-radius: var(--slider-thumb-radius);
+            background: var(--slider-thumb-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+        }
+        input[type="range"].compress-range:focus-visible {
+            outline: 2px solid var(--slider-fill-color);
+            outline-offset: 4px;
+            border-radius: 0.25rem;
+        }
     </style>
 </head>
 <body class="bg-gray-50 h-screen flex flex-col font-sans text-gray-800 overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
@@ -271,20 +406,26 @@
         </div>
 
         <nav aria-label="Herramientas principales" class="order-3 lg:order-none w-full lg:w-auto flex items-center gap-1 bg-gray-100 p-1 rounded-lg overflow-x-auto no-scrollbar dark:bg-gray-700">
-            <button type="button" onclick="switchTab('merge')" id="tab-merge" class="px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all bg-white text-blue-600 shadow-sm flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:bg-gray-600 dark:text-blue-300">
+            <button type="button" onclick="switchTab('merge')" id="tab-merge" class="px-2.5 xl:px-3 py-1.5 rounded-md text-xs xl:text-sm font-medium transition-all bg-white text-blue-600 shadow-sm flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:bg-gray-600 dark:text-blue-300">
                 <i data-lucide="combine" class="w-4 h-4"></i> Unir
             </button>
-            <button type="button" onclick="switchTab('split')" id="tab-split" class="px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
+            <button type="button" onclick="switchTab('split')" id="tab-split" class="px-2.5 xl:px-3 py-1.5 rounded-md text-xs xl:text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
                 <i data-lucide="scissors" class="w-4 h-4"></i> Dividir
             </button>
-            <button type="button" onclick="switchTab('organize')" id="tab-organize" class="px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
+            <button type="button" onclick="switchTab('organize')" id="tab-organize" class="px-2.5 xl:px-3 py-1.5 rounded-md text-xs xl:text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
                 <i data-lucide="layout-grid" class="w-4 h-4"></i> Organizar
             </button>
-            <button type="button" onclick="switchTab('images')" id="tab-images" class="px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
+            <button type="button" onclick="switchTab('images')" id="tab-images" class="px-2.5 xl:px-3 py-1.5 rounded-md text-xs xl:text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
                 <i data-lucide="image" class="w-4 h-4"></i> A imágenes
             </button>
-            <button type="button" onclick="switchTab('editor')" id="tab-editor" class="px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
+            <button type="button" onclick="switchTab('editor')" id="tab-editor" class="px-2.5 xl:px-3 py-1.5 rounded-md text-xs xl:text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
                 <i data-lucide="pencil" class="w-4 h-4"></i> Editar
+            </button>
+            <button type="button" onclick="switchTab('compress')" id="tab-compress" class="px-2.5 xl:px-3 py-1.5 rounded-md text-xs xl:text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
+                <i data-lucide="minimize-2" class="w-4 h-4"></i> Comprimir
+            </button>
+            <button type="button" onclick="switchTab('metadata')" id="tab-metadata" class="px-2.5 xl:px-3 py-1.5 rounded-md text-xs xl:text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
+                <i data-lucide="shield-check" class="w-4 h-4"></i> Metadatos
             </button>
         </nav>
 
@@ -681,6 +822,184 @@
             </div>
         </section>
 
+        <!-- TAB 6: COMPRIMIR PDF (FASE 1) -->
+        <section id="content-compress" class="tab-content flex-col h-full relative">
+            <div id="compress-upload" class="flex-1 flex flex-col items-center justify-center p-6">
+                <div id="compress-drop-zone" class="bg-white p-12 rounded-2xl shadow-sm border-2 border-dashed border-gray-300 hover:border-teal-500 transition-colors cursor-pointer group text-center max-w-md w-full dark:bg-gray-800 dark:border-gray-600 dark:hover:border-teal-400">
+                    <div class="bg-teal-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-teal-600 group-hover:scale-110 transition-transform dark:bg-gray-700 dark:text-teal-400">
+                        <i data-lucide="minimize-2" class="w-10 h-10"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2 dark:text-white">Comprimir PDF</h2>
+                    <p class="text-gray-500 mb-2 dark:text-gray-400">Reduce el peso de escaneos y documentos pesados ajustando resolución y calidad.</p>
+                    <p class="text-xs text-gray-400 mb-7 dark:text-gray-500">Arrastra tu PDF aquí o haz clic para seleccionarlo</p>
+                    <input type="file" id="compressInput" accept="application/pdf" class="hidden">
+                    <button type="button" onclick="event.stopPropagation(); document.getElementById('compressInput').click()" class="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-sm dark:bg-teal-500 dark:hover:bg-teal-600">
+                        Seleccionar PDF
+                    </button>
+                </div>
+            </div>
+
+            <div id="compress-workspace" class="hidden flex-1 flex h-full overflow-hidden">
+                <!-- Preview Column -->
+                <div class="flex-1 p-6 overflow-y-auto bg-gray-100 flex flex-col items-center justify-center custom-scroll dark:bg-gray-900/50">
+                    <div class="bg-white rounded-2xl shadow-md border border-gray-200 p-5 max-w-md w-full flex flex-col items-center gap-4 dark:bg-gray-800 dark:border-gray-700">
+                        <div class="w-full h-72 sm:h-80 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center overflow-hidden p-3 dark:bg-gray-900/60 dark:border-gray-700">
+                            <canvas id="compress-preview-canvas" class="max-w-full max-h-full shadow-sm rounded bg-white"></canvas>
+                        </div>
+                        <div class="w-full flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-700 dark:text-gray-400">
+                            <span>Tamaño original</span>
+                            <span id="compress-orig-size" class="font-mono font-bold text-sm text-gray-800 dark:text-gray-100">0 KB</span>
+                        </div>
+                        <div id="compress-inline-summary" class="hidden w-full rounded-xl p-3 text-xs border"></div>
+                    </div>
+                </div>
+
+                <!-- Controls Sidebar -->
+                <aside class="w-80 lg:w-96 bg-white border-l border-gray-200 p-6 flex flex-col shadow-lg z-10 overflow-y-auto custom-scroll dark:bg-gray-800 dark:border-gray-700">
+                    <div class="mb-4 pb-3 border-b border-gray-100 flex items-center justify-between gap-2 dark:border-gray-700">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <i data-lucide="file-text" class="w-4 h-4 text-teal-600 flex-shrink-0 dark:text-teal-400"></i>
+                            <span id="compress-filename-display" class="font-bold text-sm text-gray-700 truncate dark:text-gray-200" title="">documento.pdf</span>
+                        </div>
+                        <span id="compress-page-count" class="text-xs bg-teal-50 text-teal-700 px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 dark:bg-teal-900/40 dark:text-teal-300">0 págs</span>
+                    </div>
+
+                    <div class="space-y-5 flex-1">
+                        <fieldset class="space-y-2">
+                            <legend class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 dark:text-gray-400">Nivel de compresión</legend>
+                            <label for="compress-preset-extreme" class="flex items-start gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                                <input type="radio" id="compress-preset-extreme" name="compress-preset" value="extreme" class="mt-0.5 accent-teal-600">
+                                <span class="block">
+                                    <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Extrema (menor peso)</span>
+                                    <span class="block text-xs text-gray-500 dark:text-gray-400">96 DPI · Calidad 50% — máxima reducción</span>
+                                </span>
+                            </label>
+                            <label for="compress-preset-balanced" class="flex items-start gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                                <input type="radio" id="compress-preset-balanced" name="compress-preset" value="balanced" checked class="mt-0.5 accent-teal-600">
+                                <span class="block">
+                                    <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Recomendada (equilibrada)</span>
+                                    <span class="block text-xs text-gray-500 dark:text-gray-400">140 DPI · Calidad 65% — ideal para escaneos</span>
+                                </span>
+                            </label>
+                            <label for="compress-preset-high" class="flex items-start gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                                <input type="radio" id="compress-preset-high" name="compress-preset" value="high" class="mt-0.5 accent-teal-600">
+                                <span class="block">
+                                    <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Alta calidad</span>
+                                    <span class="block text-xs text-gray-500 dark:text-gray-400">200 DPI · Calidad 80% — conserva detalle fino</span>
+                                </span>
+                            </label>
+                        </fieldset>
+
+                        <div class="pt-3 border-t border-gray-100 space-y-4 dark:border-gray-700">
+                            <div>
+                                <label for="compress-dpi" class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 dark:text-gray-400">Resolución objetivo (DPI)</label>
+                                <select id="compress-dpi" name="compress-dpi" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="72">72 DPI (mínima / vista pantalla)</option>
+                                    <option value="96">96 DPI (compacta / correo y sedes)</option>
+                                    <option value="120">120 DPI (media-baja)</option>
+                                    <option value="140" selected>140 DPI (recomendada)</option>
+                                    <option value="150">150 DPI (estándar oficina)</option>
+                                    <option value="200">200 DPI (alta nitidez)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label for="compress-quality" class="text-xs font-bold text-gray-500 uppercase tracking-wide dark:text-gray-400">Calidad JPEG</label>
+                                    <span id="compress-quality-label" class="text-xs font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded dark:bg-teal-900/40 dark:text-teal-300">65%</span>
+                                </div>
+                                <input type="range" id="compress-quality" name="compress-quality" class="compress-range" min="40" max="85" step="5" value="65" aria-valuetext="65 por ciento">
+                                <div class="flex justify-between text-[11px] text-gray-400 dark:text-gray-500">
+                                    <span>Menor peso (40%)</span>
+                                    <span>Mayor nitidez (85%)</span>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-gray-500 bg-gray-50 border border-gray-200/80 rounded-xl p-3 leading-relaxed dark:bg-gray-700/40 dark:border-gray-600 dark:text-gray-400">
+                                Rasteriza cada página a imagen JPEG manteniendo sus dimensiones físicas exactas (también aplana capas y elimina metadatos).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-200 space-y-3 dark:border-gray-700">
+                        <button type="button" id="compress-run-btn" onclick="runCompressPdf()" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-teal-700 transition shadow-sm flex items-center justify-center gap-2 dark:bg-teal-500 dark:hover:bg-teal-600">
+                            <i data-lucide="minimize-2" class="w-5 h-5"></i> Comprimir PDF
+                        </button>
+                        <button type="button" onclick="resetTool('compress')" class="w-full text-gray-500 py-2 text-sm hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">Cancelar</button>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <!-- TAB 7: INSPECTOR Y LIMPIADOR DE METADATOS -->
+        <section id="content-metadata" class="tab-content flex-col h-full relative">
+            <div id="metadata-upload" class="flex-1 flex flex-col items-center justify-center p-6">
+                <div id="metadata-drop-zone" class="bg-white p-12 rounded-2xl shadow-sm border-2 border-dashed border-gray-300 hover:border-cyan-500 transition-colors cursor-pointer group text-center max-w-md w-full dark:bg-gray-800 dark:border-gray-600 dark:hover:border-cyan-400">
+                    <div class="bg-cyan-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-cyan-600 group-hover:scale-110 transition-transform dark:bg-gray-700 dark:text-cyan-400">
+                        <i data-lucide="shield-check" class="w-10 h-10"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2 dark:text-white">Inspector de metadatos</h2>
+                    <p class="text-gray-500 mb-2 dark:text-gray-400">Audita autor, programas, fechas y flujos XMP ocultos, y límpialos en un clic.</p>
+                    <p class="text-xs text-gray-400 mb-7 dark:text-gray-500">Arrastra tu PDF aquí o haz clic para seleccionarlo</p>
+                    <input type="file" id="metadataInput" accept="application/pdf" class="hidden">
+                    <button type="button" onclick="event.stopPropagation(); document.getElementById('metadataInput').click()" class="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-sm dark:bg-cyan-500 dark:hover:bg-cyan-600">
+                        Seleccionar PDF
+                    </button>
+                </div>
+            </div>
+
+            <div id="metadata-workspace" class="hidden flex-1 flex-col h-full overflow-y-auto bg-gray-100 p-6 custom-scroll dark:bg-gray-900/50">
+                <div class="max-w-4xl mx-auto w-full space-y-5">
+                    <!-- Summary & Actions Card -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 dark:bg-gray-800 dark:border-gray-700">
+                        <div class="flex items-start gap-3.5 min-w-0">
+                            <div class="p-3 rounded-xl bg-cyan-50 text-cyan-600 flex-shrink-0 dark:bg-cyan-900/30 dark:text-cyan-400">
+                                <i data-lucide="file-text" class="w-6 h-6"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h2 id="metadata-filename-display" class="font-bold text-base text-gray-800 truncate max-w-xs sm:max-w-md dark:text-white" title="">documento.pdf</h2>
+                                    <span id="metadata-page-count" class="text-xs bg-cyan-50 text-cyan-700 px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap dark:bg-cyan-900/40 dark:text-cyan-300">0 págs</span>
+                                    <span id="metadata-file-size" class="text-xs font-mono text-gray-500 dark:text-gray-400">0 KB</span>
+                                </div>
+                                <div id="metadata-status-badge" class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2.5 flex-shrink-0">
+                            <button type="button" id="metadata-clean-btn" onclick="cleanAndSaveMetadataPdf()" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center gap-2 dark:bg-cyan-500 dark:hover:bg-cyan-600">
+                                <i data-lucide="shield-check" class="w-4 h-4"></i> <span id="metadata-clean-btn-label">Eliminar metadatos</span>
+                            </button>
+                            <button type="button" onclick="resetTool('metadata')" aria-label="Cerrar archivo" class="px-3 py-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 text-sm font-medium transition dark:border-gray-600 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400" title="Cerrar archivo">
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Responsive Semantic Metadata Table -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden dark:bg-gray-800 dark:border-gray-700">
+                        <div tabindex="0" role="region" aria-labelledby="metadata-table-caption" class="metadata-table-wrapper custom-scroll">
+                            <table class="metadata-table text-left text-sm">
+                                <caption id="metadata-table-caption" class="sr-only">Auditoría de metadatos detectados en el archivo PDF</caption>
+                                <thead class="bg-gray-50 border-b border-gray-200 text-xs font-bold uppercase tracking-wider text-gray-500 dark:bg-gray-900/80 dark:border-gray-700 dark:text-gray-400">
+                                    <tr>
+                                        <th scope="col" class="px-5 py-3.5 border-b border-gray-200 dark:border-gray-700">Campo / Estructura</th>
+                                        <th scope="col" class="px-5 py-3.5 border-b border-gray-200 dark:border-gray-700">Valor detectado</th>
+                                        <th scope="col" class="px-5 py-3.5 border-b border-gray-200 w-36 dark:border-gray-700">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="metadata-table-body" class="divide-y divide-gray-100 dark:divide-gray-700/70"></tbody>
+                            </table>
+                        </div>
+                        <div class="px-5 py-3 bg-gray-50/70 border-t border-gray-100 text-xs text-gray-500 flex items-center gap-2 dark:bg-gray-900/40 dark:border-gray-700 dark:text-gray-400">
+                            <i data-lucide="info" class="w-4 h-4 text-cyan-600 flex-shrink-0 dark:text-cyan-400"></i>
+                            <span>La limpieza borra el diccionario <code>/Info</code> completo, flujos XML <code>XMP (/Metadata)</code> y diccionarios privados <code>/PieceInfo</code> sin alterar el texto, enlaces ni calidad visual del PDF.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Modal About -->
@@ -715,16 +1034,22 @@
             <div id="download-list" class="flex-1 overflow-y-auto space-y-2 custom-scroll p-1"></div>
 
             <div id="single-file-actions" class="hidden mt-4 pt-4 border-t border-gray-100 flex-col gap-3 dark:border-gray-700">
-                <p class="text-xs text-gray-500 text-center uppercase font-bold tracking-wide dark:text-gray-400">Opciones adicionales</p>
-                <div class="flex justify-center gap-3">
-                    <button id="res-to-org-btn" class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium transition flex items-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                        <i data-lucide="layout-grid" class="w-4 h-4"></i> Organizar
+                <p class="text-xs text-gray-500 text-center uppercase font-bold tracking-wide dark:text-gray-400">Enviar a otra herramienta</p>
+                <div class="flex flex-wrap justify-center gap-2">
+                    <button id="res-to-org-btn" type="button" class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-xs font-medium transition flex items-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> Organizar
                     </button>
-                    <button id="res-to-editor-btn" class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium transition flex items-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                        <i data-lucide="pencil" class="w-4 h-4"></i> Editar
+                    <button id="res-to-editor-btn" type="button" class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-xs font-medium transition flex items-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Editar
                     </button>
-                    <button id="res-to-img-btn" class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium transition flex items-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                        <i data-lucide="images" class="w-4 h-4"></i> A imágenes
+                    <button id="res-to-compress-btn" type="button" class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-xs font-medium transition flex items-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        <i data-lucide="minimize-2" class="w-3.5 h-3.5"></i> Comprimir
+                    </button>
+                    <button id="res-to-metadata-btn" type="button" class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-xs font-medium transition flex items-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Metadatos
+                    </button>
+                    <button id="res-to-img-btn" type="button" class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-xs font-medium transition flex items-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        <i data-lucide="images" class="w-3.5 h-3.5"></i> A imágenes
                     </button>
                 </div>
             </div>
@@ -752,18 +1077,24 @@
             <button id="merge-download-btn" type="button" autofocus class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2 dark:bg-blue-500 dark:hover:bg-blue-600">
                 <i data-lucide="download" class="w-5 h-5"></i> Descargar PDF
             </button>
-            <div class="grid grid-cols-2 gap-2.5">
-                <button id="merge-to-organize-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-sm flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <button id="merge-to-organize-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-xs flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
                     <i data-lucide="layout-grid" class="w-4 h-4"></i> Organizar
                 </button>
-                <button id="merge-to-editor-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-sm flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                <button id="merge-to-editor-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-xs flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
                     <i data-lucide="pencil" class="w-4 h-4"></i> Editar
                 </button>
-                <button id="merge-to-images-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-sm flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                    <i data-lucide="images" class="w-4 h-4"></i> A imágenes
+                <button id="merge-to-compress-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-xs flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="minimize-2" class="w-4 h-4"></i> Comprimir
                 </button>
-                <button id="merge-to-split-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-sm flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                <button id="merge-to-metadata-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-xs flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i> Metadatos
+                </button>
+                <button id="merge-to-split-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-xs flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
                     <i data-lucide="scissors" class="w-4 h-4"></i> Dividir
+                </button>
+                <button id="merge-to-images-btn" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition text-xs flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="images" class="w-4 h-4"></i> A imágenes
                 </button>
             </div>
         </div>
@@ -809,15 +1140,21 @@
                 <button id="org-success-download" class="w-full py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition flex items-center justify-center gap-2 dark:bg-green-500 dark:hover:bg-green-600">
                     <i data-lucide="download" class="w-5 h-5"></i> Descargar PDF
                 </button>
-                <div class="flex gap-3">
-                    <button id="org-success-editor" class="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <button id="org-success-editor" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
                         <i data-lucide="pencil" class="w-4 h-4"></i> Editar
                     </button>
-                    <button id="org-success-img" class="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                        <i data-lucide="images" class="w-4 h-4"></i> A imágenes
+                    <button id="org-success-compress" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        <i data-lucide="minimize-2" class="w-4 h-4"></i> Comprimir
                     </button>
-                    <button id="org-success-split" class="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <button id="org-success-metadata" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i> Metadatos
+                    </button>
+                    <button id="org-success-split" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
                         <i data-lucide="scissors" class="w-4 h-4"></i> Dividir
+                    </button>
+                    <button id="org-success-img" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        <i data-lucide="images" class="w-4 h-4"></i> A imágenes
                     </button>
                 </div>
             </div>
@@ -884,20 +1221,100 @@
                 <button id="edt-success-download" class="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition flex items-center justify-center gap-2 dark:bg-purple-500 dark:hover:bg-purple-600">
                     <i data-lucide="download" class="w-5 h-5"></i> Descargar PDF
                 </button>
-                <div class="flex gap-3">
-                    <button id="edt-success-org" class="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <button id="edt-success-org" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
                         <i data-lucide="layout-grid" class="w-4 h-4"></i> Organizar
                     </button>
-                    <button id="edt-success-img" class="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                        <i data-lucide="images" class="w-4 h-4"></i> A imágenes
+                    <button id="edt-success-compress" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        <i data-lucide="minimize-2" class="w-4 h-4"></i> Comprimir
                     </button>
-                    <button id="edt-success-split" class="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition flex items-center justify-center gap-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <button id="edt-success-metadata" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i> Metadatos
+                    </button>
+                    <button id="edt-success-split" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
                         <i data-lucide="scissors" class="w-4 h-4"></i> Dividir
+                    </button>
+                    <button id="edt-success-img" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        <i data-lucide="images" class="w-4 h-4"></i> A imágenes
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal Éxito Comprimir PDF (Native Dialog) -->
+    <dialog id="compress-success-modal" closedby="any" aria-labelledby="compress-success-title" class="bg-white rounded-2xl shadow-2xl max-w-md w-[calc(100%-2rem)] p-8 relative animate-fade-in text-center border-0 outline-none dark:bg-gray-800">
+        <form method="dialog">
+            <button type="submit" value="close" aria-label="Cerrar" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </form>
+        <div class="flex justify-center mb-4">
+            <div id="compress-modal-icon-wrap" class="bg-teal-100 p-3 rounded-full dark:bg-teal-900/30">
+                <i data-lucide="minimize-2" class="w-8 h-8 text-teal-600 dark:text-teal-400"></i>
+            </div>
+        </div>
+        <h3 id="compress-success-title" class="text-xl font-bold text-gray-800 mb-2 dark:text-white">¡Compresión completada!</h3>
+        <div id="compress-modal-comparison" class="mb-6 text-sm"></div>
+
+        <div class="flex flex-col gap-3">
+            <button id="cmp-success-download" type="button" autofocus class="w-full py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition flex items-center justify-center gap-2 dark:bg-teal-500 dark:hover:bg-teal-600">
+                <i data-lucide="download" class="w-5 h-5"></i> Descargar PDF
+            </button>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <button id="cmp-success-metadata" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i> Metadatos
+                </button>
+                <button id="cmp-success-org" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i> Organizar
+                </button>
+                <button id="cmp-success-editor" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="pencil" class="w-4 h-4"></i> Editar
+                </button>
+                <button id="cmp-success-split" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="scissors" class="w-4 h-4"></i> Dividir
+                </button>
+                <button id="cmp-success-img" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="images" class="w-4 h-4"></i> A imágenes
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Modal Éxito Limpiar Metadatos (Native Dialog) -->
+    <dialog id="metadata-success-modal" closedby="any" aria-labelledby="metadata-success-title" class="bg-white rounded-2xl shadow-2xl max-w-md w-[calc(100%-2rem)] p-8 relative animate-fade-in text-center border-0 outline-none dark:bg-gray-800">
+        <form method="dialog">
+            <button type="submit" value="close" aria-label="Cerrar" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </form>
+        <div class="flex justify-center mb-4">
+            <div class="bg-cyan-100 p-3 rounded-full dark:bg-cyan-900/30">
+                <i data-lucide="shield-check" class="w-8 h-8 text-cyan-600 dark:text-cyan-400"></i>
+            </div>
+        </div>
+        <h3 id="metadata-success-title" class="text-xl font-bold text-gray-800 mb-2 dark:text-white">¡Metadatos eliminados!</h3>
+        <p id="metadata-success-desc" class="text-gray-500 mb-6 text-sm dark:text-gray-400">El documento ha quedado libre de rastros de autoría, software y flujos XMP.</p>
+
+        <div class="flex flex-col gap-3">
+            <button id="meta-success-download" type="button" autofocus class="w-full py-3 bg-cyan-600 text-white rounded-xl font-bold hover:bg-cyan-700 transition flex items-center justify-center gap-2 dark:bg-cyan-500 dark:hover:bg-cyan-600">
+                <i data-lucide="download" class="w-5 h-5"></i> Descargar PDF limpio
+            </button>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <button id="meta-success-compress" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="minimize-2" class="w-4 h-4"></i> Comprimir
+                </button>
+                <button id="meta-success-org" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i> Organizar
+                </button>
+                <button id="meta-success-editor" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="pencil" class="w-4 h-4"></i> Editar
+                </button>
+                <button id="meta-success-split" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="scissors" class="w-4 h-4"></i> Dividir
+                </button>
+                <button id="meta-success-img" type="button" class="py-2.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-xs transition flex items-center justify-center gap-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    <i data-lucide="images" class="w-4 h-4"></i> A imágenes
+                </button>
+            </div>
+        </div>
+    </dialog>
 
     <!-- Modal Zoom (Lupa Universal) -->
     <div id="zoom-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center backdrop-blur-sm" onclick="this.classList.add('hidden')">
@@ -1145,6 +1562,54 @@
 
         function formatPageCount(n) {
             return `${n} ${n === 1 ? 'pág' : 'págs'}`;
+        }
+
+        function formatBytes(bytes) {
+            if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB'];
+            const exp = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+            const val = bytes / (1024 ** exp);
+            const decimals = exp === 0 ? 0 : (exp === 1 ? 1 : 2);
+            return `${val.toLocaleString('es-ES', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })} ${units[exp]}`;
+        }
+
+        function yieldToMain() {
+            if (typeof scheduler !== 'undefined' && typeof scheduler.yield === 'function') {
+                return scheduler.yield();
+            }
+            return new Promise((resolve) => setTimeout(resolve, 0));
+        }
+
+        function stripPdfMetadataInPlace(pdfDoc) {
+            const infoEntry = pdfDoc.context.trailerInfo.Info;
+            if (infoEntry) {
+                const infoDict = pdfDoc.context.lookupMaybe(infoEntry, PDFDict);
+                if (infoDict) {
+                    for (const [k] of infoDict.entries()) {
+                        infoDict.delete(k);
+                    }
+                }
+                if (infoEntry instanceof PDFRef) {
+                    pdfDoc.context.delete(infoEntry);
+                }
+                delete pdfDoc.context.trailerInfo.Info;
+            }
+            const purgeDictKey = (dict, keyName) => {
+                if (!dict) return;
+                const pdfKey = PDFName.of(keyName);
+                const raw = dict.get(pdfKey);
+                if (!raw) return;
+                dict.delete(pdfKey);
+                if (raw instanceof PDFRef) {
+                    pdfDoc.context.delete(raw);
+                }
+            };
+            purgeDictKey(pdfDoc.catalog, 'Metadata');
+            purgeDictKey(pdfDoc.catalog, 'PieceInfo');
+            for (const page of pdfDoc.getPages()) {
+                purgeDictKey(page.node, 'Metadata');
+                purgeDictKey(page.node, 'PieceInfo');
+            }
         }
 
         function isPdfFile(file) {
@@ -3202,6 +3667,8 @@
                 const modal = document.getElementById('editor-success-modal');
                 document.getElementById('edt-success-download').onclick = () => saveBlob(blob, outName);
                 document.getElementById('edt-success-org').onclick = () => { modal.classList.add('hidden'); switchTab('organize'); loadOrganizeFromBytes(new Uint8Array(pdfBytes), outName); };
+                document.getElementById('edt-success-compress').onclick = () => { modal.classList.add('hidden'); switchTab('compress'); loadCompressPdf(null, new Uint8Array(pdfBytes), outName); };
+                document.getElementById('edt-success-metadata').onclick = () => { modal.classList.add('hidden'); switchTab('metadata'); loadMetadataPdf(null, new Uint8Array(pdfBytes), outName); };
                 document.getElementById('edt-success-img').onclick = () => { modal.classList.add('hidden'); switchTab('images'); loadImgPdf(null, new Uint8Array(pdfBytes), outName); };
                 document.getElementById('edt-success-split').onclick = () => { modal.classList.add('hidden'); switchTab('split'); loadSplitPdf(null, new Uint8Array(pdfBytes), outName); };
                 modal.classList.remove('hidden');
@@ -3280,6 +3747,8 @@
                 const modal = document.getElementById('editor-success-modal');
                 document.getElementById('edt-success-download').onclick = () => saveBlob(blob, outName);
                 document.getElementById('edt-success-org').onclick = () => { modal.classList.add('hidden'); switchTab('organize'); loadOrganizeFromBytes(new Uint8Array(finalBytes), outName); };
+                document.getElementById('edt-success-compress').onclick = () => { modal.classList.add('hidden'); switchTab('compress'); loadCompressPdf(null, new Uint8Array(finalBytes), outName); };
+                document.getElementById('edt-success-metadata').onclick = () => { modal.classList.add('hidden'); switchTab('metadata'); loadMetadataPdf(null, new Uint8Array(finalBytes), outName); };
                 document.getElementById('edt-success-img').onclick = () => { modal.classList.add('hidden'); switchTab('images'); loadImgPdf(null, new Uint8Array(finalBytes), outName); };
                 document.getElementById('edt-success-split').onclick = () => { modal.classList.add('hidden'); switchTab('split'); loadSplitPdf(null, new Uint8Array(finalBytes), outName); };
                 modal.classList.remove('hidden');
@@ -3293,7 +3762,7 @@
 
         // --- Init Function ---
         function switchTab(tabId) {
-            const baseClasses = "px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0";
+            const baseClasses = "px-2.5 xl:px-3 py-1.5 rounded-md text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0";
             const activeClasses = "bg-white text-blue-600 shadow-sm dark:bg-gray-600 dark:text-blue-300";
             const inactiveClasses = "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200";
 
@@ -3421,6 +3890,8 @@
                 document.getElementById('merge-download-btn').onclick = () => saveBlob(blob, 'unido.pdf');
                 document.getElementById('merge-to-organize-btn').onclick = () => { mergeSuccessModal.close(); switchTab('organize'); loadOrganizeFromBytes(new Uint8Array(pdfBytes), 'unido.pdf'); };
                 document.getElementById('merge-to-editor-btn').onclick = () => { mergeSuccessModal.close(); switchTab('editor'); loadEditorPdf(null, new Uint8Array(pdfBytes), 'unido.pdf'); };
+                document.getElementById('merge-to-compress-btn').onclick = () => { mergeSuccessModal.close(); switchTab('compress'); loadCompressPdf(null, new Uint8Array(pdfBytes), 'unido.pdf'); };
+                document.getElementById('merge-to-metadata-btn').onclick = () => { mergeSuccessModal.close(); switchTab('metadata'); loadMetadataPdf(null, new Uint8Array(pdfBytes), 'unido.pdf'); };
                 document.getElementById('merge-to-images-btn').onclick = () => { mergeSuccessModal.close(); switchTab('images'); loadImgPdf(null, new Uint8Array(pdfBytes), 'unido.pdf'); };
                 document.getElementById('merge-to-split-btn').onclick = () => { mergeSuccessModal.close(); switchTab('split'); loadSplitPdf(null, new Uint8Array(pdfBytes), 'unido.pdf'); };
 
@@ -3776,6 +4247,16 @@
                         switchTab('editor');
                         loadEditorPdf(null, u8, file.name);
                     };
+                    document.getElementById('res-to-compress-btn').onclick = () => {
+                        closeDownloadResultModal();
+                        switchTab('compress');
+                        loadCompressPdf(null, u8, file.name);
+                    };
+                    document.getElementById('res-to-metadata-btn').onclick = () => {
+                        closeDownloadResultModal();
+                        switchTab('metadata');
+                        loadMetadataPdf(null, u8, file.name);
+                    };
                     document.getElementById('res-to-img-btn').onclick = () => {
                         closeDownloadResultModal();
                         switchTab('images');
@@ -3878,6 +4359,8 @@
                 const successModal = document.getElementById('organize-success-modal');
                 document.getElementById('org-success-download').onclick = () => saveBlob(blob, outName);
                 document.getElementById('org-success-editor').onclick = () => { successModal.classList.add('hidden'); switchTab('editor'); loadEditorPdf(null, new Uint8Array(pdfBytes), outName); };
+                document.getElementById('org-success-compress').onclick = () => { successModal.classList.add('hidden'); switchTab('compress'); loadCompressPdf(null, new Uint8Array(pdfBytes), outName); };
+                document.getElementById('org-success-metadata').onclick = () => { successModal.classList.add('hidden'); switchTab('metadata'); loadMetadataPdf(null, new Uint8Array(pdfBytes), outName); };
                 document.getElementById('org-success-img').onclick = () => { successModal.classList.add('hidden'); switchTab('images'); loadImgPdf(null, new Uint8Array(pdfBytes), outName); };
                 document.getElementById('org-success-split').onclick = () => { successModal.classList.add('hidden'); switchTab('split'); loadSplitPdf(null, new Uint8Array(pdfBytes), outName); };
                 successModal.classList.remove('hidden');
@@ -4074,8 +4557,600 @@
             } catch(e){console.error(e);alert('Error');} finally{hideProgress();}
         }
 
+        // ==========================================
+        // LÓGICA DE COMPRIMIR PDF (FASE 1 — RASTERIZACIÓN)
+        // ==========================================
+        const COMPRESS_PRESETS = {
+            extreme: { dpi: 96, quality: 50 },
+            balanced: { dpi: 140, quality: 65 },
+            high: { dpi: 200, quality: 80 }
+        };
+
+        const compressState = {
+            pdfBytes: null,
+            pdfJsDoc: null,
+            filename: 'documento.pdf',
+            origSize: 0
+        };
+
+        const compressDpiSelect = document.getElementById('compress-dpi');
+        const compressQualityInput = document.getElementById('compress-quality');
+        const compressSuccessModal = document.getElementById('compress-success-modal');
+
+        function syncCompressQualitySlider() {
+            if (!compressQualityInput) return;
+            const val = compressQualityInput.value;
+            compressQualityInput.style.setProperty('--attr-min', compressQualityInput.min || '40');
+            compressQualityInput.style.setProperty('--attr-max', compressQualityInput.max || '85');
+            compressQualityInput.style.setProperty('--control-value', val);
+            compressQualityInput.setAttribute('aria-valuetext', `${val} por ciento`);
+            const label = document.getElementById('compress-quality-label');
+            if (label) label.textContent = `${val}%`;
+        }
+
+        function syncCompressPresetRadiosFromControls() {
+            const dpi = parseInt(compressDpiSelect.value, 10);
+            const quality = parseInt(compressQualityInput.value, 10);
+            document.querySelectorAll('input[name="compress-preset"]').forEach((radio) => {
+                const preset = COMPRESS_PRESETS[radio.value];
+                radio.checked = Boolean(preset && preset.dpi === dpi && preset.quality === quality);
+            });
+        }
+
+        document.querySelectorAll('input[name="compress-preset"]').forEach((radio) => {
+            radio.addEventListener('change', (e) => {
+                const preset = COMPRESS_PRESETS[e.target.value];
+                if (!preset) return;
+                compressDpiSelect.value = String(preset.dpi);
+                compressQualityInput.value = String(preset.quality);
+                syncCompressQualitySlider();
+            });
+        });
+
+        compressDpiSelect.addEventListener('change', syncCompressPresetRadiosFromControls);
+        compressQualityInput.addEventListener('input', () => {
+            syncCompressQualitySlider();
+            syncCompressPresetRadiosFromControls();
+        });
+        syncCompressQualitySlider();
+
+        document.getElementById('compressInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            e.target.value = '';
+            if (file) loadCompressPdf(file);
+        });
+
+        async function loadCompressPdf(file, bytes = null, name = null) {
+            if (!file && !bytes) return;
+            showProgress('Cargando PDF...', 15);
+            try {
+                let u8;
+                let displayFilename = 'documento.pdf';
+                if (file) {
+                    displayFilename = file.name || 'documento.pdf';
+                    u8 = new Uint8Array(await file.arrayBuffer());
+                } else {
+                    displayFilename = name || 'documento.pdf';
+                    u8 = new Uint8Array(bytes);
+                }
+
+                if (compressState.pdfJsDoc && typeof compressState.pdfJsDoc.destroy === 'function') {
+                    compressState.pdfJsDoc.destroy().catch(() => {});
+                }
+
+                const pdfDoc = await pdfjsLib.getDocument(u8.slice(0)).promise;
+                compressState.pdfBytes = u8;
+                compressState.pdfJsDoc = pdfDoc;
+                compressState.filename = displayFilename;
+                compressState.origSize = u8.byteLength;
+
+                const fnEl = document.getElementById('compress-filename-display');
+                fnEl.textContent = displayFilename;
+                fnEl.title = displayFilename;
+                document.getElementById('compress-page-count').textContent = formatPageCount(pdfDoc.numPages);
+                document.getElementById('compress-orig-size').textContent = formatBytes(u8.byteLength);
+
+                const inlineSummary = document.getElementById('compress-inline-summary');
+                inlineSummary.classList.add('hidden');
+                inlineSummary.replaceChildren();
+
+                // Render Page 1 preview
+                const firstPage = await pdfDoc.getPage(1);
+                const baseVp = firstPage.getViewport({ scale: 1 });
+                const maxDim = Math.max(baseVp.width, baseVp.height, 1);
+                const previewScale = Math.min(1.2, 460 / maxDim);
+                const vp = firstPage.getViewport({ scale: previewScale });
+                const previewCvs = document.getElementById('compress-preview-canvas');
+                const previewCtx = previewCvs.getContext('2d');
+                previewCvs.width = vp.width;
+                previewCvs.height = vp.height;
+                previewCtx.fillStyle = '#FFFFFF';
+                previewCtx.fillRect(0, 0, previewCvs.width, previewCvs.height);
+                await firstPage.render({ canvasContext: previewCtx, viewport: vp }).promise;
+
+                document.getElementById('compress-upload').classList.add('hidden');
+                const ws = document.getElementById('compress-workspace');
+                ws.classList.remove('hidden');
+                ws.classList.add('flex');
+            } catch (e) {
+                console.error(e);
+                alert('Error al cargar el PDF para comprimir');
+            } finally {
+                hideProgress();
+            }
+        }
+
+        function populateCompressComparison(container, origBytes, newBytes, isModal) {
+            container.replaceChildren();
+            const reduced = newBytes < origBytes;
+            const deltaBytes = Math.abs(origBytes - newBytes);
+            const pctNum = origBytes > 0 ? (deltaBytes / origBytes) * 100 : 0;
+            const pctStr = pctNum.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-center gap-2 flex-wrap font-mono text-xs sm:text-sm mb-2';
+
+            const origSpan = document.createElement('span');
+            origSpan.className = 'text-gray-500 dark:text-gray-400';
+            origSpan.textContent = formatBytes(origBytes);
+
+            const arrowSpan = document.createElement('span');
+            arrowSpan.className = 'text-gray-400';
+            arrowSpan.textContent = '→';
+
+            const newSpan = document.createElement('span');
+            newSpan.className = reduced
+                ? 'font-bold text-teal-700 dark:text-teal-300'
+                : 'font-bold text-amber-700 dark:text-amber-300';
+            newSpan.textContent = formatBytes(newBytes);
+
+            const badge = document.createElement('span');
+            badge.className = reduced
+                ? 'px-2 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200'
+                : 'px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200';
+            badge.textContent = reduced ? `−${pctStr}%` : `+${pctStr}%`;
+
+            row.append(origSpan, arrowSpan, newSpan, badge);
+            container.appendChild(row);
+
+            const note = document.createElement('p');
+            note.className = isModal
+                ? 'text-xs leading-relaxed text-gray-500 dark:text-gray-400'
+                : 'text-[11px] leading-relaxed text-center text-gray-600 dark:text-gray-300';
+            note.textContent = reduced
+                ? `Ahorro de ${formatBytes(deltaBytes)} respecto al archivo original.`
+                : 'Este PDF contiene principalmente texto o vectores muy ligeros; rasterizarlo a imagen incrementa su peso. Puedes bajar los DPI o conservar el original.';
+            container.appendChild(note);
+        }
+
+        async function runCompressPdf() {
+            if (!compressState.pdfJsDoc || !compressState.pdfBytes) return;
+            const runBtn = document.getElementById('compress-run-btn');
+            runBtn.disabled = true;
+
+            const dpi = parseInt(compressDpiSelect.value, 10) || 140;
+            const quality = (parseInt(compressQualityInput.value, 10) || 65) / 100;
+            const scale = dpi / 72;
+
+            showProgress('Iniciando compresión...', 0);
+            const cvs = document.createElement('canvas');
+            const ctx = cvs.getContext('2d');
+
+            try {
+                const total = compressState.pdfJsDoc.numPages;
+                const outPdf = await PDFDocument.create();
+
+                for (let i = 1; i <= total; i++) {
+                    showProgress(`Comprimiendo pág ${i}/${total}...`, Math.round(((i - 1) / total) * 90));
+                    await yieldToMain();
+
+                    const page = await compressState.pdfJsDoc.getPage(i);
+                    const viewport = page.getViewport({ scale });
+                    cvs.width = Math.max(1, Math.floor(viewport.width));
+                    cvs.height = Math.max(1, Math.floor(viewport.height));
+
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, cvs.width, cvs.height);
+                    await page.render({ canvasContext: ctx, viewport }).promise;
+
+                    const jpgBlob = await new Promise((resolve) => cvs.toBlob(resolve, 'image/jpeg', quality));
+                    const jpgBytes = await jpgBlob.arrayBuffer();
+                    const embeddedJpg = await outPdf.embedJpg(jpgBytes);
+
+                    const pageWidthPts = viewport.width / scale;
+                    const pageHeightPts = viewport.height / scale;
+                    const outPage = outPdf.addPage([pageWidthPts, pageHeightPts]);
+                    outPage.drawImage(embeddedJpg, {
+                        x: 0,
+                        y: 0,
+                        width: pageWidthPts,
+                        height: pageHeightPts
+                    });
+
+                    if (typeof page.cleanup === 'function') page.cleanup();
+                }
+
+                cvs.width = 1;
+                cvs.height = 1;
+
+                showProgress('Empaquetando PDF...', 95);
+                stripPdfMetadataInPlace(outPdf);
+                const outBytes = await outPdf.save();
+                const blob = new Blob([outBytes], { type: 'application/pdf' });
+                const outName = buildOutputFilename(compressState.filename, 'comprimido');
+
+                const reduced = outBytes.byteLength < compressState.origSize;
+
+                // Update inline summary card under preview
+                const inlineSummary = document.getElementById('compress-inline-summary');
+                inlineSummary.className = reduced
+                    ? 'w-full rounded-xl p-3 text-xs border border-teal-200 bg-teal-50/70 dark:border-teal-800 dark:bg-teal-900/20'
+                    : 'w-full rounded-xl p-3 text-xs border border-amber-200 bg-amber-50/70 dark:border-amber-800 dark:bg-amber-900/20';
+                populateCompressComparison(inlineSummary, compressState.origSize, outBytes.byteLength, false);
+
+                // Update & show success modal
+                document.getElementById('compress-success-title').textContent = reduced
+                    ? '¡Compresión completada!'
+                    : 'Documento ya muy ligero';
+                populateCompressComparison(
+                    document.getElementById('compress-modal-comparison'),
+                    compressState.origSize,
+                    outBytes.byteLength,
+                    true
+                );
+
+                document.getElementById('cmp-success-download').onclick = () => saveBlob(blob, outName);
+                document.getElementById('cmp-success-metadata').onclick = () => { compressSuccessModal.close(); switchTab('metadata'); loadMetadataPdf(null, new Uint8Array(outBytes), outName); };
+                document.getElementById('cmp-success-org').onclick = () => { compressSuccessModal.close(); switchTab('organize'); loadOrganizeFromBytes(new Uint8Array(outBytes), outName); };
+                document.getElementById('cmp-success-editor').onclick = () => { compressSuccessModal.close(); switchTab('editor'); loadEditorPdf(null, new Uint8Array(outBytes), outName); };
+                document.getElementById('cmp-success-split').onclick = () => { compressSuccessModal.close(); switchTab('split'); loadSplitPdf(null, new Uint8Array(outBytes), outName); };
+                document.getElementById('cmp-success-img').onclick = () => { compressSuccessModal.close(); switchTab('images'); loadImgPdf(null, new Uint8Array(outBytes), outName); };
+
+                hideProgress();
+                compressSuccessModal.showModal();
+            } catch (e) {
+                console.error(e);
+                alert('Error al comprimir el PDF');
+            } finally {
+                cvs.width = 1;
+                cvs.height = 1;
+                runBtn.disabled = false;
+                hideProgress();
+            }
+        }
+
+        // ==========================================
+        // LÓGICA DE INSPECTOR Y LIMPIADOR DE METADATOS
+        // ==========================================
+        const metadataState = {
+            pdfBytes: null,
+            filename: 'documento.pdf',
+            fileSize: 0,
+            detectedCount: 0
+        };
+
+        const metadataSuccessModal = document.getElementById('metadata-success-modal');
+
+        document.getElementById('metadataInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            e.target.value = '';
+            if (file) loadMetadataPdf(file);
+        });
+
+        function decodePdfObjectText(pdfDoc, rawObj) {
+            if (!rawObj) return undefined;
+            const resolved = pdfDoc.context.lookup(rawObj);
+            if (!resolved) return undefined;
+            if (typeof resolved.decodeText === 'function') {
+                try { return resolved.decodeText(); } catch (_) { /* fallback below */ }
+            }
+            if (typeof resolved.asString === 'function') {
+                return resolved.asString();
+            }
+            return String(resolved);
+        }
+
+        function readPdfDateDisplay(getterFn, pdfDoc, infoDict, rawKeyName) {
+            const rawObj = infoDict ? infoDict.get(PDFName.of(rawKeyName)) : undefined;
+            const rawStr = decodePdfObjectText(pdfDoc, rawObj);
+            try {
+                const dt = getterFn();
+                if (dt instanceof Date && !Number.isNaN(dt.getTime())) {
+                    return new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'medium' }).format(dt);
+                }
+            } catch (_) {
+                // Non-standard PDF date string: fall back to raw decoded string
+            }
+            return rawStr;
+        }
+
+        async function inspectPdfMetadata(u8) {
+            const pdfDoc = await PDFDocument.load(u8.slice(0), {
+                ignoreEncryption: true,
+                updateMetadata: false
+            });
+
+            const pageCount = pdfDoc.getPageCount();
+            const rawInfoRef = pdfDoc.context.trailerInfo.Info;
+            const infoDict = rawInfoRef ? pdfDoc.context.lookupMaybe(rawInfoRef, PDFDict) : undefined;
+
+            const standardDefs = [
+                { key: 'Title', label: 'Título (/Title)', read: () => pdfDoc.getTitle() ?? decodePdfObjectText(pdfDoc, infoDict?.get(PDFName.of('Title'))) },
+                { key: 'Author', label: 'Autor (/Author)', read: () => pdfDoc.getAuthor() ?? decodePdfObjectText(pdfDoc, infoDict?.get(PDFName.of('Author'))) },
+                { key: 'Subject', label: 'Asunto (/Subject)', read: () => pdfDoc.getSubject() ?? decodePdfObjectText(pdfDoc, infoDict?.get(PDFName.of('Subject'))) },
+                { key: 'Keywords', label: 'Palabras clave (/Keywords)', read: () => {
+                    const kw = pdfDoc.getKeywords();
+                    if (Array.isArray(kw)) return kw.join(', ');
+                    return kw ?? decodePdfObjectText(pdfDoc, infoDict?.get(PDFName.of('Keywords')));
+                }},
+                { key: 'Creator', label: 'Aplicación creadora (/Creator)', read: () => pdfDoc.getCreator() ?? decodePdfObjectText(pdfDoc, infoDict?.get(PDFName.of('Creator'))) },
+                { key: 'Producer', label: 'Motor de conversión (/Producer)', read: () => pdfDoc.getProducer() ?? decodePdfObjectText(pdfDoc, infoDict?.get(PDFName.of('Producer'))) },
+                { key: 'CreationDate', label: 'Fecha de creación (/CreationDate)', read: () => readPdfDateDisplay(() => pdfDoc.getCreationDate(), pdfDoc, infoDict, 'CreationDate') },
+                { key: 'ModDate', label: 'Fecha de modificación (/ModDate)', read: () => readPdfDateDisplay(() => pdfDoc.getModificationDate(), pdfDoc, infoDict, 'ModDate') }
+            ];
+
+            const standardKeySet = new Set(standardDefs.map((d) => d.key));
+            const rows = [];
+            let detectedCount = 0;
+
+            for (const def of standardDefs) {
+                const hasRawKey = Boolean(infoDict && infoDict.get(PDFName.of(def.key)) !== undefined);
+                const val = def.read();
+                const trimmed = typeof val === 'string' ? val.trim() : '';
+                if (trimmed.length > 0) {
+                    detectedCount += 1;
+                    rows.push({ label: def.label, value: trimmed, status: 'detected' });
+                } else if (hasRawKey) {
+                    detectedCount += 1;
+                    rows.push({ label: def.label, value: '(Clave vacía presente en /Info)', status: 'empty-key' });
+                } else {
+                    rows.push({ label: def.label, value: 'No presente', status: 'clean' });
+                }
+            }
+
+            // Custom / non-standard keys inside /Info
+            if (infoDict) {
+                for (const [kObj, vObj] of infoDict.entries()) {
+                    const kName = typeof kObj.decodeText === 'function'
+                        ? kObj.decodeText()
+                        : String(kObj).replace(/^\//, '');
+                    if (standardKeySet.has(kName)) continue;
+                    const customVal = (decodePdfObjectText(pdfDoc, vObj) || '').trim();
+                    detectedCount += 1;
+                    rows.push({
+                        label: `Propiedad adicional (/Info/${kName})`,
+                        value: customVal || '(Clave vacía presente en /Info)',
+                        status: customVal ? 'detected' : 'empty-key'
+                    });
+                }
+            }
+
+            // XMP /Metadata stream (catalog & pages)
+            const metaKey = PDFName.of('Metadata');
+            const catMetaRaw = pdfDoc.catalog.get(metaKey);
+            let pageMetaCount = 0;
+            for (const p of pdfDoc.getPages()) {
+                if (p.node.get(metaKey)) pageMetaCount += 1;
+            }
+            if (catMetaRaw || pageMetaCount > 0) {
+                detectedCount += 1;
+                const catMetaObj = catMetaRaw ? pdfDoc.context.lookup(catMetaRaw) : null;
+                const byteLen = catMetaObj?.contents?.byteLength
+                    ?? (typeof catMetaObj?.getContentsSize === 'function' ? catMetaObj.getContentsSize() : null);
+                const parts = [];
+                if (catMetaRaw) parts.push(byteLen ? `Catálogo XMP (${formatBytes(byteLen)})` : 'Catálogo XMP');
+                if (pageMetaCount > 0) parts.push(`${pageMetaCount} ${pageMetaCount === 1 ? 'página' : 'páginas'}`);
+                rows.push({
+                    label: 'Flujo XML XMP (/Metadata)',
+                    value: `Presente en ${parts.join(' + ')}`,
+                    status: 'detected'
+                });
+            } else {
+                rows.push({
+                    label: 'Flujo XML XMP (/Metadata)',
+                    value: 'No presente',
+                    status: 'clean'
+                });
+            }
+
+            // Application-private /PieceInfo dictionaries (catalog & pages)
+            const pieceKey = PDFName.of('PieceInfo');
+            const catPieceRaw = pdfDoc.catalog.get(pieceKey);
+            let pagePieceCount = 0;
+            for (const p of pdfDoc.getPages()) {
+                if (p.node.get(pieceKey)) pagePieceCount += 1;
+            }
+            if (catPieceRaw || pagePieceCount > 0) {
+                detectedCount += 1;
+                const parts = [];
+                const catPieceDict = catPieceRaw ? pdfDoc.context.lookupMaybe(catPieceRaw, PDFDict) : undefined;
+                if (catPieceDict) {
+                    const appNames = catPieceDict.entries().map(([k]) => (typeof k.decodeText === 'function' ? k.decodeText() : String(k).replace(/^\//, '')));
+                    parts.push(appNames.length ? `Catálogo (${appNames.join(', ')})` : 'Catálogo');
+                } else if (catPieceRaw) {
+                    parts.push('Catálogo');
+                }
+                if (pagePieceCount > 0) parts.push(`${pagePieceCount} ${pagePieceCount === 1 ? 'página' : 'páginas'}`);
+                rows.push({
+                    label: 'Datos privados de app (/PieceInfo)',
+                    value: `Presente en ${parts.join(' + ')}`,
+                    status: 'detected'
+                });
+            } else {
+                rows.push({
+                    label: 'Datos privados de app (/PieceInfo)',
+                    value: 'No presente',
+                    status: 'clean'
+                });
+            }
+
+            // Catch empty /Info dictionary object in trailer even if it had 0 keys
+            if (rawInfoRef && detectedCount === 0) {
+                detectedCount = 1;
+                rows.push({
+                    label: 'Diccionario /Info vacío',
+                    value: 'Objeto residual vacío en el tráiler del PDF',
+                    status: 'empty-key'
+                });
+            }
+
+            return { pageCount, rows, detectedCount };
+        }
+
+        function renderMetadataAuditUI(audit) {
+            const tbody = document.getElementById('metadata-table-body');
+            tbody.replaceChildren();
+
+            for (const row of audit.rows) {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50/80 transition-colors dark:hover:bg-gray-700/40';
+
+                const th = document.createElement('th');
+                th.scope = 'row';
+                th.className = 'px-5 py-3.5 font-semibold text-gray-800 bg-white dark:bg-gray-800 dark:text-gray-100';
+                th.textContent = row.label;
+
+                const tdVal = document.createElement('td');
+                tdVal.className = row.status === 'clean'
+                    ? 'px-5 py-3.5 text-gray-400 italic dark:text-gray-500'
+                    : 'px-5 py-3.5 font-mono text-xs sm:text-sm text-gray-800 break-words dark:text-gray-200';
+                tdVal.textContent = row.value;
+
+                const tdStatus = document.createElement('td');
+                tdStatus.className = 'px-5 py-3.5';
+                const pill = document.createElement('span');
+                if (row.status === 'detected') {
+                    pill.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
+                    pill.textContent = 'Detectado';
+                } else if (row.status === 'empty-key') {
+                    pill.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+                    pill.textContent = 'Clave vacía';
+                } else {
+                    pill.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300';
+                    pill.textContent = 'Limpio';
+                }
+                tdStatus.appendChild(pill);
+
+                tr.append(th, tdVal, tdStatus);
+                tbody.appendChild(tr);
+            }
+
+            const statusBadge = document.getElementById('metadata-status-badge');
+            const cleanBtnLabel = document.getElementById('metadata-clean-btn-label');
+            if (audit.detectedCount > 0) {
+                statusBadge.className = 'mt-2 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
+                statusBadge.textContent = `${audit.detectedCount} ${audit.detectedCount === 1 ? 'rastro de metadatos detectado' : 'rastros de metadatos detectados'}`;
+                cleanBtnLabel.textContent = 'Eliminar metadatos';
+            } else {
+                statusBadge.className = 'mt-2 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300';
+                statusBadge.textContent = 'Documento limpio · 0 metadatos detectados';
+                cleanBtnLabel.textContent = 'Guardar copia verificada';
+            }
+        }
+
+        async function loadMetadataPdf(file, bytes = null, name = null) {
+            if (!file && !bytes) return;
+            showProgress('Analizando metadatos...', 20);
+            try {
+                let u8;
+                let displayFilename = 'documento.pdf';
+                if (file) {
+                    displayFilename = file.name || 'documento.pdf';
+                    u8 = new Uint8Array(await file.arrayBuffer());
+                } else {
+                    displayFilename = name || 'documento.pdf';
+                    u8 = new Uint8Array(bytes);
+                }
+
+                const audit = await inspectPdfMetadata(u8);
+                metadataState.pdfBytes = u8;
+                metadataState.filename = displayFilename;
+                metadataState.fileSize = u8.byteLength;
+                metadataState.detectedCount = audit.detectedCount;
+
+                const fnEl = document.getElementById('metadata-filename-display');
+                fnEl.textContent = displayFilename;
+                fnEl.title = displayFilename;
+                document.getElementById('metadata-page-count').textContent = formatPageCount(audit.pageCount);
+                document.getElementById('metadata-file-size').textContent = formatBytes(u8.byteLength);
+
+                renderMetadataAuditUI(audit);
+
+                document.getElementById('metadata-upload').classList.add('hidden');
+                const ws = document.getElementById('metadata-workspace');
+                ws.classList.remove('hidden');
+                ws.classList.add('flex');
+            } catch (e) {
+                console.error(e);
+                alert('Error al inspeccionar los metadatos del PDF');
+            } finally {
+                hideProgress();
+            }
+        }
+
+        async function cleanAndSaveMetadataPdf() {
+            if (!metadataState.pdfBytes) return;
+            const cleanBtn = document.getElementById('metadata-clean-btn');
+            cleanBtn.disabled = true;
+            showProgress('Eliminando metadatos...', 40);
+            try {
+                const pdfDoc = await PDFDocument.load(metadataState.pdfBytes.slice(0), {
+                    ignoreEncryption: true,
+                    updateMetadata: false
+                });
+                stripPdfMetadataInPlace(pdfDoc);
+
+                showProgress('Generando PDF limpio...', 85);
+                const cleanBytes = await pdfDoc.save();
+                const blob = new Blob([cleanBytes], { type: 'application/pdf' });
+                const outName = buildOutputFilename(metadataState.filename, 'sin_metadatos');
+
+                const descEl = document.getElementById('metadata-success-desc');
+                const removedCount = metadataState.detectedCount;
+                descEl.textContent = removedCount > 0
+                    ? `Se han purgado ${removedCount} ${removedCount === 1 ? 'rastro' : 'rastros'} (/Info, XMP y /PieceInfo). Tamaño final: ${formatBytes(cleanBytes.byteLength)}.`
+                    : `El PDF ya estaba limpio y se ha regenerado sin diccionarios de metadatos (${formatBytes(cleanBytes.byteLength)}).`;
+
+                document.getElementById('meta-success-download').onclick = () => saveBlob(blob, outName);
+                document.getElementById('meta-success-compress').onclick = () => { metadataSuccessModal.close(); switchTab('compress'); loadCompressPdf(null, new Uint8Array(cleanBytes), outName); };
+                document.getElementById('meta-success-org').onclick = () => { metadataSuccessModal.close(); switchTab('organize'); loadOrganizeFromBytes(new Uint8Array(cleanBytes), outName); };
+                document.getElementById('meta-success-editor').onclick = () => { metadataSuccessModal.close(); switchTab('editor'); loadEditorPdf(null, new Uint8Array(cleanBytes), outName); };
+                document.getElementById('meta-success-split').onclick = () => { metadataSuccessModal.close(); switchTab('split'); loadSplitPdf(null, new Uint8Array(cleanBytes), outName); };
+                document.getElementById('meta-success-img').onclick = () => { metadataSuccessModal.close(); switchTab('images'); loadImgPdf(null, new Uint8Array(cleanBytes), outName); };
+
+                hideProgress();
+                metadataSuccessModal.showModal();
+            } catch (e) {
+                console.error(e);
+                alert('Error al limpiar los metadatos del PDF');
+            } finally {
+                cleanBtn.disabled = false;
+                hideProgress();
+            }
+        }
+
         function resetTool(t) {
             if (t === 'editor') cancelPendingSidebarWheel();
+            if (t === 'compress') {
+                if (compressState.pdfJsDoc && typeof compressState.pdfJsDoc.destroy === 'function') {
+                    compressState.pdfJsDoc.destroy().catch(() => {});
+                }
+                compressState.pdfBytes = null;
+                compressState.pdfJsDoc = null;
+                compressState.origSize = 0;
+                const inlineSummary = document.getElementById('compress-inline-summary');
+                if (inlineSummary) {
+                    inlineSummary.classList.add('hidden');
+                    inlineSummary.replaceChildren();
+                }
+            }
+            if (t === 'metadata') {
+                metadataState.pdfBytes = null;
+                metadataState.fileSize = 0;
+                metadataState.detectedCount = 0;
+                const tbody = document.getElementById('metadata-table-body');
+                if (tbody) tbody.replaceChildren();
+            }
             disconnectThumbObserver(t);
             document.getElementById(`${t}-upload`).classList.remove('hidden');
             document.getElementById(`${t}-workspace`).classList.add('hidden');
@@ -4089,6 +5164,8 @@
         setupPdfDropZone('split-upload', 'split-drop-zone', 'splitInput', (file) => loadSplitPdf(file), ['border-indigo-500', 'bg-indigo-50', 'dark:border-indigo-400', 'dark:bg-gray-700']);
         setupPdfDropZone('organize-upload', 'organize-drop-zone', 'organizeInput', (file) => loadOrganizeFile(file), ['border-orange-500', 'bg-orange-50', 'dark:border-orange-400', 'dark:bg-gray-700']);
         setupPdfDropZone('images-upload', 'images-drop-zone', 'imagesInput', (file) => loadImgPdf(file), ['border-green-500', 'bg-green-50', 'dark:border-green-400', 'dark:bg-gray-700']);
+        setupPdfDropZone('compress-upload', 'compress-drop-zone', 'compressInput', (file) => loadCompressPdf(file), ['border-teal-500', 'bg-teal-50', 'dark:border-teal-400', 'dark:bg-gray-700']);
+        setupPdfDropZone('metadata-upload', 'metadata-drop-zone', 'metadataInput', (file) => loadMetadataPdf(file), ['border-cyan-500', 'bg-cyan-50', 'dark:border-cyan-400', 'dark:bg-gray-700']);
 
         // Clipboard Image Paste (Ctrl+V) in Merge, Visual Editor & Signature Modal
         window.addEventListener('paste', (e) => {
@@ -4630,6 +5707,7 @@
         // Progressive fallback for <dialog closedby="any"> light-dismiss (e.g. Safari)
         if (!('closedBy' in HTMLDialogElement.prototype)) {
             const outside = (e, dialog) => {
+                if (e.target !== dialog) return false;
                 const r = dialog.getBoundingClientRect();
                 return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
             };
@@ -4643,7 +5721,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.10';
+        const APP_VERSION = 'v2.0.0-beta.11';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
