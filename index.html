@@ -95,6 +95,8 @@
         /* Editor Specific Styles */
         .page-thumbnail.active { border-color: #3b82f6; background-color: #eff6ff; }
         .dark .page-thumbnail.active { border-color: #60a5fa; background-color: #1e3a8a; }
+        .page-thumbnail:focus-visible { outline: 2px solid #9333ea; outline-offset: 2px; }
+        #editor-sidebar { overscroll-behavior: contain; }
         #canvas-wrapper { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
         #editor-scroll-area {
             scroll-axis-lock: none;
@@ -1046,6 +1048,7 @@
                         <div class="flex items-center justify-between gap-2"><span>Ajustar pág. / Zoom 100%</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Ctrl</kbd> + <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">0</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">1</kbd></span></div>
                         <div class="flex items-center justify-between gap-2"><span>Mover vista (mano)</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Espacio</kbd> + arrastrar</span></div>
                         <div class="flex items-center justify-between gap-2"><span>Página ant. / sig.</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">RePág</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">AvPág</kbd></span></div>
+                        <div class="flex items-center justify-between gap-2"><span>Miniaturas: pasar pág.</span><span class="font-mono text-[11px]">Rueda (<kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Alt</kbd> = scroll)</span></div>
                     </div>
                 </div>
 
@@ -1297,15 +1300,32 @@
 
         const EDITOR_SERIALIZE_PROPS = ['id', 'isGlobal', 'isNoise', 'isHighlight', 'isSignature', 'isPageNumber', 'textTemplate', 'startPage', 'startValue'];
 
+        let editorPageLoadSeq = 0;
+        let activePageRenderTask = null;
+        let currentPageFullyLoaded = true;
+        let pendingSidebarPage = null;
+        let sidebarWheelLoadTimer = null;
+
+        function cancelPendingSidebarWheel(restoreActiveThumb = false) {
+            if (sidebarWheelLoadTimer) {
+                clearTimeout(sidebarWheelLoadTimer);
+                sidebarWheelLoadTimer = null;
+            }
+            pendingSidebarPage = null;
+            if (restoreActiveThumb && editorState.currentPage) {
+                setActiveSidebarThumbnail(editorState.currentPage);
+            }
+        }
+
         function hasAnyHighlightsInDocument() {
-            if (editorState.canvas && editorState.canvas.getObjects().some(o => o.isHighlight)) {
+            if (editorState.canvas && currentPageFullyLoaded && editorState.canvas.getObjects().some(o => o.isHighlight)) {
                 return true;
             }
             if (editorState.globalObjects.some(o => o.isHighlight)) {
                 return true;
             }
             for (const [pKey, pageJson] of Object.entries(editorState.pagesData)) {
-                if (Number(pKey) === editorState.currentPage && editorState.canvas) continue;
+                if (Number(pKey) === editorState.currentPage && editorState.canvas && currentPageFullyLoaded) continue;
                 if (pageJson && Array.isArray(pageJson.objects) && pageJson.objects.some(o => o.isHighlight)) {
                     return true;
                 }
@@ -1327,7 +1347,7 @@
         }
 
         function syncCurrentEditorPage() {
-            if (!editorState.canvas || !editorState.currentPage) return;
+            if (!editorState.canvas || !editorState.currentPage || !currentPageFullyLoaded) return;
             const json = editorState.canvas.toJSON(EDITOR_SERIALIZE_PROPS);
             editorState.pagesData[editorState.currentPage] = json;
             editorState.globalObjects = json.objects.filter(o => o.isGlobal);
@@ -1368,6 +1388,13 @@
                 editorState.doc = await PDFDocument.load(editorState.pdfData.slice(0), { ignoreEncryption: true });
                 
                 // Reset State
+                cancelPendingSidebarWheel();
+                editorPageLoadSeq += 1;
+                if (activePageRenderTask) {
+                    try { activePageRenderTask.cancel(); } catch (_) {}
+                    activePageRenderTask = null;
+                }
+                currentPageFullyLoaded = false;
                 editorState.pagesData = {};
                 editorState.globalObjects = [];
                 editorState.historyUndo = [];
@@ -1574,6 +1601,19 @@
         }
 
         // --- Sidebar & Navigation ---
+        function setActiveSidebarThumbnail(pageNum) {
+            document.querySelectorAll('#editor-sidebar .page-thumbnail').forEach(el => {
+                el.classList.remove('active');
+                el.removeAttribute('aria-current');
+            });
+            const activeThumb = document.getElementById(`thumb-${pageNum}`);
+            if (activeThumb) {
+                activeThumb.classList.add('active');
+                activeThumb.setAttribute('aria-current', 'page');
+                activeThumb.scrollIntoView({ block: 'nearest' });
+            }
+        }
+
         async function renderEditorSidebar() {
             const container = document.getElementById('editor-sidebar');
             disconnectThumbObserver('editor');
@@ -1582,19 +1622,22 @@
             const renderTasks = new Map();
             
             for(let i=1; i<=pdfDoc.numPages; i++) {
-                const div = document.createElement('div');
-                div.className = `page-thumbnail p-2 border-2 border-transparent rounded cursor-pointer hover:bg-gray-200 transition bg-white ${i===1?'active':''} ${i > 6 ? 'deferred-sidebar-card' : ''} dark:bg-gray-700 dark:hover:bg-gray-600`;
-                div.id = `thumb-${i}`;
-                div.innerHTML = `
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `page-thumbnail w-full text-left flex-shrink-0 p-2 border-2 border-transparent rounded cursor-pointer hover:bg-gray-200 transition bg-white ${i===1?'active':''} ${i > 6 ? 'deferred-sidebar-card' : ''} dark:bg-gray-700 dark:hover:bg-gray-600`;
+                btn.id = `thumb-${i}`;
+                btn.setAttribute('aria-label', `Ir a página ${i}`);
+                if (i === 1) btn.setAttribute('aria-current', 'page');
+                btn.innerHTML = `
                     <div class="h-32 flex items-center justify-center bg-gray-100 overflow-hidden mb-1 rounded dark:bg-gray-800">
                         <canvas id="thumb-cvs-${i}" class="max-w-full max-h-full"></canvas>
                     </div>
                     <div class="text-xs text-center font-medium text-gray-500 dark:text-gray-400">Pág ${i}</div>
                 `;
-                div.onclick = () => loadEditorPage(i);
-                container.appendChild(div);
+                btn.onclick = () => loadEditorPage(i);
+                container.appendChild(btn);
                 
-                renderTasks.set(div, () => {
+                renderTasks.set(btn, () => {
                     if (editorState.pdfJsDoc !== pdfDoc) return;
                     pdfDoc.getPage(i).then(page => {
                         const cvs = document.getElementById(`thumb-cvs-${i}`);
@@ -1609,28 +1652,34 @@
         }
 
         async function loadEditorPage(pageNum, force = false) {
-            // Optimization: Don't reload if clicking current page
-            if (!force && editorState.currentPage === pageNum) return;
+            cancelPendingSidebarWheel();
 
-            editorState.historyProcessing = true; // Block history events during transition
-
-            // 1. Save PREVIOUS page state unconditionally (including emptied pages & globals)
-            if (!force && editorState.currentPage !== pageNum && editorState.canvas) {
-                syncCurrentEditorPage();
+            // Optimization: Don't reload if already on requested page
+            if (!force && editorState.currentPage === pageNum && (currentPageFullyLoaded || activePageRenderTask)) {
+                setActiveSidebarThumbnail(pageNum);
+                return;
             }
 
-            // 2. Update UI
+            const loadSeq = ++editorPageLoadSeq;
+            editorState.historyProcessing = true; // Block history events during transition
+
+            // 1. Save PREVIOUS page state unconditionally when fully loaded (including emptied pages & globals)
+            if (!force && editorState.currentPage !== pageNum && editorState.canvas && currentPageFullyLoaded) {
+                syncCurrentEditorPage();
+            }
+            currentPageFullyLoaded = false;
+
+            // 2. Update UI & cancel any in-flight background renders
             clearTimeout(zoomRenderTimer);
             if (activeZoomRenderTask) {
                 try { activeZoomRenderTask.cancel(); } catch (_) {}
                 activeZoomRenderTask = null;
             }
-            document.querySelectorAll('.page-thumbnail').forEach(el => el.classList.remove('active'));
-            const activeThumb = document.getElementById(`thumb-${pageNum}`);
-            if (activeThumb) {
-                activeThumb.classList.add('active');
-                activeThumb.scrollIntoView({ block: 'nearest' });
+            if (activePageRenderTask) {
+                try { activePageRenderTask.cancel(); } catch (_) {}
+                activePageRenderTask = null;
             }
+            setActiveSidebarThumbnail(pageNum);
             editorState.currentPage = pageNum;
             
             // Reset History for new page
@@ -1640,6 +1689,7 @@
             // 3. Prepare Dimensions & Zoom (Pre-calculation to avoid glitch)
             editorState.canvas.clear();
             const page = await editorState.pdfJsDoc.getPage(pageNum);
+            if (loadSeq !== editorPageLoadSeq) return;
             
             // Base resolution (High quality)
             const baseViewport = page.getViewport({ scale: 1.5 }); 
@@ -1673,7 +1723,17 @@
             bgCvs.width = w; bgCvs.height = h;
             
             const renderViewport = page.getViewport({ scale: 1.5 * editorState.scale });
-            await page.render({ canvasContext: bgCvs.getContext('2d'), viewport: renderViewport }).promise;
+            const pageRenderTask = page.render({ canvasContext: bgCvs.getContext('2d'), viewport: renderViewport });
+            activePageRenderTask = pageRenderTask;
+            try {
+                await pageRenderTask.promise;
+            } catch (err) {
+                if (err?.name !== 'RenderingCancelledException') console.error(err);
+                return;
+            } finally {
+                if (activePageRenderTask === pageRenderTask) activePageRenderTask = null;
+            }
+            if (loadSeq !== editorPageLoadSeq) return;
 
             // 5. Load Objects
             const savedJson = editorState.pagesData[pageNum];
@@ -1689,6 +1749,10 @@
             if(objectsToLoad.length > 0) {
                 await new Promise(resolve => {
                     fabric.util.enlivenObjects(objectsToLoad, (objs) => {
+                        if (loadSeq !== editorPageLoadSeq) {
+                            resolve();
+                            return;
+                        }
                         objs.forEach(o => {
                             // Dynamic Page Number Logic
                             if(o.isPageNumber && o.textTemplate) {
@@ -1717,6 +1781,7 @@
                         resolve();
                     });
                 });
+                if (loadSeq !== editorPageLoadSeq) return;
             }
             
             // Force update page numbers text with Offset
@@ -1738,9 +1803,10 @@
             });
             editorState.canvas.renderAll();
             
+            currentPageFullyLoaded = true;
             editorState.historyProcessing = false;
             saveHistory(); // Save baseline state
-            // No setTimeout needed
+            updateEditorProperties();
         }
 
         // --- Tools & Actions ---
@@ -2582,6 +2648,74 @@
             editorScrollAreaEl.classList.remove('pan-dragging');
         }
 
+        const editorSidebarEl = document.getElementById('editor-sidebar');
+        let sidebarWheelAccum = 0;
+        let sidebarWheelLastTime = 0;
+
+        editorSidebarEl.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey) return; // Let editorWorkspaceEl handle Ctrl/Cmd+wheel zoom
+            if (!editorState.canvas || !editorState.pdfJsDoc) return;
+            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
+
+            let normDelta = e.deltaY;
+            if (e.deltaMode === 1) normDelta *= 33;
+            else if (e.deltaMode === 2) normDelta *= 300;
+            if (normDelta === 0) return;
+
+            e.preventDefault();
+
+            // Alt + wheel: free vertical scroll of thumbnail list without changing active page
+            if (e.altKey) {
+                editorSidebarEl.scrollTop += normDelta;
+                return;
+            }
+
+            const now = performance.now();
+            if (now - sidebarWheelLastTime > 180 || (sidebarWheelAccum !== 0 && Math.sign(normDelta) !== Math.sign(sidebarWheelAccum))) {
+                sidebarWheelAccum = 0;
+            }
+            sidebarWheelLastTime = now;
+
+            let pageDelta = 0;
+            if (Math.abs(normDelta) >= 60) {
+                // Discrete mouse wheel notch (typically ~100-120px): exact 1-page steps with zero leftover drift
+                sidebarWheelAccum = 0;
+                pageDelta = Math.sign(normDelta) * Math.max(1, Math.min(3, Math.round(Math.abs(normDelta) / 120)));
+            } else {
+                // High-resolution trackpad glide: accumulate smoothly
+                sidebarWheelAccum += normDelta;
+                const TRACKPAD_STEP_PX = 75;
+                if (Math.abs(sidebarWheelAccum) >= TRACKPAD_STEP_PX) {
+                    pageDelta = Math.trunc(sidebarWheelAccum / TRACKPAD_STEP_PX);
+                    sidebarWheelAccum -= pageDelta * TRACKPAD_STEP_PX;
+                }
+            }
+            if (pageDelta === 0) return;
+
+            const basePage = pendingSidebarPage ?? editorState.currentPage;
+            const nextPage = Math.max(1, Math.min(editorState.pdfJsDoc.numPages, basePage + pageDelta));
+            if (nextPage === basePage) return;
+
+            // Immediate synchronous UI feedback (60 fps blue frame + scrollIntoView)
+            setActiveSidebarThumbnail(nextPage);
+
+            if (nextPage === editorState.currentPage && currentPageFullyLoaded) {
+                cancelPendingSidebarWheel(true);
+                return;
+            }
+
+            pendingSidebarPage = nextPage;
+            if (sidebarWheelLoadTimer) clearTimeout(sidebarWheelLoadTimer);
+            sidebarWheelLoadTimer = setTimeout(() => {
+                sidebarWheelLoadTimer = null;
+                const targetPage = pendingSidebarPage;
+                pendingSidebarPage = null;
+                if (targetPage !== null && targetPage !== editorState.currentPage) {
+                    loadEditorPage(targetPage);
+                }
+            }, 95);
+        }, { passive: false });
+
         editorWorkspaceEl.addEventListener('wheel', (e) => {
             if (!(e.ctrlKey || e.metaKey)) return;
             if (!editorState.canvas || !editorState.pdfJsDoc) return;
@@ -2941,6 +3075,7 @@
         }
 
         async function generateEditedPdfBytes(progressCallback) {
+            cancelPendingSidebarWheel(true);
             // Unconditionally sync active page & globals (including emptied pages)
             syncCurrentEditorPage();
 
@@ -3032,6 +3167,7 @@
             const scale = dpi / 72;
             const zoomFactor = scale / 1.5;
             
+            cancelPendingSidebarWheel(true);
             syncCurrentEditorPage();
             showProgress('Preparando aplanado...', 0);
 
@@ -3889,6 +4025,7 @@
         }
 
         function resetTool(t) {
+            if (t === 'editor') cancelPendingSidebarWheel();
             disconnectThumbObserver(t);
             document.getElementById(`${t}-upload`).classList.remove('hidden');
             document.getElementById(`${t}-workspace`).classList.add('hidden');
@@ -4456,7 +4593,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.8';
+        const APP_VERSION = 'v2.0.0-beta.9';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
