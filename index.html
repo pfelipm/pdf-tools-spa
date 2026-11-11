@@ -376,12 +376,12 @@
                             <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center gap-2 dark:bg-purple-500 dark:hover:bg-purple-600">
                                 <i data-lucide="save" class="w-4 h-4"></i> Guardar <i data-lucide="chevron-down" class="w-3 h-3 ml-1"></i>
                             </button>
-                            <div class="absolute top-full right-0 mt-1 before:block before:absolute before:-top-2 before:left-0 before:w-full before:h-4 bg-white border border-gray-200 rounded-lg shadow-xl hidden group-hover:block w-56 py-1 z-50 dark:bg-gray-800 dark:border-gray-600">
+                            <div class="absolute top-full right-0 mt-1 before:block before:absolute before:-top-2 before:left-0 before:w-full before:h-4 bg-white border border-gray-200 rounded-lg shadow-xl hidden group-hover:block w-60 py-1 z-50 dark:bg-gray-800 dark:border-gray-600">
                                 <button onclick="editorSave()" class="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 flex items-start gap-3 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors">
                                     <i data-lucide="file-edit" class="w-5 h-5 text-gray-400 mt-0.5 dark:text-gray-500"></i>
                                     <div>
                                         <span class="font-bold block text-gray-700 dark:text-gray-200">Guardar PDF</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">Editable (capas)</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Conserva texto y vectores</span>
                                     </div>
                                 </button>
                                 <div class="border-t border-gray-100 dark:border-gray-700"></div>
@@ -779,14 +779,14 @@
             <h3 id="annot-warning-title" class="text-lg font-bold text-gray-800 pr-6 dark:text-white">Firmas o anotaciones detectadas</h3>
         </div>
         <p class="text-sm text-gray-600 leading-relaxed mb-6 dark:text-gray-300">
-            Este PDF contiene <strong>firmas digitales visibles o anotaciones</strong> en páginas editadas. Según el estándar PDF, al guardar por capas los visores dibujan siempre las firmas <strong>por encima</strong> del contenido (por lo que una censura o forma no las tapará) y cualquier cambio invalida criptográficamente la firma.
+            Este PDF contiene <strong>firmas digitales visibles o anotaciones</strong> en páginas editadas. Según el estándar PDF, al guardar sin aplanar los visores dibujan siempre las firmas <strong>por encima</strong> del contenido (por lo que una censura o forma no las tapará) y cualquier cambio invalida criptográficamente la firma.
         </p>
         <div class="flex flex-col gap-2.5">
             <button id="annot-warn-flatten-btn" type="button" autofocus class="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 dark:bg-purple-500 dark:hover:bg-purple-600">
                 <i data-lucide="layers" class="w-5 h-5"></i> Aplanar PDF (recomendado)
             </button>
             <button id="annot-warn-layered-btn" type="button" class="w-full py-2.5 px-4 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-sm transition dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                Guardar por capas igualmente
+                Guardar sin aplanar igualmente
             </button>
         </div>
     </dialog>
@@ -4456,7 +4456,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.7';
+        const APP_VERSION = 'v2.0.0-beta.8';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
