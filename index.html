@@ -1048,7 +1048,9 @@
                         <div class="flex items-center justify-between gap-2"><span>Ajustar pág. / Zoom 100%</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Ctrl</kbd> + <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">0</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">1</kbd></span></div>
                         <div class="flex items-center justify-between gap-2"><span>Mover vista (mano)</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Espacio</kbd> + arrastrar</span></div>
                         <div class="flex items-center justify-between gap-2"><span>Página ant. / sig.</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">RePág</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">AvPág</kbd></span></div>
-                        <div class="flex items-center justify-between gap-2"><span>Miniaturas: pasar pág.</span><span class="font-mono text-[11px]">Rueda (<kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Alt</kbd> = scroll)</span></div>
+                        <div class="flex items-center justify-between gap-2"><span>Primera / última pág.</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Inicio</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Fin</kbd></span></div>
+                        <div class="flex items-center justify-between gap-2"><span>Pasar pág. con rueda</span><span class="text-[11px] text-right">Miniaturas o pág. entera</span></div>
+                        <div class="flex items-center justify-between gap-2"><span>Scroll libre miniaturas</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Alt</kbd> + rueda</span></div>
                     </div>
                 </div>
 
@@ -1665,6 +1667,8 @@
 
             // 1. Save PREVIOUS page state unconditionally when fully loaded (including emptied pages & globals)
             if (!force && editorState.currentPage !== pageNum && editorState.canvas && currentPageFullyLoaded) {
+                const activeEditingObj = editorState.canvas.getActiveObject();
+                if (activeEditingObj && activeEditingObj.isEditing) activeEditingObj.exitEditing();
                 syncCurrentEditorPage();
             }
             currentPageFullyLoaded = false;
@@ -2652,24 +2656,18 @@
         let sidebarWheelAccum = 0;
         let sidebarWheelLastTime = 0;
 
-        editorSidebarEl.addEventListener('wheel', (e) => {
-            if (e.ctrlKey || e.metaKey) return; // Let editorWorkspaceEl handle Ctrl/Cmd+wheel zoom
-            if (!editorState.canvas || !editorState.pdfJsDoc) return;
-            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
+        function isAnyEditorModalOpen() {
+            return Boolean(document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)'));
+        }
 
+        function normalizeWheelDeltaY(e) {
             let normDelta = e.deltaY;
             if (e.deltaMode === 1) normDelta *= 33;
             else if (e.deltaMode === 2) normDelta *= 300;
-            if (normDelta === 0) return;
+            return normDelta;
+        }
 
-            e.preventDefault();
-
-            // Alt + wheel: free vertical scroll of thumbnail list without changing active page
-            if (e.altKey) {
-                editorSidebarEl.scrollTop += normDelta;
-                return;
-            }
-
+        function stepEditorPageByWheel(normDelta) {
             const now = performance.now();
             if (now - sidebarWheelLastTime > 180 || (sidebarWheelAccum !== 0 && Math.sign(normDelta) !== Math.sign(sidebarWheelAccum))) {
                 sidebarWheelAccum = 0;
@@ -2696,6 +2694,9 @@
             const nextPage = Math.max(1, Math.min(editorState.pdfJsDoc.numPages, basePage + pageDelta));
             if (nextPage === basePage) return;
 
+            const activeObj = editorState.canvas?.getActiveObject();
+            if (activeObj && activeObj.isEditing) activeObj.exitEditing();
+
             // Immediate synchronous UI feedback (60 fps blue frame + scrollIntoView)
             setActiveSidebarThumbnail(nextPage);
 
@@ -2714,6 +2715,42 @@
                     loadEditorPage(targetPage);
                 }
             }, 95);
+        }
+
+        editorSidebarEl.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey) return; // Let editorWorkspaceEl handle Ctrl/Cmd+wheel zoom
+            if (!editorState.canvas || !editorState.pdfJsDoc || isAnyEditorModalOpen() || e.buttons !== 0) return;
+
+            const normDelta = normalizeWheelDeltaY(e);
+            if (normDelta === 0) return;
+
+            e.preventDefault();
+
+            // Alt + wheel: free vertical scroll of thumbnail list without changing active page
+            if (e.altKey) {
+                editorSidebarEl.scrollTop += normDelta;
+                return;
+            }
+
+            stepEditorPageByWheel(normDelta);
+        }, { passive: false });
+
+        // Over main canvas scroll area: when full page height fits without vertical scrollbar,
+        // vertical wheel steps pages just like the thumbnail strip (zoomed-in vertical scroll stays locked to current page).
+        editorScrollAreaEl.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+            if (!editorState.canvas || !editorState.pdfJsDoc || isAnyEditorModalOpen()) return;
+            if (e.buttons !== 0 || editorPanState.dragging) return;
+            if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || e.deltaY === 0) return;
+
+            const hasVerticalScroll = editorScrollAreaEl.scrollHeight > editorScrollAreaEl.clientHeight + 2;
+            if (hasVerticalScroll) return;
+
+            const normDelta = normalizeWheelDeltaY(e);
+            if (normDelta === 0) return;
+
+            e.preventDefault();
+            stepEditorPageByWheel(normDelta);
         }, { passive: false });
 
         editorWorkspaceEl.addEventListener('wheel', (e) => {
@@ -2867,9 +2904,9 @@
             if (document.getElementById('editor-workspace').classList.contains('hidden') || !editorState.canvas) return;
             if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
 
-            // Ignore canvas shortcuts while typing in form inputs or editing Fabric text
+            // Ignore canvas shortcuts while typing in editable inputs, selects, range sliders, or editing Fabric text
             const activeEl = document.activeElement;
-            if (activeEl && (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName) || activeEl.isContentEditable)) return;
+            if (activeEl && (activeEl.matches?.(':read-write, select, input[type="range"], [role="slider"]') || activeEl.isContentEditable)) return;
 
             const activeObj = editorState.canvas.getActiveObject();
             if (activeObj && activeObj.isEditing) return;
@@ -2971,15 +3008,28 @@
                     }
                     return;
                 }
+                const navBasePage = pendingSidebarPage ?? editorState.currentPage;
                 if (e.key === 'PageUp') {
                     e.preventDefault();
-                    if (editorState.currentPage > 1) loadEditorPage(editorState.currentPage - 1);
+                    if (navBasePage > 1) loadEditorPage(navBasePage - 1);
                     return;
                 }
                 if (e.key === 'PageDown') {
                     e.preventDefault();
-                    if (editorState.pdfJsDoc && editorState.currentPage < editorState.pdfJsDoc.numPages) {
-                        loadEditorPage(editorState.currentPage + 1);
+                    if (editorState.pdfJsDoc && navBasePage < editorState.pdfJsDoc.numPages) {
+                        loadEditorPage(navBasePage + 1);
+                    }
+                    return;
+                }
+                if (e.key === 'Home') {
+                    e.preventDefault();
+                    if (navBasePage > 1) loadEditorPage(1);
+                    return;
+                }
+                if (e.key === 'End') {
+                    e.preventDefault();
+                    if (editorState.pdfJsDoc && navBasePage < editorState.pdfJsDoc.numPages) {
+                        loadEditorPage(editorState.pdfJsDoc.numPages);
                     }
                     return;
                 }
@@ -4593,7 +4643,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.9';
+        const APP_VERSION = 'v2.0.0-beta.10';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
