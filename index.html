@@ -38,7 +38,7 @@
         }
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        const { PDFDocument, PDFName, PDFDict, PDFRef, degrees, rgb } = PDFLib;
+        const { PDFDocument, PDFName, PDFDict, PDFArray, PDFRef, degrees, rgb } = PDFLib;
     </script>
 
     <style>
@@ -533,7 +533,7 @@
                                     <i data-lucide="file-edit" class="w-5 h-5 text-gray-400 mt-0.5 dark:text-gray-500"></i>
                                     <div>
                                         <span class="font-bold block text-gray-700 dark:text-gray-200">Guardar PDF</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">Conserva texto y vectores</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Re-editable · conserva texto</span>
                                     </div>
                                 </button>
                                 <div class="border-t border-gray-100 dark:border-gray-700"></div>
@@ -1608,6 +1608,17 @@
                 const pdfKey = PDFName.of(keyName);
                 const raw = dict.get(pdfKey);
                 if (!raw) return;
+                if (keyName === 'PieceInfo') {
+                    const pieceDict = pdfDoc.context.lookupMaybe(raw, PDFDict);
+                    const appRaw = pieceDict ? pieceDict.get(PDFName.of('PDFToolsSPA')) : undefined;
+                    const appDict = appRaw ? pdfDoc.context.lookupMaybe(appRaw, PDFDict) : undefined;
+                    const privRaw = appDict ? appDict.get(PDFName.of('Private')) : undefined;
+                    const privDict = privRaw ? pdfDoc.context.lookupMaybe(privRaw, PDFDict) : undefined;
+                    const payloadRaw = privDict ? privDict.get(PDFName.of('Payload')) : undefined;
+                    if (payloadRaw instanceof PDFRef) pdfDoc.context.delete(payloadRaw);
+                    if (privRaw instanceof PDFRef) pdfDoc.context.delete(privRaw);
+                    if (appRaw instanceof PDFRef) pdfDoc.context.delete(appRaw);
+                }
                 dict.delete(pdfKey);
                 if (raw instanceof PDFRef) {
                     pdfDoc.context.delete(raw);
@@ -1774,7 +1785,7 @@
             }
         };
 
-        const EDITOR_SERIALIZE_PROPS = ['id', 'isGlobal', 'isNoise', 'isHighlight', 'isSignature', 'isPageNumber', 'textTemplate', 'startPage', 'startValue'];
+        const EDITOR_SERIALIZE_PROPS = ['id', 'isGlobal', 'isNoise', 'isHighlight', 'isSignature', 'isPageNumber', 'textTemplate', 'startPage', 'startValue', 'lockScalingX', 'lockScalingY', 'lockScalingFlip'];
 
         let editorPageLoadSeq = 0;
         let activePageRenderTask = null;
@@ -1996,6 +2007,397 @@
             return combined;
         }
 
+        // --- Re-editable PDF Layer Serialization (/PieceInfo -> /PDFToolsSPA) ---
+        const PDFTOOLS_PIECE_KEY = 'PDFToolsSPA';
+
+        function getPageContentRefs(pdfContext, pageNode) {
+            const raw = pageNode.get(PDFName.of('Contents'));
+            if (!raw) return [];
+            if (raw instanceof PDFRef) {
+                const looked = pdfContext.lookup(raw);
+                if (looked instanceof PDFArray) {
+                    const refs = [];
+                    for (let i = 0; i < looked.size(); i++) {
+                        const item = looked.get(i);
+                        if (item instanceof PDFRef) refs.push(item);
+                    }
+                    return refs;
+                }
+                return [raw];
+            }
+            if (raw instanceof PDFArray) {
+                const refs = [];
+                for (let i = 0; i < raw.size(); i++) {
+                    const item = raw.get(i);
+                    if (item instanceof PDFRef) refs.push(item);
+                }
+                return refs;
+            }
+            return [];
+        }
+
+        async function encodePdfToolsPayloadStream(pdfContext, payloadObj) {
+            const jsonBytes = new TextEncoder().encode(JSON.stringify(payloadObj));
+            if (typeof CompressionStream === 'function') {
+                try {
+                    const cs = new Blob([jsonBytes]).stream().pipeThrough(new CompressionStream('deflate'));
+                    const compressedBuf = await new Response(cs).arrayBuffer();
+                    const rawStream = pdfContext.stream(new Uint8Array(compressedBuf), { Filter: 'FlateDecode' });
+                    return pdfContext.register(rawStream);
+                } catch (_) {
+                    // Fallback to uncompressed PDFRawStream below
+                }
+            }
+            const fallbackStream = pdfContext.stream(jsonBytes);
+            return pdfContext.register(fallbackStream);
+        }
+
+        async function decodePdfToolsPayloadStream(pdfDoc, payloadRaw) {
+            try {
+                const streamObj = pdfDoc.context.lookup(payloadRaw);
+                if (!streamObj) return null;
+                const rawBytes = typeof streamObj.getContents === 'function'
+                    ? streamObj.getContents()
+                    : streamObj.contents;
+                if (!rawBytes || !(rawBytes instanceof Uint8Array)) return null;
+
+                const filterObj = streamObj.dict ? streamObj.dict.lookup(PDFName.of('Filter')) : null;
+                let isFlate = false;
+                if (filterObj === PDFName.of('FlateDecode')) {
+                    isFlate = true;
+                } else if (filterObj instanceof PDFArray && filterObj.size() === 1 && filterObj.lookup(0) === PDFName.of('FlateDecode')) {
+                    isFlate = true;
+                }
+
+                if (!isFlate) {
+                    return JSON.parse(new TextDecoder().decode(rawBytes));
+                }
+
+                if (typeof DecompressionStream === 'function') {
+                    try {
+                        const ds = new Blob([rawBytes]).stream().pipeThrough(new DecompressionStream('deflate'));
+                        const decompressedBuf = await new Response(ds).arrayBuffer();
+                        return JSON.parse(new TextDecoder().decode(decompressedBuf));
+                    } catch (_) {
+                        // Fallback to pdf-lib built-in FlateStream decoder
+                    }
+                }
+
+                if (typeof PDFLib.decodePDFRawStream === 'function') {
+                    const decoded = PDFLib.decodePDFRawStream(streamObj).decode();
+                    return JSON.parse(new TextDecoder().decode(decoded));
+                }
+            } catch (err) {
+                console.warn('No se pudo decodificar la capa editable de PDF_Tools:', err);
+            }
+            return null;
+        }
+
+        async function attachPdfToolsLayerToPage(pdfDoc, page, payloadObj, overlayStreamRef, overlayImageRef) {
+            const payloadRef = await encodePdfToolsPayloadStream(pdfDoc.context, payloadObj);
+            const privEntries = {
+                Version: 1,
+                SavedRotation: payloadObj.savedRotation || 0,
+                BaseWidth: Math.round((payloadObj.baseWidth || 0) * 1000) / 1000,
+                BaseHeight: Math.round((payloadObj.baseHeight || 0) * 1000) / 1000,
+                Payload: payloadRef
+            };
+            if (overlayStreamRef instanceof PDFRef) {
+                privEntries.OverlayStream = overlayStreamRef;
+            }
+            if (overlayImageRef instanceof PDFRef) {
+                privEntries.OverlayImage = overlayImageRef;
+            }
+            const privRef = pdfDoc.context.register(pdfDoc.context.obj(privEntries));
+
+            const now = new Date();
+            const pad2 = (n) => String(n).padStart(2, '0');
+            const pdfDateStr = `D:${now.getUTCFullYear()}${pad2(now.getUTCMonth() + 1)}${pad2(now.getUTCDate())}${pad2(now.getUTCHours())}${pad2(now.getUTCMinutes())}${pad2(now.getUTCSeconds())}Z`;
+            const lastModifiedPdfStr = PDFLib.PDFString ? PDFLib.PDFString.of(pdfDateStr) : pdfDateStr;
+
+            const appRef = pdfDoc.context.register(pdfDoc.context.obj({
+                LastModified: lastModifiedPdfStr,
+                Private: privRef
+            }));
+
+            const pieceKey = PDFName.of('PieceInfo');
+            let pieceDict = pdfDoc.context.lookupMaybe(page.node.get(pieceKey), PDFDict);
+            if (!pieceDict) {
+                pieceDict = pdfDoc.context.obj({});
+                page.node.set(pieceKey, pieceDict);
+            }
+            pieceDict.set(PDFName.of(PDFTOOLS_PIECE_KEY), appRef);
+        }
+
+        async function transformObjectsForPageRotation(objects, deltaRot, oldW, oldH) {
+            const normDelta = ((deltaRot % 360) + 360) % 360;
+            if (!normDelta || !Array.isArray(objects) || objects.length === 0 || !oldW || !oldH) {
+                return objects;
+            }
+            return await new Promise((resolve) => {
+                fabric.util.enlivenObjects(objects, (enlivened) => {
+                    const rotated = enlivened.map((o) => {
+                        const center = o.getCenterPoint();
+                        let nx = center.x;
+                        let ny = center.y;
+                        if (normDelta === 90)       { nx = oldH - center.y; ny = center.x; }
+                        else if (normDelta === 180) { nx = oldW - center.x; ny = oldH - center.y; }
+                        else if (normDelta === 270) { nx = center.y; ny = oldW - center.x; }
+                        o.rotate(((o.angle || 0) + normDelta) % 360);
+                        o.setPositionByOrigin(new fabric.Point(nx, ny), 'center', 'center');
+                        o.setCoords();
+                        return o.toObject(EDITOR_SERIALIZE_PROPS);
+                    });
+                    resolve(rotated);
+                });
+            });
+        }
+
+        async function extractAndStripPdfToolsLayers(rawArrayBuffer) {
+            try {
+                const probeDoc = await PDFDocument.load(rawArrayBuffer.slice(0), {
+                    ignoreEncryption: true,
+                    updateMetadata: false
+                });
+                const pages = probeDoc.getPages();
+                const totalPages = pages.length;
+                if (totalPages === 0) {
+                    return { hasRestoredLayers: false, cleanBuffer: rawArrayBuffer };
+                }
+
+                const pieceKey = PDFName.of('PieceInfo');
+                const appKey = PDFName.of(PDFTOOLS_PIECE_KEY);
+                const privKey = PDFName.of('Private');
+                const payloadKey = PDFName.of('Payload');
+                const overlayStreamKey = PDFName.of('OverlayStream');
+                const overlayImageKey = PDFName.of('OverlayImage');
+
+                // Pass 1: Read & decode without mutating dictionaries or deleting shared PDFRefs
+                const extractedEntries = [];
+                for (let idx = 0; idx < totalPages; idx++) {
+                    const page = pages[idx];
+                    const pieceRaw = page.node.get(pieceKey);
+                    if (!pieceRaw) continue;
+                    const pieceDict = probeDoc.context.lookupMaybe(pieceRaw, PDFDict);
+                    if (!pieceDict) continue;
+                    const appRaw = pieceDict.get(appKey);
+                    if (!appRaw) continue;
+                    const appDict = probeDoc.context.lookupMaybe(appRaw, PDFDict);
+                    const privRaw = appDict ? appDict.get(privKey) : undefined;
+                    const privDict = privRaw ? probeDoc.context.lookupMaybe(privRaw, PDFDict) : undefined;
+                    const payloadRaw = privDict ? privDict.get(payloadKey) : undefined;
+                    if (!payloadRaw) continue;
+
+                    const decoded = await decodePdfToolsPayloadStream(probeDoc, payloadRaw);
+                    if (!decoded || !Array.isArray(decoded.objects)) continue;
+
+                    const overlayStreamRef = privDict.get(overlayStreamKey);
+                    const overlayImageRef = privDict.get(overlayImageKey);
+                    const currRot = ((page.getRotation().angle % 360) + 360) % 360;
+                    const savedRotNum = typeof decoded.savedRotation === 'number'
+                        ? decoded.savedRotation
+                        : (privDict.lookup(PDFName.of('SavedRotation'))?.asNumber?.() ?? currRot);
+                    const savedRot = ((savedRotNum % 360) + 360) % 360;
+                    const baseW = typeof decoded.baseWidth === 'number'
+                        ? decoded.baseWidth
+                        : (privDict.lookup(PDFName.of('BaseWidth'))?.asNumber?.() ?? 0);
+                    const baseH = typeof decoded.baseHeight === 'number'
+                        ? decoded.baseHeight
+                        : (privDict.lookup(PDFName.of('BaseHeight'))?.asNumber?.() ?? 0);
+
+                    extractedEntries.push({
+                        pageNum: idx + 1,
+                        pageNode: page.node,
+                        pieceRaw,
+                        pieceDict,
+                        appRaw,
+                        privRaw,
+                        payloadRaw,
+                        overlayStreamRef: overlayStreamRef instanceof PDFRef ? overlayStreamRef : null,
+                        overlayImageRef: overlayImageRef instanceof PDFRef ? overlayImageRef : null,
+                        decoded,
+                        deltaRot: ((currRot - savedRot) % 360 + 360) % 360,
+                        baseW,
+                        baseH
+                    });
+                }
+
+                if (extractedEntries.length === 0) {
+                    return { hasRestoredLayers: false, cleanBuffer: rawArrayBuffer };
+                }
+
+                // Pass 2: Strip baked PNG streams/XObjects & /PDFToolsSPA dicts, then purge indirect PDFRefs
+                const refsToDelete = new Map();
+                const queueRefDelete = (ref) => {
+                    if (ref instanceof PDFRef) refsToDelete.set(ref.toString(), ref);
+                };
+
+                const contentsKey = PDFName.of('Contents');
+                const resourcesKey = PDFName.of('Resources');
+                const xObjectKey = PDFName.of('XObject');
+
+                for (const entry of extractedEntries) {
+                    const { pageNode, pieceRaw, pieceDict, appRaw, privRaw, payloadRaw, overlayStreamRef, overlayImageRef } = entry;
+
+                    if (overlayStreamRef) {
+                        const streamTag = overlayStreamRef.toString();
+                        const contentsRaw = pageNode.get(contentsKey);
+                        if (contentsRaw instanceof PDFRef && contentsRaw.toString() === streamTag) {
+                            pageNode.delete(contentsKey);
+                        } else {
+                            const contentsArr = probeDoc.context.lookupMaybe(contentsRaw, PDFArray);
+                            if (contentsArr) {
+                                const kept = [];
+                                for (let c = 0; c < contentsArr.size(); c++) {
+                                    const item = contentsArr.get(c);
+                                    if (item instanceof PDFRef && item.toString() === streamTag) continue;
+                                    kept.push(item);
+                                }
+                                if (kept.length === 0) {
+                                    pageNode.delete(contentsKey);
+                                } else {
+                                    const rebuilt = probeDoc.context.obj(kept);
+                                    if (contentsRaw instanceof PDFRef) {
+                                        probeDoc.context.assign(contentsRaw, rebuilt);
+                                    } else {
+                                        pageNode.set(contentsKey, rebuilt);
+                                    }
+                                }
+                            }
+                        }
+                        queueRefDelete(overlayStreamRef);
+                    }
+
+                    if (overlayImageRef) {
+                        const imgTag = overlayImageRef.toString();
+                        const resDict = probeDoc.context.lookupMaybe(pageNode.get(resourcesKey), PDFDict);
+                        const xObjDict = resDict ? probeDoc.context.lookupMaybe(resDict.get(xObjectKey), PDFDict) : undefined;
+                        if (xObjDict) {
+                            for (const [k, v] of xObjDict.entries()) {
+                                if (v instanceof PDFRef && v.toString() === imgTag) {
+                                    xObjDict.delete(k);
+                                }
+                            }
+                        }
+                        queueRefDelete(overlayImageRef);
+                    }
+
+                    pieceDict.delete(appKey);
+                    if (pieceDict.entries().length === 0) {
+                        pageNode.delete(pieceKey);
+                        queueRefDelete(pieceRaw);
+                    }
+                    queueRefDelete(payloadRaw);
+                    queueRefDelete(privRaw);
+                    queueRefDelete(appRaw);
+                }
+
+                for (const ref of refsToDelete.values()) {
+                    probeDoc.context.delete(ref);
+                }
+
+                const cleanBytes = await probeDoc.save({ updateFieldAppearances: false });
+                const cleanBuffer = cleanBytes.buffer.slice(cleanBytes.byteOffset, cleanBytes.byteOffset + cleanBytes.byteLength);
+
+                // Pass 3: Reconcile page rotations, global vs local objects, and highlight visibility
+                const globalStats = new Map();
+                const perPageTransformed = [];
+
+                for (const entry of extractedEntries) {
+                    let objs = entry.decoded.objects;
+                    if (entry.deltaRot !== 0) {
+                        objs = await transformObjectsForPageRotation(objs, entry.deltaRot, entry.baseW, entry.baseH);
+                    }
+                    objs.forEach((o) => {
+                        if (!o.id) o.id = crypto.randomUUID();
+                        if (o.isGlobal) {
+                            let stat = globalStats.get(o.id);
+                            if (!stat) {
+                                stat = { count: 0, rotDeltas: new Set(), sample: o };
+                                globalStats.set(o.id, stat);
+                            }
+                            stat.count += 1;
+                            stat.rotDeltas.add(entry.deltaRot);
+                        }
+                    });
+                    perPageTransformed.push({
+                        pageNum: entry.pageNum,
+                        showHighlights: entry.decoded.showHighlights,
+                        savedPageNum: entry.decoded.savedPageNum || entry.pageNum,
+                        savedTotalPages: entry.decoded.savedTotalPages || totalPages,
+                        objects: objs
+                    });
+                }
+
+                const validGlobalIds = new Set();
+                const restoredGlobals = [];
+                for (const [gid, stat] of globalStats.entries()) {
+                    if (stat.count === totalPages && stat.rotDeltas.size === 1) {
+                        validGlobalIds.add(gid);
+                        restoredGlobals.push(structuredClone(stat.sample));
+                    }
+                }
+
+                const highlightBearingPages = perPageTransformed.filter((p) => p.objects.some((o) => o.isHighlight));
+                const restoredShowHighlights = highlightBearingPages.length > 0
+                    ? !highlightBearingPages.every((p) => p.showHighlights === false)
+                    : true;
+
+                const syncHighlightFlags = (o) => {
+                    if (o.isHighlight) {
+                        o.visible = restoredShowHighlights;
+                        o.selectable = restoredShowHighlights;
+                        o.evented = restoredShowHighlights;
+                    }
+                    return o;
+                };
+
+                restoredGlobals.forEach(syncHighlightFlags);
+
+                const restoredPagesData = {};
+                for (const pageEntry of perPageTransformed) {
+                    const localObjects = [];
+                    for (const rawObj of pageEntry.objects) {
+                        if (rawObj.isGlobal) {
+                            if (validGlobalIds.has(rawObj.id)) continue;
+                            // Demote partial-document or mixed-rotation global object to page-local
+                            const demoted = structuredClone(rawObj);
+                            demoted.isGlobal = false;
+                            demoted.id = `${rawObj.id}_p${pageEntry.pageNum}`;
+                            if (demoted.isPageNumber && demoted.textTemplate) {
+                                const startPage = demoted.startPage || 1;
+                                if (pageEntry.savedPageNum < startPage) continue;
+                                const n = (pageEntry.savedPageNum - startPage) + (demoted.startValue || 1);
+                                demoted.text = demoted.textTemplate.replace('{n}', n).replace('{t}', pageEntry.savedTotalPages);
+                                demoted.opacity = 1;
+                                demoted.isPageNumber = false;
+                            }
+                            localObjects.push(syncHighlightFlags(demoted));
+                        } else {
+                            localObjects.push(syncHighlightFlags(rawObj));
+                        }
+                    }
+                    if (localObjects.length > 0) {
+                        restoredPagesData[pageEntry.pageNum] = {
+                            version: '5.3.0',
+                            objects: localObjects
+                        };
+                    }
+                }
+
+                return {
+                    hasRestoredLayers: true,
+                    cleanBuffer,
+                    pagesData: restoredPagesData,
+                    globalObjects: restoredGlobals,
+                    showHighlights: restoredShowHighlights
+                };
+            } catch (err) {
+                console.warn('Error al inspeccionar capas re-editables del PDF:', err);
+                return { hasRestoredLayers: false, cleanBuffer: rawArrayBuffer };
+            }
+        }
+
         // --- Init & Upload ---
         document.getElementById('editorInput').addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -2007,13 +2409,19 @@
             if(!file && !bytes) return;
             showProgress('Cargando Editor...', 10);
             try {
+                let rawBuffer;
                 if(file) {
                     editorState.filename = file.name || 'documento.pdf';
-                    editorState.pdfData = await file.arrayBuffer();
+                    rawBuffer = await file.arrayBuffer();
                 } else if(bytes) {
                     editorState.filename = name || 'documento.pdf';
-                    editorState.pdfData = bytes.buffer.slice(0); // Ensure ArrayBuffer
+                    rawBuffer = bytes instanceof ArrayBuffer
+                        ? bytes.slice(0)
+                        : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
                 }
+
+                const restored = await extractAndStripPdfToolsLayers(rawBuffer);
+                editorState.pdfData = restored.cleanBuffer;
 
                 editorState.pdfJsDoc = await pdfjsLib.getDocument(editorState.pdfData.slice(0)).promise;
                 editorState.doc = await PDFDocument.load(editorState.pdfData.slice(0), { ignoreEncryption: true });
@@ -2061,6 +2469,14 @@
                     editorState.canvas = null;
                 }
                 initFabric();
+                if (restored.hasRestoredLayers) {
+                    editorState.pagesData = restored.pagesData;
+                    editorState.globalObjects = restored.globalObjects;
+                    editorState.showHighlights = restored.showHighlights;
+                    lastSyncedThumbGlobalSig = JSON.stringify(editorState.globalObjects);
+                    if (hlGlobalSwitch) hlGlobalSwitch.checked = editorState.showHighlights;
+                    updateHighlightsBarVisibility();
+                }
                 setEditorMode('select'); // Always start with selection tool
                 renderEditorEmptyProperties();
                 
@@ -2451,6 +2867,7 @@
                         objs.forEach(o => {
                             // Dynamic Page Number Logic
                             if(o.isPageNumber && o.textTemplate) {
+                                o.set({ lockScalingX: true, lockScalingY: true });
                                 const t = editorState.pdfJsDoc.numPages;
                                 const startPage = o.startPage || 1;
                                 
@@ -2461,6 +2878,18 @@
                                     const n = (pageNum - startPage) + (o.startValue || 1);
                                     o.set('text', o.textTemplate.replace('{n}', n).replace('{t}', t));
                                     o.bringToFront(); 
+                                }
+                            }
+                            if (o.isNoise) {
+                                o.set({
+                                    objectCaching: false,
+                                    lockScalingFlip: true,
+                                    transparentCorners: false,
+                                    cornerColor: '#3b82f6',
+                                    cornerSize: 10
+                                });
+                                if (!o.fill || typeof o.fill === 'string') {
+                                    o.set('fill', createNoisePattern());
                                 }
                             }
                             if (o.isHighlight) {
@@ -3869,24 +4298,48 @@
                     
                     if(objects.length > 0) {
                         const page = await editorState.pdfJsDoc.getPage(i);
+                        const baseVp = page.getViewport({ scale: 1.5 });
                         const vp = page.getViewport({ scale: exportScale });
+                        const rot = ((copiedPage.getRotation().angle % 360) + 360) % 360;
                         const addedCount = await renderObjectsToStaticFabric(tempFabric, objects, i, total, vp.width, vp.height, zoomFactor);
                         
+                        let overlayStreamRef = null;
+                        let overlayImageRef = null;
+
                         if (addedCount > 0) {
                             const pngData = tempFabric.toDataURL({ format: 'png', multiplier: 1 });
                             const pngImage = await newPdf.embedPng(pngData);
                             
                             // Compensate PDF /CropBox and /Rotate so scanned or rotated pages align 1:1 with PDF.js
                             const { x: bx, y: by, width: bw, height: bh } = copiedPage.getCropBox();
-                            const rot = ((copiedPage.getRotation().angle % 360) + 360) % 360;
                             let drawOpts;
                             if (rot === 90)       drawOpts = { x: bx + bw, y: by,      width: bh, height: bw, rotate: degrees(90) };
                             else if (rot === 180) drawOpts = { x: bx + bw, y: by + bh, width: bw, height: bh, rotate: degrees(180) };
                             else if (rot === 270) drawOpts = { x: bx,      y: by + bh, width: bh, height: bw, rotate: degrees(270) };
                             else                  drawOpts = { x: bx,      y: by,      width: bw, height: bh, rotate: degrees(0) };
 
+                            if (typeof copiedPage.node.normalize === 'function') {
+                                copiedPage.node.normalize();
+                            }
+                            const beforeRefs = getPageContentRefs(newPdf.context, copiedPage.node);
                             copiedPage.drawImage(pngImage, drawOpts);
+                            const afterRefs = getPageContentRefs(newPdf.context, copiedPage.node);
+                            const beforeTags = new Set(beforeRefs.map((r) => r.toString()));
+                            const newRefs = afterRefs.filter((r) => !beforeTags.has(r.toString()));
+                            overlayStreamRef = newRefs.length > 0 ? newRefs[newRefs.length - 1] : null;
+                            overlayImageRef = pngImage.ref || null;
                         }
+
+                        await attachPdfToolsLayerToPage(newPdf, copiedPage, {
+                            v: 1,
+                            showHighlights: Boolean(editorState.showHighlights),
+                            baseWidth: baseVp.width,
+                            baseHeight: baseVp.height,
+                            savedRotation: rot,
+                            savedPageNum: i,
+                            savedTotalPages: total,
+                            objects
+                        }, overlayStreamRef, overlayImageRef);
                     }
                     newPdf.addPage(copiedPage);
                 }
@@ -5212,10 +5665,19 @@
 
             // Application-private /PieceInfo dictionaries (catalog & pages)
             const pieceKey = PDFName.of('PieceInfo');
+            const pdfToolsPieceKey = PDFName.of(PDFTOOLS_PIECE_KEY);
             const catPieceRaw = pdfDoc.catalog.get(pieceKey);
             let pagePieceCount = 0;
+            let pdfToolsLayerPages = 0;
             for (const p of pdfDoc.getPages()) {
-                if (p.node.get(pieceKey)) pagePieceCount += 1;
+                const pPieceRaw = p.node.get(pieceKey);
+                if (pPieceRaw) {
+                    pagePieceCount += 1;
+                    const pPieceDict = pdfDoc.context.lookupMaybe(pPieceRaw, PDFDict);
+                    if (pPieceDict && pPieceDict.get(pdfToolsPieceKey)) {
+                        pdfToolsLayerPages += 1;
+                    }
+                }
             }
             if (catPieceRaw || pagePieceCount > 0) {
                 detectedCount += 1;
@@ -5228,9 +5690,12 @@
                     parts.push('Catálogo');
                 }
                 if (pagePieceCount > 0) parts.push(`${pagePieceCount} ${pagePieceCount === 1 ? 'página' : 'páginas'}`);
+                const layerSuffix = pdfToolsLayerPages > 0
+                    ? ` · incluye capa re-editable de PDF_Tools (${pdfToolsLayerPages} ${pdfToolsLayerPages === 1 ? 'pág.' : 'págs.'})`
+                    : '';
                 rows.push({
                     label: 'Datos privados de app (/PieceInfo)',
-                    value: `Presente en ${parts.join(' + ')}`,
+                    value: `Presente en ${parts.join(' + ')}${layerSuffix}`,
                     status: 'detected'
                 });
             } else {
@@ -5981,7 +6446,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.13';
+        const APP_VERSION = 'v2.0.0-beta.14';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
