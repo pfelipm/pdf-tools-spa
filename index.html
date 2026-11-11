@@ -105,6 +105,33 @@
         #editor-scroll-area.pan-dragging,
         #editor-scroll-area.pan-dragging * { cursor: grabbing !important; }
 
+        /* Editor Shortcuts Popover (Viewport-Aware Anchor + Progressive Fallback) */
+        #editor-shortcuts-btn {
+            anchor-name: --editor-shortcuts-trigger;
+        }
+        #editor-shortcuts-popover {
+            display: none;
+            position: fixed;
+            inset: auto;
+            z-index: 60;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: transparent;
+        }
+        #editor-shortcuts-popover:is(:popover-open, .\:popover-open),
+        #editor-shortcuts-popover.shortcuts-popover-fallback-open {
+            display: block;
+        }
+        @supports (position-area: block-end) {
+            #editor-shortcuts-popover {
+                position-anchor: --editor-shortcuts-trigger;
+                position-area: block-end span-inline-end;
+                position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+                margin-block-start: 0.4rem;
+            }
+        }
+
         /* PWA Update Toast (Popover Manual + Progressive Fallback) */
         #pwa-update-toast {
             display: none;
@@ -309,6 +336,7 @@
                             <button type="button" onclick="editorZoom(0.1)" aria-label="Acercar documento" class="p-1 hover:bg-gray-200 rounded text-gray-600 dark:text-gray-300 dark:hover:bg-gray-600" title="Acercar documento (Ctrl++ o Ctrl+rueda)"><i data-lucide="plus" class="w-3 h-3"></i></button>
                         </div>
                         <button type="button" onclick="editorFitPage()" aria-label="Ajustar a página" class="p-2 hover:bg-gray-100 rounded text-gray-600 ml-1 dark:text-gray-300 dark:hover:bg-gray-700" title="Ajustar a página (Ctrl+0)"><i data-lucide="maximize" class="w-4 h-4"></i></button>
+                        <button type="button" id="editor-shortcuts-btn" commandfor="editor-shortcuts-popover" command="toggle-popover" aria-label="Atajos de teclado" class="p-2 hover:bg-gray-100 rounded text-gray-500 hover:text-purple-600 transition dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-purple-400" title="Atajos de teclado (?)"><i data-lucide="keyboard" class="w-4 h-4"></i></button>
                     </div>
 
                     <!-- Group 2: Tools -->
@@ -403,13 +431,7 @@
                             </label>
                             <input id="global-highlights-switch" type="checkbox" switch checked onchange="toggleAllHighlights(this.checked)">
                         </div>
-                        <div id="editor-properties" class="flex-1 overflow-y-auto p-4 flex flex-col gap-6 custom-scroll">
-                            <div class="text-center text-gray-400 mt-10 text-sm">
-                                <i data-lucide="mouse-pointer-click" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-                                <p>Selecciona un objeto para editarlo</p>
-                            </div>
-                            <!-- Dynamic properties injected via JS -->
-                        </div>
+                        <div id="editor-properties" class="flex-1 overflow-y-auto p-4 flex flex-col gap-6 custom-scroll"></div>
                     </aside>
                 </div>
             </div>
@@ -1002,6 +1024,57 @@
         </div>
     </dialog>
 
+    <!-- Popover de Atajos del Editor Visual -->
+    <div id="editor-shortcuts-popover" popover="auto" aria-labelledby="editor-shortcuts-title">
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-2xl p-4 w-80 sm:w-96 text-left animate-fade-in dark:bg-gray-800 dark:border-gray-700">
+            <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-100 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="keyboard" class="w-4 h-4 text-purple-600 dark:text-purple-400"></i>
+                    <h3 id="editor-shortcuts-title" class="text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200">Atajos del Editor</h3>
+                </div>
+                <button type="button" commandfor="editor-shortcuts-popover" command="hide-popover" aria-label="Cerrar ayuda de atajos" class="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition dark:hover:text-gray-200 dark:hover:bg-gray-700">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-purple-600 mb-1.5 dark:text-purple-400">Zoom y navegación</p>
+                    <div class="space-y-1 text-gray-600 dark:text-gray-300">
+                        <div class="flex items-center justify-between gap-2"><span>Zoom en el cursor</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Ctrl</kbd> + rueda</span></div>
+                        <div class="flex items-center justify-between gap-2"><span>Acercar / Alejar</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Ctrl</kbd> + <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">+</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">-</kbd></span></div>
+                        <div class="flex items-center justify-between gap-2"><span>Ajustar pág. / Zoom 100%</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Ctrl</kbd> + <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">0</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">1</kbd></span></div>
+                        <div class="flex items-center justify-between gap-2"><span>Mover vista (mano)</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Espacio</kbd> + arrastrar</span></div>
+                        <div class="flex items-center justify-between gap-2"><span>Página ant. / sig.</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">RePág</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">AvPág</kbd></span></div>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-purple-600 mb-1.5 dark:text-purple-400">Herramientas rápidas</p>
+                    <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-gray-600 dark:text-gray-300">
+                        <div class="flex items-center justify-between"><span>Seleccionar</span><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded font-mono text-[11px] dark:bg-gray-700 dark:border-gray-600">V</kbd></div>
+                        <div class="flex items-center justify-between"><span>Resaltador</span><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded font-mono text-[11px] dark:bg-gray-700 dark:border-gray-600">H</kbd></div>
+                        <div class="flex items-center justify-between"><span>Dibujar</span><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded font-mono text-[11px] dark:bg-gray-700 dark:border-gray-600">D</kbd></div>
+                        <div class="flex items-center justify-between"><span>Censurar</span><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded font-mono text-[11px] dark:bg-gray-700 dark:border-gray-600">X</kbd></div>
+                        <div class="flex items-center justify-between"><span>Texto</span><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded font-mono text-[11px] dark:bg-gray-700 dark:border-gray-600">T</kbd></div>
+                        <div class="flex items-center justify-between"><span>Firmar</span><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded font-mono text-[11px] dark:bg-gray-700 dark:border-gray-600">S</kbd></div>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 mt-1 text-gray-600 dark:text-gray-300"><span>Ver / ocultar resaltados</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Alt</kbd> + <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">H</kbd></span></div>
+                </div>
+
+                <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-purple-600 mb-1.5 dark:text-purple-400">Edición y archivo</p>
+                    <div class="space-y-1 text-gray-600 dark:text-gray-300">
+                        <div class="flex items-center justify-between gap-2"><span>Deshacer / Rehacer</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Ctrl</kbd> + <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Z</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Y</kbd></span></div>
+                        <div class="flex items-center justify-between gap-2"><span>Copiar / Pegar / Duplicar</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Ctrl</kbd> + <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">C</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">V</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">D</kbd></span></div>
+                        <div class="flex items-center justify-between gap-2"><span>Desplazar objeto (1 / 10 px)</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Flechas</kbd> (+ <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Shift</kbd>)</span></div>
+                        <div class="flex items-center justify-between gap-2"><span>Eliminar / Guardar PDF</span><span class="font-mono text-[11px]"><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Supr</kbd> / <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">Ctrl</kbd>+<kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">S</kbd></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Progress & Canvas -->
     <div id="progressModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center dark:bg-gray-800">
@@ -1299,14 +1372,7 @@
                 }
                 initFabric();
                 setEditorMode('select'); // Always start with selection tool
-                
-                // Clear properties panel
-                document.getElementById('editor-properties').innerHTML = `
-                    <div class="text-center text-gray-400 mt-10 text-sm">
-                        <i data-lucide="mouse-pointer-click" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-                        <p>Selecciona un objeto para editarlo</p>
-                    </div>`;
-                lucide.createIcons();
+                renderEditorEmptyProperties();
                 
                 await renderEditorSidebar();
                 await loadEditorPage(1, true);
@@ -1368,12 +1434,7 @@
             editorState.canvas.on('selection:cleared', () => {
                 if (editorState.mode === 'draw') { renderBrushProperties(); return; }
                 if (editorState.mode === 'highlight') { renderHighlighterProperties(); return; }
-                document.getElementById('editor-properties').innerHTML = `
-                    <div class="text-center text-gray-400 mt-10 text-sm">
-                        <i data-lucide="mouse-pointer-click" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-                        <p>Selecciona un objeto para editarlo</p>
-                    </div>`;
-                lucide.createIcons();
+                renderEditorEmptyProperties();
             });
             editorState.canvas.on('object:added', (e) => {
                 if(!e.target.id) e.target.id = crypto.randomUUID();
@@ -1677,10 +1738,12 @@
                 editorState.canvas.defaultCursor = 'crosshair';
                 editorState.canvas.selection = false; // Disable group selection while drawing
                 document.getElementById('tool-pixelate').classList.add('active', 'bg-purple-50', 'text-purple-600', 'dark:bg-purple-900/30', 'dark:text-purple-300');
+                if (!editorState.canvas.getActiveObject()) renderEditorEmptyProperties();
             } else {
                 editorState.canvas.defaultCursor = 'default';
                 editorState.canvas.selection = true;
                 document.getElementById('tool-select').classList.add('active', 'bg-purple-50', 'text-purple-600', 'dark:bg-purple-900/30', 'dark:text-purple-300');
+                if (!editorState.canvas.getActiveObject()) renderEditorEmptyProperties();
             }
         }
         function toggleDrawMode() {
@@ -1978,9 +2041,49 @@
         }
 
         // --- Properties Panel ---
+        function renderEditorEmptyProperties() {
+            const panel = document.getElementById('editor-properties');
+            if (!panel) return;
+            panel.innerHTML = `
+                <div class="text-center text-gray-400 mt-6 text-sm">
+                    <i data-lucide="mouse-pointer-click" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                    <p>Selecciona un objeto para editarlo</p>
+                </div>
+                <div class="mt-2 pt-5 border-t border-gray-100 text-left space-y-2.5 dark:border-gray-700/80">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Atajos rápidos</p>
+                    <div class="space-y-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                        <div class="flex items-center justify-between gap-2">
+                            <span>Zoom en página</span>
+                            <span class="font-mono"><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] dark:bg-gray-700 dark:border-gray-600">Ctrl</kbd> + rueda</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-2">
+                            <span>Mover vista</span>
+                            <span class="font-mono"><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] dark:bg-gray-700 dark:border-gray-600">Espacio</kbd> + arrastrar</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-2">
+                            <span>Pegar imagen</span>
+                            <span class="font-mono"><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] dark:bg-gray-700 dark:border-gray-600">Ctrl</kbd> + <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] dark:bg-gray-700 dark:border-gray-600">V</kbd></span>
+                        </div>
+                        <div class="flex items-center justify-between gap-2">
+                            <span>Herramientas</span>
+                            <span class="font-mono space-x-0.5"><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] dark:bg-gray-700 dark:border-gray-600">V</kbd><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] dark:bg-gray-700 dark:border-gray-600">H</kbd><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] dark:bg-gray-700 dark:border-gray-600">D</kbd><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] dark:bg-gray-700 dark:border-gray-600">X</kbd><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] dark:bg-gray-700 dark:border-gray-600">T</kbd><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] dark:bg-gray-700 dark:border-gray-600">S</kbd></span>
+                        </div>
+                    </div>
+                    <button type="button" commandfor="editor-shortcuts-popover" command="toggle-popover" class="w-full py-1.5 px-2.5 rounded-lg bg-gray-50 hover:bg-purple-50 text-[11px] font-medium text-gray-500 hover:text-purple-700 border border-gray-200/80 transition flex items-center justify-center gap-1.5 dark:bg-gray-700/40 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-purple-900/30 dark:hover:text-purple-300">
+                        <i data-lucide="keyboard" class="w-3.5 h-3.5"></i> Ver todos los atajos (?)
+                    </button>
+                </div>`;
+            lucide.createIcons();
+        }
+
         function updateEditorProperties() {
             const obj = editorState.canvas.getActiveObject();
-            if(!obj) return;
+            if(!obj) {
+                if (editorState.mode === 'draw') renderBrushProperties();
+                else if (editorState.mode === 'highlight') renderHighlighterProperties();
+                else renderEditorEmptyProperties();
+                return;
+            }
             
             const panel = document.getElementById('editor-properties');
             let html = '';
@@ -2615,6 +2718,17 @@
 
             const modKey = e.ctrlKey || e.metaKey;
             const key = e.key.toLowerCase();
+
+            // Toggle Shortcuts Cheat-Sheet Popover with '?'
+            if (!modKey && !e.altKey && e.key === '?' && !e.repeat) {
+                e.preventDefault();
+                toggleShortcutsPopover();
+                return;
+            }
+            if (isShortcutsPopoverOpen()) {
+                if (e.key === 'Escape') hideShortcutsPopover();
+                return;
+            }
 
             // Spacebar + drag hand panning (yields to keyboard-focused buttons so Enter/Space accessibility stays intact)
             if (e.code === 'Space' && !modKey && !e.altKey) {
@@ -4218,6 +4332,87 @@
         }
 
         enhanceSwitchControls();
+        renderEditorEmptyProperties();
+
+        // Editor Shortcuts Popover + Offline Invoker Commands / Anchor Positioning Fallback
+        const shortcutsPopoverEl = document.getElementById('editor-shortcuts-popover');
+        const shortcutsBtnEl = document.getElementById('editor-shortcuts-btn');
+        const supportsCssAnchorArea = typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('position-area', 'block-end');
+
+        function positionShortcutsPopoverFallback() {
+            if (supportsCssAnchorArea || !shortcutsPopoverEl || !shortcutsBtnEl) return;
+            const r = shortcutsBtnEl.getBoundingClientRect();
+            if (!r.width && !r.height) return;
+            const estWidth = Math.min(384, window.innerWidth - 24);
+            const left = Math.max(12, Math.min(window.innerWidth - estWidth - 12, r.left));
+            const top = Math.max(12, Math.min(window.innerHeight - 360, r.bottom + 8));
+            shortcutsPopoverEl.style.left = `${left}px`;
+            shortcutsPopoverEl.style.top = `${top}px`;
+        }
+
+        function isShortcutsPopoverOpen() {
+            if (!shortcutsPopoverEl) return false;
+            if ('popover' in HTMLElement.prototype) {
+                try { return shortcutsPopoverEl.matches(':popover-open'); } catch (_) {}
+            }
+            return shortcutsPopoverEl.classList.contains('shortcuts-popover-fallback-open');
+        }
+
+        function showShortcutsPopover() {
+            if (!shortcutsPopoverEl) return;
+            positionShortcutsPopoverFallback();
+            if ('popover' in HTMLElement.prototype && typeof shortcutsPopoverEl.showPopover === 'function') {
+                if (!isShortcutsPopoverOpen()) shortcutsPopoverEl.showPopover();
+            } else {
+                shortcutsPopoverEl.classList.add('shortcuts-popover-fallback-open');
+            }
+            shortcutsBtnEl?.setAttribute('aria-expanded', 'true');
+        }
+
+        function hideShortcutsPopover() {
+            if (!shortcutsPopoverEl) return;
+            if ('popover' in HTMLElement.prototype && typeof shortcutsPopoverEl.hidePopover === 'function') {
+                if (isShortcutsPopoverOpen()) shortcutsPopoverEl.hidePopover();
+            } else {
+                shortcutsPopoverEl.classList.remove('shortcuts-popover-fallback-open');
+            }
+            shortcutsBtnEl?.setAttribute('aria-expanded', 'false');
+        }
+
+        function toggleShortcutsPopover() {
+            if (isShortcutsPopoverOpen()) hideShortcutsPopover();
+            else showShortcutsPopover();
+        }
+
+        if (shortcutsPopoverEl) {
+            shortcutsPopoverEl.addEventListener('beforetoggle', (e) => {
+                if (e.newState === 'open') positionShortcutsPopoverFallback();
+            });
+            shortcutsPopoverEl.addEventListener('toggle', (e) => {
+                shortcutsBtnEl?.setAttribute('aria-expanded', e.newState === 'open' ? 'true' : 'false');
+            });
+        }
+
+        // Progressive fallback for Invoker Commands (`commandfor` / `command`) in browsers without `commandForElement`
+        if (!('commandForElement' in HTMLButtonElement.prototype)) {
+            document.addEventListener('click', (event) => {
+                const button = event.composedPath().find((el) => el.matches?.('button[commandfor]'));
+                if (!button) return;
+                const target = document.getElementById(button.getAttribute('commandfor'));
+                const cmd = button.getAttribute('command');
+                if (!target || !cmd) return;
+                if (target === shortcutsPopoverEl) {
+                    if (cmd === 'toggle-popover') toggleShortcutsPopover();
+                    else if (cmd === 'show-popover') showShortcutsPopover();
+                    else if (cmd === 'hide-popover') hideShortcutsPopover();
+                }
+            });
+            document.addEventListener('pointerdown', (event) => {
+                if ('popover' in HTMLElement.prototype || !isShortcutsPopoverOpen()) return;
+                if (shortcutsPopoverEl.contains(event.target) || event.target.closest?.('button[commandfor="editor-shortcuts-popover"]')) return;
+                hideShortcutsPopover();
+            });
+        }
 
         // Progressive fallback for <dialog closedby="any"> light-dismiss (e.g. Safari)
         if (!('closedBy' in HTMLDialogElement.prototype)) {
@@ -4235,7 +4430,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.5';
+        const APP_VERSION = 'v2.0.0-beta.6';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
