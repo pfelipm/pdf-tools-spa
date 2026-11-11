@@ -2140,7 +2140,8 @@
                     : streamObj.contents;
                 if (!rawBytes || !(rawBytes instanceof Uint8Array)) return null;
 
-                const filterObj = streamObj.dict ? streamObj.dict.lookup(PDFName.of('Filter')) : null;
+                const sDict = !(streamObj instanceof PDFDict) && streamObj.dict instanceof PDFDict ? streamObj.dict : null;
+                const filterObj = sDict ? sDict.lookup(PDFName.of('Filter')) : null;
                 let isFlate = false;
                 if (filterObj === PDFName.of('FlateDecode')) {
                     isFlate = true;
@@ -5562,6 +5563,21 @@
             container.appendChild(note);
         }
 
+        function pdfNumberValue(obj) {
+            if (!obj) return undefined;
+            if (typeof obj.asNumber === 'function') return obj.asNumber();
+            if (typeof obj.value === 'function') {
+                const v = obj.value();
+                if (typeof v === 'number') return v;
+            }
+            return undefined;
+        }
+
+        function getPdfStreamDict(pdfObj) {
+            if (!pdfObj || pdfObj instanceof PDFDict) return null;
+            return pdfObj.dict instanceof PDFDict ? pdfObj.dict : null;
+        }
+
         function resolvePdfImageColorChannels(dict) {
             const csObj = dict.lookup(PDFName.of('ColorSpace')) ?? dict.lookup(PDFName.of('CS'));
             if (!csObj) return null;
@@ -5573,7 +5589,8 @@
                 if (tag === PDFName.of('CalGray')) return 1;
                 if (tag === PDFName.of('ICCBased')) {
                     const iccStream = csObj.lookup(1);
-                    const n = iccStream?.dict?.lookup(PDFName.of('N'))?.asNumber?.();
+                    const iccDict = getPdfStreamDict(iccStream);
+                    const n = pdfNumberValue(iccDict?.lookup(PDFName.of('N')));
                     if (n === 1 || n === 3) return n;
                 }
             }
@@ -5599,8 +5616,8 @@
             if (!decArr) return false;
             if (decArr.size() !== channels * 2) return true;
             for (let c = 0; c < channels; c++) {
-                const dMin = decArr.lookup(c * 2)?.asNumber?.();
-                const dMax = decArr.lookup(c * 2 + 1)?.asNumber?.();
+                const dMin = pdfNumberValue(decArr.lookup(c * 2));
+                const dMax = pdfNumberValue(decArr.lookup(c * 2 + 1));
                 if (typeof dMin !== 'number' || typeof dMax !== 'number') return true;
                 if (Math.abs(dMin) > 0.001 || Math.abs(dMax - 1) > 0.001) return true;
             }
@@ -5659,10 +5676,24 @@
         }
 
         async function compressPdfPreservingLayers(rawBytes, targetDpi, jpegQuality, onProgress) {
-            const pdfDoc = await PDFDocument.load(rawBytes.slice(0), {
-                ignoreEncryption: true,
-                updateMetadata: false
-            });
+            let pdfDoc;
+            try {
+                pdfDoc = await PDFDocument.load(rawBytes.slice(0), {
+                    ignoreEncryption: true,
+                    updateMetadata: false
+                });
+            } catch (loadErr) {
+                const encErr = new Error('PDF cifrado o con estructura protegida');
+                encErr.code = 'ENCRYPTED_OR_PROTECTED_PDF';
+                encErr.cause = loadErr;
+                throw encErr;
+            }
+
+            if (pdfDoc.isEncrypted || pdfDoc.context.trailerInfo.Encrypt) {
+                const encErr = new Error('PDF con cifrado de permisos activo');
+                encErr.code = 'ENCRYPTED_OR_PROTECTED_PDF';
+                throw encErr;
+            }
 
             const pages = pdfDoc.getPages();
             const protectedImageTags = new Set();
@@ -5682,19 +5713,24 @@
 
             const collectResourceImages = (resDict, pageBudgetPx, visitedForms) => {
                 if (!resDict) return;
-                const xObjDict = pdfDoc.context.lookupMaybe(resDict.get(xObjectKey), PDFDict);
+                const xObjRaw = resDict.get(xObjectKey);
+                if (!xObjRaw) return;
+                const xObjDict = pdfDoc.context.lookupMaybe(xObjRaw, PDFDict);
                 if (!xObjDict) return;
                 for (const [, val] of xObjDict.entries()) {
                     if (!(val instanceof PDFRef)) continue;
                     const tag = val.toString();
                     const obj = pdfDoc.context.lookup(val);
-                    const sub = obj?.dict?.lookup(subtypeKey);
+                    const objDict = getPdfStreamDict(obj);
+                    if (!objDict) continue;
+                    const sub = objDict.lookup(subtypeKey);
                     if (sub === imageName) {
                         const prev = imageMaxLongSideByTag.get(tag) || 0;
                         if (pageBudgetPx > prev) imageMaxLongSideByTag.set(tag, pageBudgetPx);
                     } else if (sub === formName && !visitedForms.has(tag)) {
                         visitedForms.add(tag);
-                        const nestedRes = pdfDoc.context.lookupMaybe(obj.dict.get(resourcesKey), PDFDict);
+                        const nestedResRaw = objDict.get(resourcesKey);
+                        const nestedRes = nestedResRaw ? pdfDoc.context.lookupMaybe(nestedResRaw, PDFDict) : undefined;
                         collectResourceImages(nestedRes, pageBudgetPx, visitedForms);
                     }
                 }
@@ -5702,9 +5738,12 @@
 
             for (const page of pages) {
                 // 1. Protect PDF_Tools re-editable PNG overlays from lossy opaque JPEG conversion
-                const pieceDict = pdfDoc.context.lookupMaybe(page.node.get(pieceKey), PDFDict);
-                const appDict = pieceDict ? pdfDoc.context.lookupMaybe(pieceDict.get(appKey), PDFDict) : undefined;
-                const privDict = appDict ? pdfDoc.context.lookupMaybe(appDict.get(privKey), PDFDict) : undefined;
+                const pieceRaw = page.node.get(pieceKey);
+                const pieceDict = pieceRaw ? pdfDoc.context.lookupMaybe(pieceRaw, PDFDict) : undefined;
+                const appRaw = pieceDict ? pieceDict.get(appKey) : undefined;
+                const appDict = appRaw ? pdfDoc.context.lookupMaybe(appRaw, PDFDict) : undefined;
+                const privRaw = appDict ? appDict.get(privKey) : undefined;
+                const privDict = privRaw ? pdfDoc.context.lookupMaybe(privRaw, PDFDict) : undefined;
                 const overlayImgRef = privDict ? privDict.get(overlayImgKey) : undefined;
                 if (overlayImgRef instanceof PDFRef) {
                     protectedImageTags.add(overlayImgRef.toString());
@@ -5717,28 +5756,36 @@
                     if (thumbRaw instanceof PDFRef) pdfDoc.context.delete(thumbRaw);
                 }
 
-                // 3. Record target pixel budget for images referenced on this page
+                // 3. Record target pixel budget for images referenced on this page (including inherited /Resources)
                 const { width: pwPts, height: phPts } = page.getSize();
                 const pageBudgetPx = Math.max(96, Math.round((Math.max(pwPts, phPts) / 72) * targetDpi));
-                const resDict = pdfDoc.context.lookupMaybe(page.node.get(resourcesKey), PDFDict);
+                let resDict;
+                try {
+                    resDict = typeof page.node.Resources === 'function' ? page.node.Resources() : undefined;
+                } catch (_) {
+                    const resRaw = page.node.get(resourcesKey);
+                    resDict = resRaw ? pdfDoc.context.lookupMaybe(resRaw, PDFDict) : undefined;
+                }
                 collectResourceImages(resDict, pageBudgetPx, new Set());
             }
 
             // Count /SMask references across indirect objects so shared masks are never prematurely deleted
+            // NOTE: In pdf-lib, PDFDict itself has a private `.dict` Map, so distinguish PDFDict vs PDFStream!
             const smaskRefCounts = new Map();
             const candidateImages = [];
             for (const [ref, pdfObj] of pdfDoc.context.enumerateIndirectObjects()) {
-                const dict = pdfObj?.dict;
-                if (!dict) continue;
-                const smRef = dict.get(PDFName.of('SMask'));
+                const anyDict = pdfObj instanceof PDFDict ? pdfObj : getPdfStreamDict(pdfObj);
+                if (!anyDict) continue;
+                const smRef = anyDict.get(PDFName.of('SMask'));
                 if (smRef instanceof PDFRef) {
                     const smTag = smRef.toString();
                     smaskRefCounts.set(smTag, (smaskRefCounts.get(smTag) || 0) + 1);
                 }
-                if (dict.lookup(subtypeKey) === imageName) {
+                const streamDict = getPdfStreamDict(pdfObj);
+                if (streamDict && streamDict.lookup(subtypeKey) === imageName) {
                     const rawStreamBytes = typeof pdfObj.getContents === 'function' ? pdfObj.getContents() : pdfObj.contents;
                     if (rawStreamBytes instanceof Uint8Array) {
-                        candidateImages.push({ ref, stream: pdfObj, dict, rawStreamBytes });
+                        candidateImages.push({ ref, stream: pdfObj, dict: streamDict, rawStreamBytes });
                     }
                 }
             }
@@ -5765,7 +5812,10 @@
                     if (rawStreamBytes.byteLength < 4096) continue;
 
                     // Skip 1-bit stencil masks or color-keyed masks
-                    if (dict.lookup(PDFName.of('ImageMask')) === PDFLib.PDFBool.True) continue;
+                    const imFlag = dict.lookup(PDFName.of('ImageMask')) ?? dict.lookup(PDFName.of('IM'));
+                    if (imFlag && (imFlag === PDFLib.PDFBool?.True || (typeof imFlag.asBoolean === 'function' && imFlag.asBoolean()) || String(imFlag) === 'true')) {
+                        continue;
+                    }
                     if (dict.get(PDFName.of('Mask'))) continue;
 
                     const filters = getPdfStreamFilterNames(dict);
@@ -5813,14 +5863,14 @@
                             filters.length === 0 ||
                             (filters.length === 1 && ['FlateDecode', 'Fl', 'LZWDecode', 'LZW', 'RunLengthDecode', 'RL', 'ASCII85Decode', 'A85', 'ASCIIHexDecode', 'AHx'].includes(filters[0]))
                         ) {
-                            const bpc = dict.lookup(PDFName.of('BitsPerComponent'))?.asNumber?.()
-                                ?? dict.lookup(PDFName.of('BPC'))?.asNumber?.()
+                            const bpc = pdfNumberValue(dict.lookup(PDFName.of('BitsPerComponent')))
+                                ?? pdfNumberValue(dict.lookup(PDFName.of('BPC')))
                                 ?? 8;
-                            const wNum = dict.lookup(PDFName.of('Width'))?.asNumber?.()
-                                ?? dict.lookup(PDFName.of('W'))?.asNumber?.()
+                            const wNum = pdfNumberValue(dict.lookup(PDFName.of('Width')))
+                                ?? pdfNumberValue(dict.lookup(PDFName.of('W')))
                                 ?? 0;
-                            const hNum = dict.lookup(PDFName.of('Height'))?.asNumber?.()
-                                ?? dict.lookup(PDFName.of('H'))?.asNumber?.()
+                            const hNum = pdfNumberValue(dict.lookup(PDFName.of('Height')))
+                                ?? pdfNumberValue(dict.lookup(PDFName.of('H')))
                                 ?? 0;
                             if (bpc !== 8 || wNum <= 0 || hNum <= 0 || typeof PDFLib.decodePDFRawStream !== 'function') {
                                 continue;
@@ -5922,10 +5972,18 @@
             }
 
             stripPdfMetadataInPlace(pdfDoc, { preservePdfToolsLayer: true });
-            const outBytes = await pdfDoc.save({
-                useObjectStreams: true,
-                updateFieldAppearances: false
-            });
+            let outBytes;
+            try {
+                outBytes = await pdfDoc.save({
+                    useObjectStreams: true,
+                    updateFieldAppearances: false
+                });
+            } catch (_) {
+                outBytes = await pdfDoc.save({
+                    useObjectStreams: false,
+                    updateFieldAppearances: false
+                });
+            }
 
             return {
                 outBytes,
@@ -6048,7 +6106,12 @@
                 compressSuccessModal.showModal();
             } catch (e) {
                 console.error(e);
-                alert('Error al comprimir el PDF');
+                hideProgress();
+                if (e && e.code === 'ENCRYPTED_OR_PROTECTED_PDF') {
+                    alert('Este PDF incluye cifrado interno de permisos que impide editar sus flujos de imágenes directamente.\n\nSelecciona el modo «Rasterizado total · Aplana páginas» para comprimirlo sin problemas.');
+                } else {
+                    alert('Error al comprimir el PDF');
+                }
             } finally {
                 runBtn.disabled = false;
                 hideProgress();
@@ -6972,7 +7035,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.15';
+        const APP_VERSION = 'v2.0.0-beta.16';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
