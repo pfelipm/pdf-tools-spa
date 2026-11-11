@@ -401,6 +401,58 @@
             outline-offset: 4px;
             border-radius: 0.25rem;
         }
+
+        /* Brand-Consistent Form Controls (Compress Form Radios + Fallback) */
+        #compress-form {
+            --compress-accent: #0d9488;
+            accent-color: var(--compress-accent);
+            color-scheme: light;
+        }
+        .dark #compress-form {
+            --compress-accent: #2dd4bf;
+            color-scheme: dark;
+        }
+        @supports not (accent-color: #0d9488) {
+            #compress-form input[type="radio"].compress-radio {
+                position: absolute !important;
+                clip-path: inset(50%) !important;
+                overflow: hidden !important;
+                width: 1px !important;
+                height: 1px !important;
+                margin: -1px !important;
+                padding: 0 !important;
+                border: 0 !important;
+                white-space: nowrap !important;
+            }
+            #compress-form label.compress-radio-card {
+                position: relative;
+                padding-inline-start: 2.25rem;
+            }
+            #compress-form input[type="radio"].compress-radio + span::before {
+                content: "";
+                position: absolute;
+                inset-inline-start: 0.75rem;
+                inset-block-start: 0.9rem;
+                width: 1rem;
+                height: 1rem;
+                border: 2px solid #9ca3af;
+                border-radius: 999px;
+                background: #ffffff;
+                box-sizing: border-box;
+            }
+            .dark #compress-form input[type="radio"].compress-radio + span::before {
+                background: #1f2937;
+                border-color: #6b7280;
+            }
+            #compress-form input[type="radio"].compress-radio:focus-visible + span::before {
+                outline: 2px solid var(--compress-accent);
+                outline-offset: 2px;
+            }
+            #compress-form input[type="radio"].compress-radio:checked + span::before {
+                border-color: var(--compress-accent);
+                background: radial-gradient(circle, var(--compress-accent) 42%, transparent 46%);
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 h-screen flex flex-col font-sans text-gray-800 overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
@@ -528,12 +580,12 @@
                             <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center gap-2 dark:bg-purple-500 dark:hover:bg-purple-600">
                                 <i data-lucide="save" class="w-4 h-4"></i> Guardar <i data-lucide="chevron-down" class="w-3 h-3 ml-1"></i>
                             </button>
-                            <div class="absolute top-full right-0 mt-1 before:block before:absolute before:-top-2 before:left-0 before:w-full before:h-4 bg-white border border-gray-200 rounded-lg shadow-xl hidden group-hover:block w-60 py-1 z-50 dark:bg-gray-800 dark:border-gray-600">
+                            <div class="absolute top-full right-0 mt-1 before:block before:absolute before:-top-2 before:left-0 before:w-full before:h-4 bg-white border border-gray-200 rounded-lg shadow-xl hidden group-hover:block w-64 py-1 z-50 dark:bg-gray-800 dark:border-gray-600">
                                 <button onclick="editorSave()" class="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 flex items-start gap-3 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors">
-                                    <i data-lucide="file-edit" class="w-5 h-5 text-gray-400 mt-0.5 dark:text-gray-500"></i>
+                                    <i data-lucide="file-edit" class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0 dark:text-gray-500"></i>
                                     <div>
                                         <span class="font-bold block text-gray-700 dark:text-gray-200">Guardar PDF</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">Re-editable · conserva texto</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Conserva texto y capas editables</span>
                                     </div>
                                 </button>
                                 <div class="border-t border-gray-100 dark:border-gray-700"></div>
@@ -831,7 +883,7 @@
             </div>
         </section>
 
-        <!-- TAB 6: COMPRIMIR PDF (FASE 1) -->
+        <!-- TAB 6: COMPRIMIR PDF (INTELIGENTE + RASTERIZADO) -->
         <section id="content-compress" class="tab-content flex-col h-full relative">
             <div id="compress-upload" class="flex-1 flex flex-col items-center justify-center p-6">
                 <div id="compress-drop-zone" class="bg-white p-12 rounded-2xl shadow-sm border-2 border-dashed border-gray-300 hover:border-teal-500 transition-colors cursor-pointer group text-center max-w-md w-full dark:bg-gray-800 dark:border-gray-600 dark:hover:border-teal-400">
@@ -839,7 +891,7 @@
                         <i data-lucide="minimize-2" class="w-10 h-10"></i>
                     </div>
                     <h2 class="text-2xl font-bold mb-2 dark:text-white">Comprimir PDF</h2>
-                    <p class="text-gray-500 mb-2 dark:text-gray-400">Ideal para reducir drásticamente el peso de PDFs escaneados, documentos fotografiados o presentaciones con imágenes pesadas.</p>
+                    <p class="text-gray-500 mb-2 dark:text-gray-400">Reduce el peso de documentos con fotos, presentaciones o escaneos conservando el texto y las capas editables (o aplanando páginas).</p>
                     <p class="text-xs text-gray-400 mb-7 dark:text-gray-500">Arrastra tu PDF aquí o haz clic para seleccionarlo</p>
                     <input type="file" id="compressInput" accept="application/pdf" class="hidden">
                     <button type="button" onclick="event.stopPropagation(); document.getElementById('compressInput').click()" class="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-sm dark:bg-teal-500 dark:hover:bg-teal-600">
@@ -864,7 +916,7 @@
                 </div>
 
                 <!-- Controls Sidebar -->
-                <aside class="w-80 lg:w-96 bg-white border-l border-gray-200 p-6 flex flex-col shadow-lg z-10 overflow-y-auto custom-scroll dark:bg-gray-800 dark:border-gray-700">
+                <aside class="w-80 lg:w-96 bg-white border-l border-gray-200 p-5 flex flex-col shadow-lg z-10 overflow-y-auto custom-scroll dark:bg-gray-800 dark:border-gray-700">
                     <div class="mb-4 pb-3 border-b border-gray-100 flex items-center justify-between gap-2 dark:border-gray-700">
                         <div class="flex items-center gap-2 min-w-0">
                             <i data-lucide="file-text" class="w-4 h-4 text-teal-600 flex-shrink-0 dark:text-teal-400"></i>
@@ -873,69 +925,89 @@
                         <span id="compress-page-count" class="text-xs bg-teal-50 text-teal-700 px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 dark:bg-teal-900/40 dark:text-teal-300">0 págs</span>
                     </div>
 
-                    <div class="space-y-5 flex-1">
-                        <fieldset class="space-y-2">
-                            <legend class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 dark:text-gray-400">Nivel de compresión</legend>
-                            <label for="compress-preset-extreme" class="flex items-start gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
-                                <input type="radio" id="compress-preset-extreme" name="compress-preset" value="extreme" class="mt-0.5 accent-teal-600">
-                                <span class="block">
-                                    <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Extrema (menor peso)</span>
-                                    <span class="block text-xs text-gray-500 dark:text-gray-400">96 DPI · Calidad 50% — máxima reducción</span>
-                                </span>
-                            </label>
-                            <label for="compress-preset-balanced" class="flex items-start gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
-                                <input type="radio" id="compress-preset-balanced" name="compress-preset" value="balanced" checked class="mt-0.5 accent-teal-600">
-                                <span class="block">
-                                    <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Recomendada (equilibrada)</span>
-                                    <span class="block text-xs text-gray-500 dark:text-gray-400">140 DPI · Calidad 65% — ideal para escaneos</span>
-                                </span>
-                            </label>
-                            <label for="compress-preset-high" class="flex items-start gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
-                                <input type="radio" id="compress-preset-high" name="compress-preset" value="high" class="mt-0.5 accent-teal-600">
-                                <span class="block">
-                                    <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Alta calidad</span>
-                                    <span class="block text-xs text-gray-500 dark:text-gray-400">200 DPI · Calidad 80% — conserva detalle fino</span>
-                                </span>
-                            </label>
-                        </fieldset>
+                    <form id="compress-form" action="#" method="post" novalidate class="flex-1 flex flex-col">
+                        <div class="space-y-4 flex-1">
+                            <fieldset class="space-y-2">
+                                <legend class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 dark:text-gray-400">Modo de compresión</legend>
+                                <label for="compress-mode-smart" class="compress-radio-card flex items-start gap-3 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                                    <input type="radio" id="compress-mode-smart" name="compress-mode" value="smart" checked aria-describedby="compress-mode-note" class="compress-radio mt-0.5">
+                                    <span class="block">
+                                        <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Inteligente · Conserva capas</span>
+                                        <span class="block text-xs text-gray-500 dark:text-gray-400">Mantiene texto seleccionable, vectores y ediciones</span>
+                                    </span>
+                                </label>
+                                <label for="compress-mode-raster" class="compress-radio-card flex items-start gap-3 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                                    <input type="radio" id="compress-mode-raster" name="compress-mode" value="raster" aria-describedby="compress-mode-note" class="compress-radio mt-0.5">
+                                    <span class="block">
+                                        <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Rasterizado total · Aplana páginas</span>
+                                        <span class="block text-xs text-gray-500 dark:text-gray-400">Convierte cada página completa en imagen JPEG</span>
+                                    </span>
+                                </label>
+                            </fieldset>
 
-                        <div class="pt-3 border-t border-gray-100 space-y-4 dark:border-gray-700">
-                            <div>
-                                <label for="compress-dpi" class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 dark:text-gray-400">Resolución objetivo (DPI)</label>
-                                <select id="compress-dpi" name="compress-dpi" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                    <option value="72">72 DPI (mínima / vista pantalla)</option>
-                                    <option value="96">96 DPI (compacta / correo y web)</option>
-                                    <option value="120">120 DPI (media-baja)</option>
-                                    <option value="140" selected>140 DPI (recomendada)</option>
-                                    <option value="150">150 DPI (estándar oficina)</option>
-                                    <option value="200">200 DPI (alta nitidez)</option>
-                                </select>
-                            </div>
+                            <fieldset class="pt-3 border-t border-gray-100 space-y-2 dark:border-gray-700">
+                                <legend class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 dark:text-gray-400">Nivel de compresión</legend>
+                                <label for="compress-preset-extreme" class="compress-radio-card flex items-start gap-3 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                                    <input type="radio" id="compress-preset-extreme" name="compress-preset" value="extreme" class="compress-radio mt-0.5">
+                                    <span class="block">
+                                        <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Extrema (menor peso)</span>
+                                        <span class="block text-xs text-gray-500 dark:text-gray-400">96 DPI · Calidad 50% — máxima reducción</span>
+                                    </span>
+                                </label>
+                                <label for="compress-preset-balanced" class="compress-radio-card flex items-start gap-3 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                                    <input type="radio" id="compress-preset-balanced" name="compress-preset" value="balanced" checked class="compress-radio mt-0.5">
+                                    <span class="block">
+                                        <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Recomendada (equilibrada)</span>
+                                        <span class="block text-xs text-gray-500 dark:text-gray-400">140 DPI · Calidad 65% — equilibrio ideal</span>
+                                    </span>
+                                </label>
+                                <label for="compress-preset-high" class="compress-radio-card flex items-start gap-3 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                                    <input type="radio" id="compress-preset-high" name="compress-preset" value="high" class="compress-radio mt-0.5">
+                                    <span class="block">
+                                        <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Alta calidad</span>
+                                        <span class="block text-xs text-gray-500 dark:text-gray-400">200 DPI · Calidad 80% — conserva detalle fino</span>
+                                    </span>
+                                </label>
+                            </fieldset>
 
-                            <div>
-                                <div class="flex items-center justify-between mb-1">
-                                    <label for="compress-quality" class="text-xs font-bold text-gray-500 uppercase tracking-wide dark:text-gray-400">Calidad JPEG</label>
-                                    <span id="compress-quality-label" class="text-xs font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded dark:bg-teal-900/40 dark:text-teal-300">65%</span>
+                            <div class="pt-3 border-t border-gray-100 space-y-3.5 dark:border-gray-700">
+                                <div>
+                                    <label for="compress-dpi" class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 dark:text-gray-400">Resolución objetivo (DPI)</label>
+                                    <select id="compress-dpi" name="compress-dpi" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <option value="72">72 DPI (mínima / vista pantalla)</option>
+                                        <option value="96">96 DPI (compacta / correo y web)</option>
+                                        <option value="120">120 DPI (media-baja)</option>
+                                        <option value="140" selected>140 DPI (recomendada)</option>
+                                        <option value="150">150 DPI (estándar oficina)</option>
+                                        <option value="200">200 DPI (alta nitidez)</option>
+                                    </select>
                                 </div>
-                                <input type="range" id="compress-quality" name="compress-quality" class="compress-range" min="40" max="85" step="5" value="65" aria-valuetext="65 por ciento">
-                                <div class="flex justify-between text-[11px] text-gray-400 dark:text-gray-500">
-                                    <span>Menor peso (40%)</span>
-                                    <span>Mayor nitidez (85%)</span>
-                                </div>
-                            </div>
 
-                            <p class="text-xs text-gray-500 bg-gray-50 border border-gray-200/80 rounded-xl p-3 leading-relaxed dark:bg-gray-700/40 dark:border-gray-600 dark:text-gray-400">
-                                Ideal para reducir drásticamente el peso de PDFs escaneados, documentos fotografiados o presentaciones con imágenes pesadas. Rasteriza cada página a imagen JPEG manteniendo sus dimensiones físicas exactas (aplana capas/texto seleccionable y elimina metadatos).
-                            </p>
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label for="compress-quality" class="text-xs font-bold text-gray-500 uppercase tracking-wide dark:text-gray-400">Calidad JPEG</label>
+                                        <span id="compress-quality-label" class="text-xs font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded dark:bg-teal-900/40 dark:text-teal-300">65%</span>
+                                    </div>
+                                    <input type="range" id="compress-quality" name="compress-quality" class="compress-range" min="40" max="85" step="5" value="65" aria-valuetext="65 por ciento">
+                                    <div class="flex justify-between text-[11px] text-gray-400 dark:text-gray-500">
+                                        <span>Menor peso (40%)</span>
+                                        <span>Mayor nitidez (85%)</span>
+                                    </div>
+                                </div>
+
+                                <p id="compress-mode-note" class="text-xs text-gray-500 bg-gray-50 border border-gray-200/80 rounded-xl p-3 leading-relaxed dark:bg-gray-700/40 dark:border-gray-600 dark:text-gray-400">
+                                    Re-escala y recomprime únicamente las imágenes internas pesadas manteniendo intactos el texto seleccionable, los vectores, los enlaces y las capas editables de PDF_Tools.
+                                </p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="mt-6 pt-4 border-t border-gray-200 space-y-3 dark:border-gray-700">
-                        <button type="button" id="compress-run-btn" onclick="runCompressPdf()" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-teal-700 transition shadow-sm flex items-center justify-center gap-2 dark:bg-teal-500 dark:hover:bg-teal-600">
-                            <i data-lucide="minimize-2" class="w-5 h-5"></i> Comprimir PDF
-                        </button>
-                        <button type="button" onclick="resetTool('compress')" class="w-full text-gray-500 py-2 text-sm hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">Cancelar</button>
-                    </div>
+                        <div class="mt-5 pt-4 border-t border-gray-200 space-y-2.5 dark:border-gray-700">
+                            <button type="submit" id="compress-run-btn" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-teal-700 disabled:opacity-50 transition shadow-sm flex items-center justify-center gap-2 dark:bg-teal-500 dark:hover:bg-teal-600">
+                                <i data-lucide="minimize-2" class="w-5 h-5"></i> Comprimir PDF
+                            </button>
+                            <button type="button" id="compress-cancel-btn" class="w-full text-gray-500 py-2 text-sm hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">Cancelar</button>
+                        </div>
+                    </form>
                 </aside>
             </div>
         </section>
@@ -1589,7 +1661,7 @@
             return new Promise((resolve) => setTimeout(resolve, 0));
         }
 
-        function stripPdfMetadataInPlace(pdfDoc) {
+        function stripPdfMetadataInPlace(pdfDoc, { preservePdfToolsLayer = false } = {}) {
             const infoEntry = pdfDoc.context.trailerInfo.Info;
             if (infoEntry) {
                 const infoDict = pdfDoc.context.lookupMaybe(infoEntry, PDFDict);
@@ -1603,14 +1675,21 @@
                 }
                 delete pdfDoc.context.trailerInfo.Info;
             }
-            const purgeDictKey = (dict, keyName) => {
+            const purgeDictKey = (dict, keyName, keepPdfToolsOnDict = false) => {
                 if (!dict) return;
                 const pdfKey = PDFName.of(keyName);
                 const raw = dict.get(pdfKey);
                 if (!raw) return;
                 if (keyName === 'PieceInfo') {
                     const pieceDict = pdfDoc.context.lookupMaybe(raw, PDFDict);
-                    const appRaw = pieceDict ? pieceDict.get(PDFName.of('PDFToolsSPA')) : undefined;
+                    const pdfToolsKey = PDFName.of('PDFToolsSPA');
+                    if (keepPdfToolsOnDict && pieceDict && pieceDict.get(pdfToolsKey)) {
+                        for (const [k] of pieceDict.entries()) {
+                            if (k !== pdfToolsKey) pieceDict.delete(k);
+                        }
+                        return;
+                    }
+                    const appRaw = pieceDict ? pieceDict.get(pdfToolsKey) : undefined;
                     const appDict = appRaw ? pdfDoc.context.lookupMaybe(appRaw, PDFDict) : undefined;
                     const privRaw = appDict ? appDict.get(PDFName.of('Private')) : undefined;
                     const privDict = privRaw ? pdfDoc.context.lookupMaybe(privRaw, PDFDict) : undefined;
@@ -1628,7 +1707,7 @@
             purgeDictKey(pdfDoc.catalog, 'PieceInfo');
             for (const page of pdfDoc.getPages()) {
                 purgeDictKey(page.node, 'Metadata');
-                purgeDictKey(page.node, 'PieceInfo');
+                purgeDictKey(page.node, 'PieceInfo', preservePdfToolsLayer);
             }
         }
 
@@ -5268,12 +5347,17 @@
         }
 
         // ==========================================
-        // LÓGICA DE COMPRIMIR PDF (FASE 1 — RASTERIZACIÓN)
+        // LÓGICA DE COMPRIMIR PDF (FASE 1 + FASE 2: INTELIGENTE Y RASTERIZADO)
         // ==========================================
         const COMPRESS_PRESETS = {
             extreme: { dpi: 96, quality: 50 },
             balanced: { dpi: 140, quality: 65 },
             high: { dpi: 200, quality: 80 }
+        };
+
+        const COMPRESS_MODE_NOTES = {
+            smart: 'Re-escala y recomprime únicamente las imágenes internas pesadas manteniendo intactos el texto seleccionable, los vectores, los enlaces y las capas editables de PDF_Tools.',
+            raster: 'Rasteriza cada página completa a imagen JPEG manteniendo sus dimensiones físicas exactas (aplana capas/texto seleccionable y elimina metadatos). Ideal cuando deseas aplanar y comprimir a la vez.'
         };
 
         const compressState = {
@@ -5283,9 +5367,23 @@
             origSize: 0
         };
 
+        const compressFormEl = document.getElementById('compress-form');
         const compressDpiSelect = document.getElementById('compress-dpi');
         const compressQualityInput = document.getElementById('compress-quality');
+        const compressModeNoteEl = document.getElementById('compress-mode-note');
         const compressSuccessModal = document.getElementById('compress-success-modal');
+
+        function getSelectedCompressMode() {
+            const checked = document.querySelector('input[name="compress-mode"]:checked');
+            return checked ? checked.value : 'smart';
+        }
+
+        function syncCompressModeUI() {
+            const mode = getSelectedCompressMode();
+            if (compressModeNoteEl) {
+                compressModeNoteEl.textContent = COMPRESS_MODE_NOTES[mode] || COMPRESS_MODE_NOTES.smart;
+            }
+        }
 
         function syncCompressQualitySlider() {
             if (!compressQualityInput) return;
@@ -5307,6 +5405,10 @@
             });
         }
 
+        document.querySelectorAll('input[name="compress-mode"]').forEach((radio) => {
+            radio.addEventListener('change', syncCompressModeUI);
+        });
+
         document.querySelectorAll('input[name="compress-preset"]').forEach((radio) => {
             radio.addEventListener('change', (e) => {
                 const preset = COMPRESS_PRESETS[e.target.value];
@@ -5322,7 +5424,18 @@
             syncCompressQualitySlider();
             syncCompressPresetRadiosFromControls();
         });
+        if (compressFormEl) {
+            compressFormEl.addEventListener('submit', (e) => {
+                e.preventDefault();
+                runCompressPdf();
+            });
+        }
+        const compressCancelBtn = document.getElementById('compress-cancel-btn');
+        if (compressCancelBtn) {
+            compressCancelBtn.addEventListener('click', () => resetTool('compress'));
+        }
         syncCompressQualitySlider();
+        syncCompressModeUI();
 
         document.getElementById('compressInput').addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -5390,7 +5503,7 @@
             }
         }
 
-        function populateCompressComparison(container, origBytes, newBytes, isModal) {
+        function populateCompressComparison(container, origBytes, newBytes, isModal, mode = 'smart', stats = null) {
             container.replaceChildren();
             const reduced = newBytes < origBytes;
             const deltaBytes = Math.abs(origBytes - newBytes);
@@ -5427,31 +5540,413 @@
             note.className = isModal
                 ? 'text-xs leading-relaxed text-gray-500 dark:text-gray-400'
                 : 'text-[11px] leading-relaxed text-center text-gray-600 dark:text-gray-300';
-            note.textContent = reduced
-                ? `Ahorro de ${formatBytes(deltaBytes)} respecto al archivo original.`
-                : 'Este PDF contiene principalmente texto o vectores muy ligeros; rasterizarlo a imagen incrementa su peso. Puedes bajar los DPI o conservar el original.';
+
+            if (reduced) {
+                if (mode === 'smart') {
+                    const imgCount = stats?.reencodedCount || 0;
+                    note.textContent = imgCount > 0
+                        ? `Ahorro de ${formatBytes(deltaBytes)} (${imgCount} ${imgCount === 1 ? 'imagen optimizada' : 'imágenes optimizadas'}; texto y capas intactos).`
+                        : `Ahorro de ${formatBytes(deltaBytes)} compactando estructura y metadatos (texto y capas intactos).`;
+                } else {
+                    note.textContent = `Ahorro de ${formatBytes(deltaBytes)} respecto al archivo original (páginas rasterizadas a JPEG).`;
+                }
+            } else if (mode === 'smart') {
+                if (stats && stats.skippedSpecialColorCount > 0 && stats.reencodedCount === 0) {
+                    note.textContent = 'Las imágenes usan espacio de color especial (CMYK/indexado) o máscaras y se han mantenido intactas. Prueba «Rasterizado total» si necesitas forzar su compresión.';
+                } else {
+                    note.textContent = 'Este PDF ya está muy optimizado (sin imágenes pesadas que reducir). Puedes conservar el original o probar «Rasterizado total» si contiene gráficos vectoriales muy densos.';
+                }
+            } else {
+                note.textContent = 'Este PDF contiene principalmente texto o vectores muy ligeros; rasterizarlo a imagen incrementa su peso. Prueba el modo «Inteligente», baja los DPI o conserva el original.';
+            }
             container.appendChild(note);
         }
 
-        async function runCompressPdf() {
-            if (!compressState.pdfJsDoc || !compressState.pdfBytes) return;
-            const runBtn = document.getElementById('compress-run-btn');
-            runBtn.disabled = true;
+        function resolvePdfImageColorChannels(dict) {
+            const csObj = dict.lookup(PDFName.of('ColorSpace')) ?? dict.lookup(PDFName.of('CS'));
+            if (!csObj) return null;
+            if (csObj === PDFName.of('DeviceRGB')) return 3;
+            if (csObj === PDFName.of('DeviceGray')) return 1;
+            if (csObj instanceof PDFArray && csObj.size() >= 2) {
+                const tag = csObj.lookup(0);
+                if (tag === PDFName.of('CalRGB')) return 3;
+                if (tag === PDFName.of('CalGray')) return 1;
+                if (tag === PDFName.of('ICCBased')) {
+                    const iccStream = csObj.lookup(1);
+                    const n = iccStream?.dict?.lookup(PDFName.of('N'))?.asNumber?.();
+                    if (n === 1 || n === 3) return n;
+                }
+            }
+            return null;
+        }
 
-            const dpi = parseInt(compressDpiSelect.value, 10) || 140;
-            const quality = (parseInt(compressQualityInput.value, 10) || 65) / 100;
+        function getPdfStreamFilterNames(dict) {
+            const fRaw = dict.lookup(PDFName.of('Filter')) ?? dict.lookup(PDFName.of('F'));
+            if (!fRaw) return [];
+            const nameOf = (o) => (typeof o?.decodeText === 'function' ? o.decodeText() : String(o).replace(/^\//, ''));
+            if (fRaw instanceof PDFArray) {
+                const list = [];
+                for (let i = 0; i < fRaw.size(); i++) {
+                    list.push(nameOf(fRaw.lookup(i)));
+                }
+                return list;
+            }
+            return [nameOf(fRaw)];
+        }
+
+        function hasNonDefaultDecodeArray(dict, channels) {
+            const decArr = dict.lookupMaybe(PDFName.of('Decode'), PDFArray) ?? dict.lookupMaybe(PDFName.of('D'), PDFArray);
+            if (!decArr) return false;
+            if (decArr.size() !== channels * 2) return true;
+            for (let c = 0; c < channels; c++) {
+                const dMin = decArr.lookup(c * 2)?.asNumber?.();
+                const dMax = decArr.lookup(c * 2 + 1)?.asNumber?.();
+                if (typeof dMin !== 'number' || typeof dMax !== 'number') return true;
+                if (Math.abs(dMin) > 0.001 || Math.abs(dMax - 1) > 0.001) return true;
+            }
+            return false;
+        }
+
+        function inspectPdfImageSmask(pdfDoc, dict) {
+            const smaskRaw = dict.get(PDFName.of('SMask'));
+            if (!smaskRaw) return { hasRealAlpha: false, removableSmaskRef: null, smaskByteLen: 0 };
+            try {
+                const smaskObj = pdfDoc.context.lookup(smaskRaw);
+                if (!smaskObj || typeof PDFLib.decodePDFRawStream !== 'function') {
+                    return { hasRealAlpha: true, removableSmaskRef: null, smaskByteLen: 0 };
+                }
+                const alphaPixels = PDFLib.decodePDFRawStream(smaskObj).decode();
+                if (!alphaPixels || alphaPixels.length === 0) {
+                    return { hasRealAlpha: true, removableSmaskRef: null, smaskByteLen: 0 };
+                }
+                for (let i = 0; i < alphaPixels.length; i++) {
+                    if (alphaPixels[i] < 254) {
+                        return { hasRealAlpha: true, removableSmaskRef: null, smaskByteLen: 0 };
+                    }
+                }
+                const rawBytes = typeof smaskObj.getContents === 'function' ? smaskObj.getContents() : smaskObj.contents;
+                return {
+                    hasRealAlpha: false,
+                    removableSmaskRef: smaskRaw instanceof PDFRef ? smaskRaw : null,
+                    smaskByteLen: rawBytes?.byteLength || 0
+                };
+            } catch (_) {
+                return { hasRealAlpha: true, removableSmaskRef: null, smaskByteLen: 0 };
+            }
+        }
+
+        async function decodeJpegBytesToDrawable(jpegU8) {
+            const blob = new Blob([jpegU8], { type: 'image/jpeg' });
+            if (typeof createImageBitmap === 'function') {
+                try {
+                    return await createImageBitmap(blob);
+                } catch (_) {
+                    // Fallback to HTMLImageElement below
+                }
+            }
+            const url = URL.createObjectURL(blob);
+            try {
+                const img = await new Promise((resolve, reject) => {
+                    const el = new Image();
+                    el.onload = () => resolve(el);
+                    el.onerror = reject;
+                    el.src = url;
+                });
+                return img;
+            } finally {
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        async function compressPdfPreservingLayers(rawBytes, targetDpi, jpegQuality, onProgress) {
+            const pdfDoc = await PDFDocument.load(rawBytes.slice(0), {
+                ignoreEncryption: true,
+                updateMetadata: false
+            });
+
+            const pages = pdfDoc.getPages();
+            const protectedImageTags = new Set();
+            const imageMaxLongSideByTag = new Map();
+            const defaultMaxLongSide = Math.max(120, Math.round((842 / 72) * targetDpi));
+
+            const pieceKey = PDFName.of('PieceInfo');
+            const appKey = PDFName.of(PDFTOOLS_PIECE_KEY);
+            const privKey = PDFName.of('Private');
+            const overlayImgKey = PDFName.of('OverlayImage');
+            const thumbKey = PDFName.of('Thumb');
+            const resourcesKey = PDFName.of('Resources');
+            const xObjectKey = PDFName.of('XObject');
+            const subtypeKey = PDFName.of('Subtype');
+            const imageName = PDFName.of('Image');
+            const formName = PDFName.of('Form');
+
+            const collectResourceImages = (resDict, pageBudgetPx, visitedForms) => {
+                if (!resDict) return;
+                const xObjDict = pdfDoc.context.lookupMaybe(resDict.get(xObjectKey), PDFDict);
+                if (!xObjDict) return;
+                for (const [, val] of xObjDict.entries()) {
+                    if (!(val instanceof PDFRef)) continue;
+                    const tag = val.toString();
+                    const obj = pdfDoc.context.lookup(val);
+                    const sub = obj?.dict?.lookup(subtypeKey);
+                    if (sub === imageName) {
+                        const prev = imageMaxLongSideByTag.get(tag) || 0;
+                        if (pageBudgetPx > prev) imageMaxLongSideByTag.set(tag, pageBudgetPx);
+                    } else if (sub === formName && !visitedForms.has(tag)) {
+                        visitedForms.add(tag);
+                        const nestedRes = pdfDoc.context.lookupMaybe(obj.dict.get(resourcesKey), PDFDict);
+                        collectResourceImages(nestedRes, pageBudgetPx, visitedForms);
+                    }
+                }
+            };
+
+            for (const page of pages) {
+                // 1. Protect PDF_Tools re-editable PNG overlays from lossy opaque JPEG conversion
+                const pieceDict = pdfDoc.context.lookupMaybe(page.node.get(pieceKey), PDFDict);
+                const appDict = pieceDict ? pdfDoc.context.lookupMaybe(pieceDict.get(appKey), PDFDict) : undefined;
+                const privDict = appDict ? pdfDoc.context.lookupMaybe(appDict.get(privKey), PDFDict) : undefined;
+                const overlayImgRef = privDict ? privDict.get(overlayImgKey) : undefined;
+                if (overlayImgRef instanceof PDFRef) {
+                    protectedImageTags.add(overlayImgRef.toString());
+                }
+
+                // 2. Purge obsolete embedded page thumbnail bitmaps (/Thumb)
+                const thumbRaw = page.node.get(thumbKey);
+                if (thumbRaw) {
+                    page.node.delete(thumbKey);
+                    if (thumbRaw instanceof PDFRef) pdfDoc.context.delete(thumbRaw);
+                }
+
+                // 3. Record target pixel budget for images referenced on this page
+                const { width: pwPts, height: phPts } = page.getSize();
+                const pageBudgetPx = Math.max(96, Math.round((Math.max(pwPts, phPts) / 72) * targetDpi));
+                const resDict = pdfDoc.context.lookupMaybe(page.node.get(resourcesKey), PDFDict);
+                collectResourceImages(resDict, pageBudgetPx, new Set());
+            }
+
+            // Count /SMask references across indirect objects so shared masks are never prematurely deleted
+            const smaskRefCounts = new Map();
+            const candidateImages = [];
+            for (const [ref, pdfObj] of pdfDoc.context.enumerateIndirectObjects()) {
+                const dict = pdfObj?.dict;
+                if (!dict) continue;
+                const smRef = dict.get(PDFName.of('SMask'));
+                if (smRef instanceof PDFRef) {
+                    const smTag = smRef.toString();
+                    smaskRefCounts.set(smTag, (smaskRefCounts.get(smTag) || 0) + 1);
+                }
+                if (dict.lookup(subtypeKey) === imageName) {
+                    const rawStreamBytes = typeof pdfObj.getContents === 'function' ? pdfObj.getContents() : pdfObj.contents;
+                    if (rawStreamBytes instanceof Uint8Array) {
+                        candidateImages.push({ ref, stream: pdfObj, dict, rawStreamBytes });
+                    }
+                }
+            }
+
+            const srcCvs = document.createElement('canvas');
+            const srcCtx = srcCvs.getContext('2d');
+            const dstCvs = document.createElement('canvas');
+            const dstCtx = dstCvs.getContext('2d');
+
+            let reencodedCount = 0;
+            let skippedSpecialColorCount = 0;
+            const totalCandidates = candidateImages.length;
+
+            try {
+                for (let idx = 0; idx < totalCandidates; idx++) {
+                    if (onProgress) {
+                        onProgress(idx + 1, totalCandidates);
+                    }
+                    await yieldToMain();
+
+                    const { ref, stream, dict, rawStreamBytes } = candidateImages[idx];
+                    const refTag = ref.toString();
+                    if (protectedImageTags.has(refTag)) continue;
+                    if (rawStreamBytes.byteLength < 4096) continue;
+
+                    // Skip 1-bit stencil masks or color-keyed masks
+                    if (dict.lookup(PDFName.of('ImageMask')) === PDFLib.PDFBool.True) continue;
+                    if (dict.get(PDFName.of('Mask'))) continue;
+
+                    const filters = getPdfStreamFilterNames(dict);
+                    if (filters.some((f) => f === 'JBIG2Decode' || f === 'CCITTFaxDecode' || f === 'CCF' || f === 'JPXDecode')) {
+                        continue;
+                    }
+
+                    const channels = resolvePdfImageColorChannels(dict);
+                    if (!channels) {
+                        skippedSpecialColorCount += 1;
+                        continue;
+                    }
+                    if (hasNonDefaultDecodeArray(dict, channels)) continue;
+
+                    const smaskInfo = inspectPdfImageSmask(pdfDoc, dict);
+                    if (smaskInfo.hasRealAlpha) continue;
+
+                    const maxLongSide = imageMaxLongSideByTag.get(refTag) || defaultMaxLongSide;
+
+                    let srcW = 0;
+                    let srcH = 0;
+                    let drawable = null;
+                    let drewViaPixelBuffer = false;
+
+                    try {
+                        const isDirectJpeg = filters.length === 1 && (filters[0] === 'DCTDecode' || filters[0] === 'DCT');
+                        const isFlateJpeg = filters.length === 2
+                            && (filters[0] === 'FlateDecode' || filters[0] === 'Fl')
+                            && (filters[1] === 'DCTDecode' || filters[1] === 'DCT');
+
+                        if (isDirectJpeg || isFlateJpeg) {
+                            let jpegBytes = rawStreamBytes;
+                            if (isFlateJpeg) {
+                                if (typeof DecompressionStream === 'function') {
+                                    const ds = new Blob([rawStreamBytes]).stream().pipeThrough(new DecompressionStream('deflate'));
+                                    jpegBytes = new Uint8Array(await new Response(ds).arrayBuffer());
+                                } else {
+                                    continue;
+                                }
+                            }
+                            drawable = await decodeJpegBytesToDrawable(jpegBytes);
+                            srcW = drawable.width || drawable.naturalWidth || 0;
+                            srcH = drawable.height || drawable.naturalHeight || 0;
+                        } else if (
+                            filters.length === 0 ||
+                            (filters.length === 1 && ['FlateDecode', 'Fl', 'LZWDecode', 'LZW', 'RunLengthDecode', 'RL', 'ASCII85Decode', 'A85', 'ASCIIHexDecode', 'AHx'].includes(filters[0]))
+                        ) {
+                            const bpc = dict.lookup(PDFName.of('BitsPerComponent'))?.asNumber?.()
+                                ?? dict.lookup(PDFName.of('BPC'))?.asNumber?.()
+                                ?? 8;
+                            const wNum = dict.lookup(PDFName.of('Width'))?.asNumber?.()
+                                ?? dict.lookup(PDFName.of('W'))?.asNumber?.()
+                                ?? 0;
+                            const hNum = dict.lookup(PDFName.of('Height'))?.asNumber?.()
+                                ?? dict.lookup(PDFName.of('H'))?.asNumber?.()
+                                ?? 0;
+                            if (bpc !== 8 || wNum <= 0 || hNum <= 0 || typeof PDFLib.decodePDFRawStream !== 'function') {
+                                continue;
+                            }
+                            const decodedPixels = PDFLib.decodePDFRawStream(stream).decode();
+                            if (!decodedPixels || decodedPixels.length !== wNum * hNum * channels) {
+                                continue;
+                            }
+                            srcW = wNum;
+                            srcH = hNum;
+                            srcCvs.width = srcW;
+                            srcCvs.height = srcH;
+                            const imgData = srcCtx.createImageData(srcW, srcH);
+                            const rgba = imgData.data;
+                            const pxCount = srcW * srcH;
+                            if (channels === 3) {
+                                for (let p = 0, s = 0, d = 0; p < pxCount; p++, s += 3, d += 4) {
+                                    rgba[d] = decodedPixels[s];
+                                    rgba[d + 1] = decodedPixels[s + 1];
+                                    rgba[d + 2] = decodedPixels[s + 2];
+                                    rgba[d + 3] = 255;
+                                }
+                            } else {
+                                for (let p = 0, d = 0; p < pxCount; p++, d += 4) {
+                                    const g = decodedPixels[p];
+                                    rgba[d] = g;
+                                    rgba[d + 1] = g;
+                                    rgba[d + 2] = g;
+                                    rgba[d + 3] = 255;
+                                }
+                            }
+                            srcCtx.putImageData(imgData, 0, 0);
+                            drewViaPixelBuffer = true;
+                        } else {
+                            continue;
+                        }
+
+                        if (srcW <= 0 || srcH <= 0) continue;
+
+                        const srcLong = Math.max(srcW, srcH);
+                        let dstW = srcW;
+                        let dstH = srcH;
+                        if (srcLong > maxLongSide) {
+                            const ratio = maxLongSide / srcLong;
+                            dstW = Math.max(1, Math.round(srcW * ratio));
+                            dstH = Math.max(1, Math.round(srcH * ratio));
+                        }
+
+                        dstCvs.width = dstW;
+                        dstCvs.height = dstH;
+                        dstCtx.fillStyle = '#FFFFFF';
+                        dstCtx.fillRect(0, 0, dstW, dstH);
+                        dstCtx.imageSmoothingEnabled = true;
+                        dstCtx.imageSmoothingQuality = 'high';
+                        dstCtx.drawImage(drewViaPixelBuffer ? srcCvs : drawable, 0, 0, dstW, dstH);
+
+                        const jpgBlob = await new Promise((resolve) => dstCvs.toBlob(resolve, 'image/jpeg', jpegQuality));
+                        if (!jpgBlob) continue;
+                        const newJpgBytes = new Uint8Array(await jpgBlob.arrayBuffer());
+
+                        const origEffectiveCost = rawStreamBytes.byteLength + (smaskInfo.smaskByteLen || 0);
+                        if (newJpgBytes.byteLength >= origEffectiveCost * 0.97) {
+                            continue;
+                        }
+
+                        const replacementStream = pdfDoc.context.stream(newJpgBytes, {
+                            Type: 'XObject',
+                            Subtype: 'Image',
+                            Width: dstW,
+                            Height: dstH,
+                            ColorSpace: 'DeviceRGB',
+                            BitsPerComponent: 8,
+                            Filter: 'DCTDecode'
+                        });
+                        pdfDoc.context.assign(ref, replacementStream);
+
+                        if (smaskInfo.removableSmaskRef) {
+                            const smTag = smaskInfo.removableSmaskRef.toString();
+                            const nextCount = (smaskRefCounts.get(smTag) || 1) - 1;
+                            smaskRefCounts.set(smTag, nextCount);
+                            if (nextCount <= 0) {
+                                pdfDoc.context.delete(smaskInfo.removableSmaskRef);
+                            }
+                        }
+                        reencodedCount += 1;
+                    } catch (imgErr) {
+                        console.warn('Imagen omitida en compresión inteligente:', imgErr);
+                    } finally {
+                        if (drawable && typeof drawable.close === 'function') {
+                            try { drawable.close(); } catch (_) {}
+                        }
+                    }
+                }
+            } finally {
+                srcCvs.width = 1;
+                srcCvs.height = 1;
+                dstCvs.width = 1;
+                dstCvs.height = 1;
+            }
+
+            stripPdfMetadataInPlace(pdfDoc, { preservePdfToolsLayer: true });
+            const outBytes = await pdfDoc.save({
+                useObjectStreams: true,
+                updateFieldAppearances: false
+            });
+
+            return {
+                outBytes,
+                stats: {
+                    totalCandidates,
+                    reencodedCount,
+                    skippedSpecialColorCount
+                }
+            };
+        }
+
+        async function rasterizeCompressPdf(dpi, quality, onProgress) {
             const scale = dpi / 72;
-
-            showProgress('Iniciando compresión...', 0);
             const cvs = document.createElement('canvas');
             const ctx = cvs.getContext('2d');
-
             try {
                 const total = compressState.pdfJsDoc.numPages;
                 const outPdf = await PDFDocument.create();
 
                 for (let i = 1; i <= total; i++) {
-                    showProgress(`Comprimiendo pág ${i}/${total}...`, Math.round(((i - 1) / total) * 90));
+                    if (onProgress) onProgress(i, total);
                     await yieldToMain();
 
                     const page = await compressState.pdfJsDoc.getPage(i);
@@ -5480,12 +5975,43 @@
                     if (typeof page.cleanup === 'function') page.cleanup();
                 }
 
+                stripPdfMetadataInPlace(outPdf);
+                const outBytes = await outPdf.save({ useObjectStreams: true });
+                return { outBytes, stats: null };
+            } finally {
                 cvs.width = 1;
                 cvs.height = 1;
+            }
+        }
+
+        async function runCompressPdf() {
+            if (!compressState.pdfJsDoc || !compressState.pdfBytes) return;
+            const runBtn = document.getElementById('compress-run-btn');
+            runBtn.disabled = true;
+
+            const mode = getSelectedCompressMode();
+            const dpi = parseInt(compressDpiSelect.value, 10) || 140;
+            const quality = (parseInt(compressQualityInput.value, 10) || 65) / 100;
+
+            showProgress('Iniciando compresión...', 0);
+
+            try {
+                let result;
+                if (mode === 'smart') {
+                    result = await compressPdfPreservingLayers(compressState.pdfBytes, dpi, quality, (cur, total) => {
+                        showProgress(
+                            total > 0 ? `Optimizando imagen ${cur}/${total}...` : 'Optimizando estructura...',
+                            total > 0 ? Math.round(((cur - 1) / total) * 90) : 50
+                        );
+                    });
+                } else {
+                    result = await rasterizeCompressPdf(dpi, quality, (cur, total) => {
+                        showProgress(`Rasterizando pág ${cur}/${total}...`, Math.round(((cur - 1) / total) * 90));
+                    });
+                }
 
                 showProgress('Empaquetando PDF...', 95);
-                stripPdfMetadataInPlace(outPdf);
-                const outBytes = await outPdf.save();
+                const { outBytes, stats } = result;
                 const blob = new Blob([outBytes], { type: 'application/pdf' });
                 const outName = buildOutputFilename(compressState.filename, 'comprimido');
 
@@ -5496,7 +6022,7 @@
                 inlineSummary.className = reduced
                     ? 'w-full rounded-xl p-3 text-xs border border-teal-200 bg-teal-50/70 dark:border-teal-800 dark:bg-teal-900/20'
                     : 'w-full rounded-xl p-3 text-xs border border-amber-200 bg-amber-50/70 dark:border-amber-800 dark:bg-amber-900/20';
-                populateCompressComparison(inlineSummary, compressState.origSize, outBytes.byteLength, false);
+                populateCompressComparison(inlineSummary, compressState.origSize, outBytes.byteLength, false, mode, stats);
 
                 // Update & show success modal
                 document.getElementById('compress-success-title').textContent = reduced
@@ -5506,7 +6032,9 @@
                     document.getElementById('compress-modal-comparison'),
                     compressState.origSize,
                     outBytes.byteLength,
-                    true
+                    true,
+                    mode,
+                    stats
                 );
 
                 document.getElementById('cmp-success-download').onclick = () => saveBlob(blob, outName);
@@ -5522,8 +6050,6 @@
                 console.error(e);
                 alert('Error al comprimir el PDF');
             } finally {
-                cvs.width = 1;
-                cvs.height = 1;
                 runBtn.disabled = false;
                 hideProgress();
             }
@@ -6446,7 +6972,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.14';
+        const APP_VERSION = 'v2.0.0-beta.15';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
