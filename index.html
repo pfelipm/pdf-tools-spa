@@ -125,6 +125,26 @@
         }
         [popover] + [popover] { margin-top: 1rem; }
 
+        /* Hide horizontal scrollbar on responsive nav */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Deferred Off-Screen Thumbnail Rendering & Layout Containment */
+        .deferred-grid-card {
+            content-visibility: auto;
+            contain-intrinsic-size: auto none auto 224px;
+        }
+        .deferred-sidebar-card {
+            content-visibility: auto;
+            contain-intrinsic-size: auto none auto 160px;
+        }
+        @supports not (content-visibility: auto) {
+            .deferred-grid-card,
+            .deferred-sidebar-card {
+                contain: layout style paint;
+            }
+        }
+
         /* Native Modal Dialogs (Scroll Containment & Backdrop) */
         dialog:modal {
             overscroll-behavior: contain;
@@ -139,42 +159,42 @@
 </head>
 <body class="bg-gray-50 h-screen flex flex-col font-sans text-gray-800 overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
 
-    <!-- Header (Centrado Absoluto) -->
-    <header class="bg-white border-b border-gray-200 flex-none z-20 shadow-sm flex items-center justify-between px-6 py-3 relative dark:bg-gray-800 dark:border-gray-700">
-        <div class="flex items-center gap-3">
-            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-2 rounded-lg text-white shadow-md">
-                <i data-lucide="files" class="w-6 h-6"></i>
+    <!-- Header (Responsivo preparado para 7 pestañas) -->
+    <header class="bg-white border-b border-gray-200 flex-none z-20 shadow-sm px-4 lg:px-6 py-2.5 flex flex-wrap lg:grid lg:grid-cols-[1fr_auto_1fr] items-center justify-between gap-y-2 gap-x-4 dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-2 rounded-lg text-white shadow-md flex-shrink-0">
+                <i data-lucide="files" class="w-5 h-5"></i>
             </div>
-            <h1 class="text-xl font-bold text-gray-800 tracking-tight dark:text-white">Herramientas PDF</h1>
+            <h1 class="text-lg xl:text-xl font-bold text-gray-800 tracking-tight truncate dark:text-white">Herramientas PDF</h1>
         </div>
 
-        <nav class="flex gap-1 bg-gray-100 p-1 rounded-lg absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 dark:bg-gray-700">
-            <button onclick="switchTab('merge')" id="tab-merge" class="px-4 py-2 rounded-md text-sm font-medium transition-all bg-white text-blue-600 shadow-sm flex items-center gap-2 dark:bg-gray-600 dark:text-blue-300">
+        <nav aria-label="Herramientas principales" class="order-3 lg:order-none w-full lg:w-auto flex items-center gap-1 bg-gray-100 p-1 rounded-lg overflow-x-auto no-scrollbar dark:bg-gray-700">
+            <button type="button" onclick="switchTab('merge')" id="tab-merge" class="px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all bg-white text-blue-600 shadow-sm flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:bg-gray-600 dark:text-blue-300">
                 <i data-lucide="combine" class="w-4 h-4"></i> Unir
             </button>
-            <button onclick="switchTab('split')" id="tab-split" class="px-4 py-2 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-2 dark:text-gray-400 dark:hover:text-gray-200">
+            <button type="button" onclick="switchTab('split')" id="tab-split" class="px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
                 <i data-lucide="scissors" class="w-4 h-4"></i> Dividir
             </button>
-            <button onclick="switchTab('organize')" id="tab-organize" class="px-4 py-2 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-2 dark:text-gray-400 dark:hover:text-gray-200">
+            <button type="button" onclick="switchTab('organize')" id="tab-organize" class="px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
                 <i data-lucide="layout-grid" class="w-4 h-4"></i> Organizar
             </button>
-            <button onclick="switchTab('images')" id="tab-images" class="px-4 py-2 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-2 dark:text-gray-400 dark:hover:text-gray-200">
+            <button type="button" onclick="switchTab('images')" id="tab-images" class="px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
                 <i data-lucide="image" class="w-4 h-4"></i> A imágenes
             </button>
-            <button onclick="switchTab('editor')" id="tab-editor" class="px-4 py-2 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-2 dark:text-gray-400 dark:hover:text-gray-200">
+            <button type="button" onclick="switchTab('editor')" id="tab-editor" class="px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 dark:text-gray-400 dark:hover:text-gray-200">
                 <i data-lucide="pencil" class="w-4 h-4"></i> Editar
             </button>
         </nav>
 
-        <div class="flex items-center gap-3">
-            <button id="pwa-install-btn" class="hidden items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50" title="Instalar aplicación para uso directo y sin conexión">
+        <div class="flex items-center justify-end gap-2">
+            <button type="button" id="pwa-install-btn" class="hidden items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50" title="Instalar aplicación para uso directo y sin conexión">
                 <i data-lucide="download" class="w-4 h-4"></i> Instalar
             </button>
-            <button id="theme-toggle" class="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-blue-400" title="Cambiar tema">
+            <button type="button" id="theme-toggle" aria-label="Cambiar tema" class="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-blue-400" title="Cambiar tema">
                 <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
                 <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
             </button>
-            <button id="about-btn" class="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-blue-400" title="Sobre este proyecto">
+            <button type="button" id="about-btn" aria-label="Sobre este proyecto" class="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-blue-400" title="Sobre este proyecto">
                 <i data-lucide="info" class="w-5 h-5"></i>
             </button>
         </div>
@@ -187,14 +207,15 @@
         <section id="content-editor" class="tab-content flex-col h-full relative bg-gray-100 dark:bg-gray-900">
              <!-- Editor Upload View -->
              <div id="editor-upload" class="flex-1 flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-900 absolute inset-0 z-50">
-                <div class="bg-white p-12 rounded-2xl shadow-sm border border-gray-200 text-center max-w-md w-full dark:bg-gray-800 dark:border-gray-700">
-                    <div class="bg-purple-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-purple-600 dark:bg-gray-700 dark:text-purple-400">
+                <div id="editor-drop-zone" class="bg-white p-12 rounded-2xl shadow-sm border-2 border-dashed border-gray-300 hover:border-purple-500 transition-colors cursor-pointer group text-center max-w-md w-full dark:bg-gray-800 dark:border-gray-600 dark:hover:border-purple-400">
+                    <div class="bg-purple-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-purple-600 group-hover:scale-110 transition-transform dark:bg-gray-700 dark:text-purple-400">
                         <i data-lucide="pencil" class="w-10 h-10"></i>
                     </div>
                     <h2 class="text-2xl font-bold mb-2 dark:text-white">Editor visual PDF</h2>
-                    <p class="text-gray-500 mb-8 dark:text-gray-400">Añade texto, formas, dibujos y numeración.</p>
+                    <p class="text-gray-500 mb-2 dark:text-gray-400">Añade texto, formas, dibujos y numeración.</p>
+                    <p class="text-xs text-gray-400 mb-7 dark:text-gray-500">Arrastra tu PDF aquí o haz clic para seleccionarlo</p>
                     <input type="file" id="editorInput" accept="application/pdf" class="hidden">
-                    <button onclick="document.getElementById('editorInput').click()" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-sm dark:bg-purple-500 dark:hover:bg-purple-600">
+                    <button type="button" onclick="event.stopPropagation(); document.getElementById('editorInput').click()" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-sm dark:bg-purple-500 dark:hover:bg-purple-600">
                         Seleccionar PDF
                     </button>
                 </div>
@@ -291,14 +312,23 @@
                         </div>
                     </div>
 
-                    <!-- Right Sidebar (Properties) -->
-                    <div id="editor-properties" class="w-64 bg-white border-l border-gray-200 overflow-y-auto p-4 flex flex-col gap-6 shadow-lg z-10 dark:bg-gray-800 dark:border-gray-700">
-                        <div class="text-center text-gray-400 mt-10 text-sm">
-                            <i data-lucide="mouse-pointer-click" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-                            <p>Selecciona un objeto para editarlo</p>
+                    <!-- Right Sidebar (File Info + Properties) -->
+                    <aside class="w-64 bg-white border-l border-gray-200 flex flex-col shadow-lg z-10 dark:bg-gray-800 dark:border-gray-700">
+                        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2 flex-none dark:border-gray-700">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i data-lucide="file-text" class="w-4 h-4 text-purple-600 flex-shrink-0 dark:text-purple-400"></i>
+                                <span id="editor-filename-display" class="font-bold text-xs text-gray-700 truncate dark:text-gray-200" title="">documento.pdf</span>
+                            </div>
+                            <span id="editor-page-count" class="text-[11px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 dark:bg-purple-900/40 dark:text-purple-300">0 págs</span>
                         </div>
-                        <!-- Dynamic properties injected via JS -->
-                    </div>
+                        <div id="editor-properties" class="flex-1 overflow-y-auto p-4 flex flex-col gap-6 custom-scroll">
+                            <div class="text-center text-gray-400 mt-10 text-sm">
+                                <i data-lucide="mouse-pointer-click" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                                <p>Selecciona un objeto para editarlo</p>
+                            </div>
+                            <!-- Dynamic properties injected via JS -->
+                        </div>
+                    </aside>
                 </div>
             </div>
         </section>
@@ -312,9 +342,9 @@
                             <i data-lucide="combine" class="w-8 h-8"></i>
                         </div>
                         <h2 class="text-xl font-bold mb-2 text-gray-800 dark:text-white">Unir archivos</h2>
-                        <p class="text-gray-500 mb-6 dark:text-gray-400">Arrastra PDFs o imágenes (JPG, PNG) aquí.</p>
-                        <input type="file" id="mergeInput" multiple accept=".pdf,.jpg,.jpeg,.png" class="hidden">
-                        <button onclick="document.getElementById('mergeInput').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium transition shadow-sm inline-flex items-center gap-2 dark:bg-blue-500 dark:hover:bg-blue-600">
+                        <p class="text-gray-500 mb-6 dark:text-gray-400">Arrastra PDFs o imágenes (JPG, PNG) aquí, o pega capturas con <kbd class="px-1.5 py-0.5 text-xs bg-gray-100 border border-gray-300 rounded font-mono dark:bg-gray-700 dark:border-gray-600">Ctrl+V</kbd>.</p>
+                        <input type="file" id="mergeInput" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" class="hidden">
+                        <button type="button" onclick="event.stopPropagation(); document.getElementById('mergeInput').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium transition shadow-sm inline-flex items-center gap-2 dark:bg-blue-500 dark:hover:bg-blue-600">
                             <i data-lucide="plus" class="w-4 h-4"></i> Seleccionar archivos
                         </button>
                     </div>
@@ -324,7 +354,7 @@
             </div>
 
             <div class="bg-white border-t border-gray-200 p-4 pb-10 flex justify-between items-center z-10 px-8 dark:bg-gray-800 dark:border-gray-700">
-                <button onclick="clearMergeList()" class="text-gray-500 hover:text-red-600 text-sm font-medium transition dark:text-gray-400 dark:hover:text-red-400">Limpiar lista</button>
+                <button type="button" id="merge-clear-btn" disabled class="text-gray-500 enabled:hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium transition dark:text-gray-400 dark:enabled:hover:text-red-400">Limpiar lista</button>
                 <div class="flex gap-4 items-center">
                     <span id="merge-file-count" class="text-sm text-gray-500 dark:text-gray-400">0 archivos</span>
                     <button id="mergeBtn" disabled class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-2.5 rounded-xl font-bold transition shadow-md flex items-center gap-2 dark:bg-blue-500 dark:hover:bg-blue-600">
@@ -337,25 +367,33 @@
         <!-- TAB 2: DIVIDIR (SPLIT) -->
         <section id="content-split" class="tab-content flex-col h-full">
              <div id="split-upload" class="flex-1 flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
-                <div class="bg-white p-12 rounded-2xl shadow-sm border border-gray-200 text-center max-w-md w-full dark:bg-gray-800 dark:border-gray-700">
-                    <div class="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-600 dark:bg-gray-700 dark:text-indigo-400">
+                <div id="split-drop-zone" class="bg-white p-12 rounded-2xl shadow-sm border-2 border-dashed border-gray-300 hover:border-indigo-500 transition-colors cursor-pointer group text-center max-w-md w-full dark:bg-gray-800 dark:border-gray-600 dark:hover:border-indigo-400">
+                    <div class="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-600 group-hover:scale-110 transition-transform dark:bg-gray-700 dark:text-indigo-400">
                         <i data-lucide="scissors" class="w-10 h-10"></i>
                     </div>
                     <h2 class="text-2xl font-bold mb-2 dark:text-white">Dividir PDF</h2>
-                    <p class="text-gray-500 mb-8 dark:text-gray-400">Extrae rangos de páginas o divide en múltiples archivos.</p>
+                    <p class="text-gray-500 mb-2 dark:text-gray-400">Extrae rangos de páginas o divide en múltiples archivos.</p>
+                    <p class="text-xs text-gray-400 mb-7 dark:text-gray-500">Arrastra tu PDF aquí o haz clic para seleccionarlo</p>
                     <input type="file" id="splitInput" accept="application/pdf" class="hidden">
-                    <button onclick="document.getElementById('splitInput').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-sm dark:bg-indigo-500 dark:hover:bg-indigo-600">
+                    <button type="button" onclick="event.stopPropagation(); document.getElementById('splitInput').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-sm dark:bg-indigo-500 dark:hover:bg-indigo-600">
                         Seleccionar PDF
                     </button>
                 </div>
             </div>
 
             <div id="split-workspace" class="hidden flex-1 flex overflow-hidden">
-                <div class="flex-1 bg-gray-100 p-6 overflow-y-auto custom-scroll dark:bg-gray-900">
+                <div id="split-scroll-area" class="flex-1 bg-gray-100 p-6 overflow-y-auto custom-scroll dark:bg-gray-900">
                     <div id="splitGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-6xl mx-auto"></div>
                 </div>
 
                 <aside class="w-80 bg-white border-l border-gray-200 flex flex-col p-6 shadow-xl z-10 overflow-y-auto dark:bg-gray-800 dark:border-gray-700">
+                    <div class="mb-4 pb-4 border-b border-gray-100 flex items-center justify-between gap-2 dark:border-gray-700">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <i data-lucide="file-text" class="w-4 h-4 text-indigo-600 flex-shrink-0 dark:text-indigo-400"></i>
+                            <span id="split-filename-display" class="font-bold text-sm text-gray-700 truncate dark:text-gray-200" title="">documento.pdf</span>
+                        </div>
+                        <span id="split-page-count" class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 dark:bg-indigo-900/40 dark:text-indigo-300">0 págs</span>
+                    </div>
                     <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2 text-lg dark:text-white"><i data-lucide="settings-2" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i> Opciones</h3>
 
                     <div class="space-y-6 flex-1">
@@ -412,25 +450,27 @@
         <!-- TAB 3: ORGANIZAR -->
         <section id="content-organize" class="tab-content flex-col h-full">
             <div id="organize-upload" class="flex-1 flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
-                <div class="bg-white p-12 rounded-2xl shadow-sm border border-gray-200 text-center max-w-md w-full dark:bg-gray-800 dark:border-gray-700">
-                    <div class="bg-orange-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-orange-600 dark:bg-gray-700 dark:text-orange-400">
+                <div id="organize-drop-zone" class="bg-white p-12 rounded-2xl shadow-sm border-2 border-dashed border-gray-300 hover:border-orange-500 transition-colors cursor-pointer group text-center max-w-md w-full dark:bg-gray-800 dark:border-gray-600 dark:hover:border-orange-400">
+                    <div class="bg-orange-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-orange-600 group-hover:scale-110 transition-transform dark:bg-gray-700 dark:text-orange-400">
                         <i data-lucide="layout-grid" class="w-10 h-10"></i>
                     </div>
                     <h2 class="text-2xl font-bold mb-2 dark:text-white">Organizar PDF</h2>
-                    <p class="text-gray-500 mb-8 dark:text-gray-400">Reordena, rota o elimina páginas.</p>
+                    <p class="text-gray-500 mb-2 dark:text-gray-400">Reordena, rota o elimina páginas.</p>
+                    <p class="text-xs text-gray-400 mb-7 dark:text-gray-500">Arrastra tu PDF aquí o haz clic para seleccionarlo</p>
                     <input type="file" id="organizeInput" accept="application/pdf" class="hidden">
-                    <button onclick="document.getElementById('organizeInput').click()" class="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-sm dark:bg-orange-500 dark:hover:bg-orange-600">Seleccionar PDF</button>
+                    <button type="button" onclick="event.stopPropagation(); document.getElementById('organizeInput').click()" class="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-sm dark:bg-orange-500 dark:hover:bg-orange-600">Seleccionar PDF</button>
                 </div>
             </div>
             <div id="organize-workspace" class="hidden flex-1 flex flex-col h-full overflow-hidden">
                 <div class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm z-10 dark:bg-gray-800 dark:border-gray-700">
-                    <div class="flex items-center gap-3">
-                         <span class="font-bold text-gray-700 truncate max-w-xs dark:text-gray-200" id="organize-filename">doc.pdf</span>
-                         <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full dark:bg-gray-700 dark:text-gray-300" id="organize-page-count">0 págs</span>
+                    <div class="flex items-center gap-3 min-w-0">
+                         <i data-lucide="file-text" class="w-4 h-4 text-orange-600 flex-shrink-0 dark:text-orange-400"></i>
+                         <span class="font-bold text-gray-700 truncate max-w-xs dark:text-gray-200" id="organize-filename" title="">doc.pdf</span>
+                         <span class="text-xs bg-orange-50 text-orange-700 px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap dark:bg-orange-900/40 dark:text-orange-300" id="organize-page-count">0 págs</span>
                     </div>
                     <button onclick="resetTool('organize')" class="text-gray-500 hover:text-red-600 text-sm font-medium flex items-center gap-1 dark:text-gray-400 dark:hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i> Reiniciar</button>
                 </div>
-                <div class="flex-1 bg-gray-100 p-8 overflow-y-auto custom-scroll dark:bg-gray-900">
+                <div id="organize-scroll-area" class="flex-1 bg-gray-100 p-8 overflow-y-auto custom-scroll dark:bg-gray-900">
                     <div id="organizeGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 max-w-7xl mx-auto"></div>
                 </div>
                 <div class="bg-white border-t border-gray-200 p-4 flex justify-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 dark:bg-gray-800 dark:border-gray-700">
@@ -442,21 +482,29 @@
         <!-- TAB 4: IMÁGENES -->
         <section id="content-images" class="tab-content flex-col h-full">
             <div id="images-upload" class="flex-1 flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
-                <div class="bg-white p-12 rounded-2xl shadow-sm border border-gray-200 text-center max-w-md w-full dark:bg-gray-800 dark:border-gray-700">
-                    <div class="bg-green-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 dark:bg-gray-700 dark:text-green-400">
+                <div id="images-drop-zone" class="bg-white p-12 rounded-2xl shadow-sm border-2 border-dashed border-gray-300 hover:border-green-500 transition-colors cursor-pointer group text-center max-w-md w-full dark:bg-gray-800 dark:border-gray-600 dark:hover:border-green-400">
+                    <div class="bg-green-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 group-hover:scale-110 transition-transform dark:bg-gray-700 dark:text-green-400">
                         <i data-lucide="images" class="w-10 h-10"></i>
                     </div>
                     <h2 class="text-2xl font-bold mb-2 dark:text-white">PDF a imágenes</h2>
-                    <p class="text-gray-500 mb-8 dark:text-gray-400">Convierte páginas a JPG o PNG.</p>
+                    <p class="text-gray-500 mb-2 dark:text-gray-400">Convierte páginas a JPG o PNG.</p>
+                    <p class="text-xs text-gray-400 mb-7 dark:text-gray-500">Arrastra tu PDF aquí o haz clic para seleccionarlo</p>
                     <input type="file" id="imagesInput" accept="application/pdf" class="hidden">
-                    <button onclick="document.getElementById('imagesInput').click()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-sm dark:bg-green-500 dark:hover:bg-green-600">Seleccionar PDF</button>
+                    <button type="button" onclick="event.stopPropagation(); document.getElementById('imagesInput').click()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-sm dark:bg-green-500 dark:hover:bg-green-600">Seleccionar PDF</button>
                 </div>
             </div>
             <div id="images-workspace" class="hidden flex-1 flex overflow-hidden">
-                <div class="flex-1 bg-gray-100 p-6 overflow-y-auto custom-scroll relative dark:bg-gray-900">
+                <div id="images-scroll-area" class="flex-1 bg-gray-100 p-6 overflow-y-auto custom-scroll relative dark:bg-gray-900">
                     <div id="imagesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 max-w-6xl mx-auto pb-20"></div>
                 </div>
                 <aside class="w-80 bg-white border-l border-gray-200 flex flex-col z-10 shadow-lg p-6 overflow-y-auto dark:bg-gray-800 dark:border-gray-700">
+                    <div class="mb-4 pb-4 border-b border-gray-100 flex items-center justify-between gap-2 dark:border-gray-700">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <i data-lucide="file-text" class="w-4 h-4 text-green-600 flex-shrink-0 dark:text-green-400"></i>
+                            <span id="images-filename-display" class="font-bold text-sm text-gray-700 truncate dark:text-gray-200" title="">documento.pdf</span>
+                        </div>
+                        <span id="images-page-count" class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 dark:bg-green-900/40 dark:text-green-300">0 págs</span>
+                    </div>
                     <div class="border-b border-gray-100 pb-4 mb-4 dark:border-gray-700">
                         <h3 class="font-bold text-gray-800 flex items-center gap-2 dark:text-white"><i data-lucide="sliders-horizontal" class="w-4 h-4 text-gray-500 dark:text-gray-400"></i> Opciones</h3>
                     </div>
@@ -555,7 +603,7 @@
     <!-- Modal Resultados -->
     <div id="download-result-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative animate-fade-in flex flex-col max-h-[80vh] dark:bg-gray-800">
-            <button onclick="document.getElementById('download-result-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <button type="button" onclick="closeDownloadResultModal()" aria-label="Cerrar" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2 dark:text-white"><i data-lucide="check-circle" class="w-6 h-6 text-green-600 dark:text-green-400"></i> Archivos listos</h3>
             <p class="text-sm text-gray-500 mb-4 dark:text-gray-400">Descarga los archivos individualmente:</p>
             <div id="download-list" class="flex-1 overflow-y-auto space-y-2 custom-scroll p-1"></div>
@@ -576,7 +624,7 @@
             </div>
 
             <div class="mt-6 pt-4 border-t border-gray-100 text-center dark:border-gray-700">
-                <button onclick="document.getElementById('download-result-modal').classList.add('hidden')" class="text-blue-600 hover:underline text-sm font-medium dark:text-blue-400">Cerrar</button>
+                <button type="button" onclick="closeDownloadResultModal()" class="text-blue-600 hover:underline text-sm font-medium dark:text-blue-400">Cerrar</button>
             </div>
         </div>
     </div>
@@ -805,7 +853,120 @@
 
         themeToggleBtn.addEventListener('click', toggleTheme);
 
+        // ==========================================
+        // UTILIDADES COMPARTIDAS (NOMBRES, LAZY RENDER, DRAG & DROP)
+        // ==========================================
+        function stripPdfExt(filename) {
+            if (!filename) return 'documento';
+            return filename.replace(/\.pdf$/i, '').trim() || 'documento';
+        }
 
+        function buildOutputFilename(sourceName, suffix, ext = 'pdf') {
+            const base = stripPdfExt(sourceName);
+            const suffixToken = `_${suffix}`;
+            const cleanBase = base.toLowerCase().endsWith(suffixToken.toLowerCase()) ? base : `${base}${suffixToken}`;
+            return `${cleanBase}.${ext}`;
+        }
+
+        function formatPageCount(n) {
+            return `${n} ${n === 1 ? 'pág' : 'págs'}`;
+        }
+
+        function isPdfFile(file) {
+            return Boolean(file && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)));
+        }
+
+        const thumbObservers = { split: null, organize: null, images: null, editor: null };
+
+        function disconnectThumbObserver(key) {
+            if (thumbObservers[key]) {
+                thumbObservers[key].disconnect();
+                thumbObservers[key] = null;
+            }
+        }
+
+        function observeThumbnails(key, scrollRoot, renderTasksMap) {
+            disconnectThumbObserver(key);
+            if (!('IntersectionObserver' in window)) {
+                renderTasksMap.forEach((fn) => fn());
+                renderTasksMap.clear();
+                return;
+            }
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+                    const el = entry.target;
+                    obs.unobserve(el);
+                    const task = renderTasksMap.get(el);
+                    if (task) {
+                        renderTasksMap.delete(el);
+                        task();
+                    }
+                });
+            }, {
+                root: scrollRoot || null,
+                rootMargin: '300px 0px'
+            });
+            thumbObservers[key] = observer;
+            renderTasksMap.forEach((_, el) => observer.observe(el));
+        }
+
+        function setupPdfDropZone(wrapperId, cardId, inputId, onFileCallback, highlightClasses) {
+            const wrapperEl = document.getElementById(wrapperId);
+            const cardEl = document.getElementById(cardId);
+            const inputEl = document.getElementById(inputId);
+            if (!wrapperEl || !cardEl || !inputEl) return;
+
+            cardEl.addEventListener('click', () => inputEl.click());
+
+            wrapperEl.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                cardEl.classList.add(...highlightClasses);
+            });
+            wrapperEl.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                if (!wrapperEl.contains(e.relatedTarget)) {
+                    cardEl.classList.remove(...highlightClasses);
+                }
+            });
+            wrapperEl.addEventListener('drop', (e) => {
+                e.preventDefault();
+                cardEl.classList.remove(...highlightClasses);
+                const files = Array.from(e.dataTransfer?.files || []);
+                const pdfFile = files.find(isPdfFile);
+                if (pdfFile) onFileCallback(pdfFile);
+            });
+        }
+
+        // Prevent accidental browser navigation when dropping files outside drop zones
+        window.addEventListener('dragover', (e) => e.preventDefault());
+        window.addEventListener('drop', (e) => e.preventDefault());
+
+        async function embedImageFileInPdf(pdfDoc, file) {
+            const isJpeg = file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name);
+            const isPng = file.type === 'image/png' || /\.png$/i.test(file.name);
+            if (isJpeg) return pdfDoc.embedJpg(await file.arrayBuffer());
+            if (isPng) return pdfDoc.embedPng(await file.arrayBuffer());
+
+            // Convert WebP / BMP / GIF clipboard or web images to PNG via offscreen canvas
+            const bitmapUrl = URL.createObjectURL(file);
+            try {
+                const imgEl = await new Promise((resolve, reject) => {
+                    const im = new Image();
+                    im.onload = () => resolve(im);
+                    im.onerror = reject;
+                    im.src = bitmapUrl;
+                });
+                const cvs = document.createElement('canvas');
+                cvs.width = imgEl.naturalWidth || imgEl.width;
+                cvs.height = imgEl.naturalHeight || imgEl.height;
+                cvs.getContext('2d').drawImage(imgEl, 0, 0);
+                const pngBlob = await new Promise((r) => cvs.toBlob(r, 'image/png'));
+                return pdfDoc.embedPng(await pngBlob.arrayBuffer());
+            } finally {
+                URL.revokeObjectURL(bitmapUrl);
+            }
+        }
 
         // ==========================================
         // LÓGICA DEL EDITOR (NUEVO MÓDULO)
@@ -817,6 +978,7 @@
             pdfData: null,      // ArrayBuffer
             pdfJsDoc: null,     // PDF.js Doc
             canvas: null,       // Fabric Canvas
+            filename: 'documento.pdf',
             currentPage: 1,
             scale: 1,
             pagesData: {},      // { pageNum: json }
@@ -825,6 +987,7 @@
             historyRedo: [],    // Redo stack
             historyProcessing: false, // Flag to prevent loops
             clipboard: null,    // For copy/paste
+            preferFabricClipboard: false, // Distinguishes recent internal Ctrl+C from OS clipboard images
             defaults: {         // User Style Preferences
                 shape: { fill: 'transparent', stroke: '#ff0000', strokeWidth: 3 },
                 text: { fontSize: 24, fill: '#ff0000', fontFamily: 'Arial', fontWeight: 'normal', fontStyle: 'normal', underline: false },
@@ -864,8 +1027,10 @@
             showProgress('Cargando Editor...', 10);
             try {
                 if(file) {
+                    editorState.filename = file.name || 'documento.pdf';
                     editorState.pdfData = await file.arrayBuffer();
                 } else if(bytes) {
+                    editorState.filename = name || 'documento.pdf';
                     editorState.pdfData = bytes.buffer.slice(0); // Ensure ArrayBuffer
                 }
 
@@ -879,6 +1044,13 @@
                 editorState.historyRedo = [];
                 editorState.currentPage = 1;
                 editorState.scale = 1; // Reset scale
+                editorState.preferFabricClipboard = false;
+
+                // Update File Info Header
+                const fnDisplay = document.getElementById('editor-filename-display');
+                fnDisplay.textContent = editorState.filename;
+                fnDisplay.title = editorState.filename;
+                document.getElementById('editor-page-count').textContent = formatPageCount(editorState.pdfJsDoc.numPages);
                 
                 // Reset UI Layout
                 document.getElementById('canvas-wrapper').style.transform = 'scale(1)';
@@ -1038,11 +1210,14 @@
         // --- Sidebar & Navigation ---
         async function renderEditorSidebar() {
             const container = document.getElementById('editor-sidebar');
+            disconnectThumbObserver('editor');
             container.innerHTML = '';
+            const pdfDoc = editorState.pdfJsDoc;
+            const renderTasks = new Map();
             
-            for(let i=1; i<=editorState.pdfJsDoc.numPages; i++) {
+            for(let i=1; i<=pdfDoc.numPages; i++) {
                 const div = document.createElement('div');
-                div.className = `page-thumbnail p-2 border-2 border-transparent rounded cursor-pointer hover:bg-gray-200 transition bg-white ${i===1?'active':''} dark:bg-gray-700 dark:hover:bg-gray-600`;
+                div.className = `page-thumbnail p-2 border-2 border-transparent rounded cursor-pointer hover:bg-gray-200 transition bg-white ${i===1?'active':''} ${i > 6 ? 'deferred-sidebar-card' : ''} dark:bg-gray-700 dark:hover:bg-gray-600`;
                 div.id = `thumb-${i}`;
                 div.innerHTML = `
                     <div class="h-32 flex items-center justify-center bg-gray-100 overflow-hidden mb-1 rounded dark:bg-gray-800">
@@ -1053,14 +1228,18 @@
                 div.onclick = () => loadEditorPage(i);
                 container.appendChild(div);
                 
-                // Lazy render thumb
-                editorState.pdfJsDoc.getPage(i).then(page => {
-                    const cvs = document.getElementById(`thumb-cvs-${i}`);
-                    const viewport = page.getViewport({ scale: 0.2 });
-                    cvs.width = viewport.width; cvs.height = viewport.height;
-                    page.render({ canvasContext: cvs.getContext('2d'), viewport: viewport });
+                renderTasks.set(div, () => {
+                    if (editorState.pdfJsDoc !== pdfDoc) return;
+                    pdfDoc.getPage(i).then(page => {
+                        const cvs = document.getElementById(`thumb-cvs-${i}`);
+                        if (!cvs || !cvs.isConnected) return;
+                        const viewport = page.getViewport({ scale: 0.2 });
+                        cvs.width = viewport.width; cvs.height = viewport.height;
+                        page.render({ canvasContext: cvs.getContext('2d'), viewport: viewport });
+                    }).catch(() => {});
                 });
             }
+            observeThumbnails('editor', container, renderTasks);
         }
 
         async function loadEditorPage(pageNum, force = false) {
@@ -1225,30 +1404,35 @@
             setEditorMode('select');
         }
 
+        function insertImageDataUrlToEditor(dataUrl) {
+            if (!editorState.canvas) return;
+            fabric.Image.fromURL(dataUrl, (img) => {
+                if (!img || !editorState.canvas) return;
+                // Smart Scaling: Max 50% of logical page width (independent of zoom)
+                const logicalWidth = editorState.baseWidth || editorState.canvas.getWidth();
+                const maxWidth = logicalWidth * 0.5;
+                const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+                
+                img.set({
+                    left: 100, top: 100,
+                    scaleX: scale, scaleY: scale
+                });
+                
+                editorState.canvas.add(img);
+                editorState.canvas.setActiveObject(img);
+                setEditorMode('select');
+                syncCurrentEditorPage();
+                saveHistory();
+            });
+        }
+
         function handleAddImage(input) {
             const file = input.files[0];
             input.value = ''; // Reset immediately for next use (even if same file)
             if(!file) return;
             
             const reader = new FileReader();
-            reader.onload = (e) => {
-                fabric.Image.fromURL(e.target.result, (img) => {
-                    // Smart Scaling: Max 50% of logical page width (independent of zoom)
-                    const logicalWidth = editorState.baseWidth || editorState.canvas.getWidth();
-                    const maxWidth = logicalWidth * 0.5;
-                    const scale = img.width > maxWidth ? maxWidth / img.width : 1;
-                    
-                    img.set({
-                        left: 100, top: 100,
-                        scaleX: scale, scaleY: scale
-                    });
-                    
-                    editorState.canvas.add(img);
-                    editorState.canvas.setActiveObject(img);
-                    setEditorMode('select');
-                    saveHistory();
-                });
-            };
+            reader.onload = (e) => insertImageDataUrlToEditor(e.target.result);
             reader.readAsDataURL(file);
         }
 
@@ -1779,6 +1963,39 @@
             });
         }
 
+        function pasteFabricClipboard() {
+            if (!editorState.clipboard || !editorState.canvas) return false;
+            editorState.clipboard.clone(cloned => {
+                editorState.canvas.discardActiveObject();
+                cloned.set({
+                    left: cloned.left + 10,
+                    top: cloned.top + 10,
+                    evented: true,
+                    id: crypto.randomUUID()
+                });
+                if (cloned.type === 'activeSelection') {
+                    cloned.canvas = editorState.canvas;
+                    cloned.forEachObject(o => {
+                        o.id = crypto.randomUUID();
+                        editorState.canvas.add(o);
+                    });
+                    cloned.setCoords();
+                } else {
+                    editorState.canvas.add(cloned);
+                }
+                editorState.canvas.setActiveObject(cloned);
+                editorState.canvas.requestRenderAll();
+                syncCurrentEditorPage();
+                saveHistory();
+            }, EDITOR_SERIALIZE_PROPS);
+            return true;
+        }
+
+        // Reset internal clipboard preference when user switches out to copy an external screenshot/image
+        window.addEventListener('blur', () => {
+            editorState.preferFabricClipboard = false;
+        });
+
         function handleEditorKeys(e) {
             if (!document.getElementById('content-editor').classList.contains('active')) return;
             if (document.getElementById('editor-workspace').classList.contains('hidden') || !editorState.canvas) return;
@@ -1804,35 +2021,20 @@
             // Copy (Ctrl/Cmd+C)
             if (modKey && key === 'c') {
                 if (activeObj) {
-                    activeObj.clone(cloned => { editorState.clipboard = cloned; }, EDITOR_SERIALIZE_PROPS);
+                    activeObj.clone(cloned => {
+                        editorState.clipboard = cloned;
+                        editorState.preferFabricClipboard = true;
+                    }, EDITOR_SERIALIZE_PROPS);
                 }
                 return;
             }
-            // Paste (Ctrl/Cmd+V)
-            if (modKey && key === 'v' && editorState.clipboard) {
-                editorState.clipboard.clone(cloned => {
-                    editorState.canvas.discardActiveObject();
-                    cloned.set({
-                        left: cloned.left + 10,
-                        top: cloned.top + 10,
-                        evented: true,
-                        id: crypto.randomUUID()
-                    });
-                    if (cloned.type === 'activeSelection') {
-                        cloned.canvas = editorState.canvas;
-                        cloned.forEachObject(o => {
-                            o.id = crypto.randomUUID();
-                            editorState.canvas.add(o);
-                        });
-                        cloned.setCoords();
-                    } else {
-                        editorState.canvas.add(cloned);
-                    }
-                    editorState.canvas.setActiveObject(cloned);
-                    editorState.canvas.requestRenderAll();
-                    syncCurrentEditorPage();
-                    saveHistory();
-                }, EDITOR_SERIALIZE_PROPS);
+            // Paste (Ctrl/Cmd+V): intercept immediately only when user recently copied a Fabric object;
+            // otherwise let native 'paste' event inspect system clipboard images first (with fallback to Fabric clipboard).
+            if (modKey && key === 'v') {
+                if (editorState.preferFabricClipboard && editorState.clipboard) {
+                    e.preventDefault();
+                    pasteFabricClipboard();
+                }
                 return;
             }
             // Duplicate (Ctrl/Cmd+D)
@@ -2000,13 +2202,14 @@
                 });
                 
                 const blob = new Blob([pdfBytes], {type: 'application/pdf'});
+                const outName = buildOutputFilename(editorState.filename, 'editado');
                 
                 // Show Success Modal
                 const modal = document.getElementById('editor-success-modal');
-                document.getElementById('edt-success-download').onclick = () => saveBlob(blob, 'editado.pdf');
-                document.getElementById('edt-success-org').onclick = () => { modal.classList.add('hidden'); switchTab('organize'); loadOrganizeFromBytes(new Uint8Array(pdfBytes), 'editado.pdf'); };
-                document.getElementById('edt-success-img').onclick = () => { modal.classList.add('hidden'); switchTab('images'); loadImgPdf(null, new Uint8Array(pdfBytes), 'editado.pdf'); };
-                document.getElementById('edt-success-split').onclick = () => { modal.classList.add('hidden'); switchTab('split'); loadSplitPdf(null, new Uint8Array(pdfBytes), 'editado.pdf'); };
+                document.getElementById('edt-success-download').onclick = () => saveBlob(blob, outName);
+                document.getElementById('edt-success-org').onclick = () => { modal.classList.add('hidden'); switchTab('organize'); loadOrganizeFromBytes(new Uint8Array(pdfBytes), outName); };
+                document.getElementById('edt-success-img').onclick = () => { modal.classList.add('hidden'); switchTab('images'); loadImgPdf(null, new Uint8Array(pdfBytes), outName); };
+                document.getElementById('edt-success-split').onclick = () => { modal.classList.add('hidden'); switchTab('split'); loadSplitPdf(null, new Uint8Array(pdfBytes), outName); };
                 modal.classList.remove('hidden');
 
             } catch(e) { console.error(e); alert("Error guardando PDF"); }
@@ -2076,13 +2279,14 @@
                 const finalBytes = await flatPdf.save();
                 
                 const blob = new Blob([finalBytes], {type: 'application/pdf'});
+                const outName = buildOutputFilename(editorState.filename, 'aplanado');
                 
                 // Show Success Modal
                 const modal = document.getElementById('editor-success-modal');
-                document.getElementById('edt-success-download').onclick = () => saveBlob(blob, 'aplanado_seguro.pdf');
-                document.getElementById('edt-success-org').onclick = () => { modal.classList.add('hidden'); switchTab('organize'); loadOrganizeFromBytes(new Uint8Array(finalBytes), 'aplanado_seguro.pdf'); };
-                document.getElementById('edt-success-img').onclick = () => { modal.classList.add('hidden'); switchTab('images'); loadImgPdf(null, new Uint8Array(finalBytes), 'aplanado_seguro.pdf'); };
-                document.getElementById('edt-success-split').onclick = () => { modal.classList.add('hidden'); switchTab('split'); loadSplitPdf(null, new Uint8Array(finalBytes), 'aplanado_seguro.pdf'); };
+                document.getElementById('edt-success-download').onclick = () => saveBlob(blob, outName);
+                document.getElementById('edt-success-org').onclick = () => { modal.classList.add('hidden'); switchTab('organize'); loadOrganizeFromBytes(new Uint8Array(finalBytes), outName); };
+                document.getElementById('edt-success-img').onclick = () => { modal.classList.add('hidden'); switchTab('images'); loadImgPdf(null, new Uint8Array(finalBytes), outName); };
+                document.getElementById('edt-success-split').onclick = () => { modal.classList.add('hidden'); switchTab('split'); loadSplitPdf(null, new Uint8Array(finalBytes), outName); };
                 modal.classList.remove('hidden');
 
             } catch(e) { console.error(e); alert("Error al aplanar PDF"); }
@@ -2094,25 +2298,14 @@
 
         // --- Init Function ---
         function switchTab(tabId) {
+            const baseClasses = "px-3 xl:px-3.5 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0";
+            const activeClasses = "bg-white text-blue-600 shadow-sm dark:bg-gray-600 dark:text-blue-300";
+            const inactiveClasses = "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200";
+
             document.querySelectorAll('nav button').forEach(btn => {
-                // Determine icon based on tab ID
-                let iconName = '';
-                if(btn.id === 'tab-merge') iconName = 'combine';
-                else if(btn.id === 'tab-split') iconName = 'scissors';
-                else if(btn.id === 'tab-organize') iconName = 'layout-grid';
-                else if(btn.id === 'tab-images') iconName = 'image';
-                else if(btn.id === 'tab-editor') iconName = 'pencil';
-
-                // Base classes
-                const baseClasses = "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 shadow-sm";
-                const activeClasses = "bg-white text-blue-600 dark:bg-gray-600 dark:text-blue-300";
-                const inactiveClasses = "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 shadow-none";
-
-                if(btn.id === `tab-${tabId}`) {
-                    btn.className = `${baseClasses} ${activeClasses}`;
-                } else {
-                    btn.className = `${baseClasses} ${inactiveClasses}`;
-                }
+                btn.className = btn.id === `tab-${tabId}`
+                    ? `${baseClasses} ${activeClasses}`
+                    : `${baseClasses} ${inactiveClasses}`;
             });
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(`content-${tabId}`).classList.add('active');
@@ -2142,10 +2335,14 @@
 
         // --- MERGE LOGIC ---
         let mergeFiles = [];
+        let pastedImageCounter = 0;
         const mergeList = document.getElementById('mergeList');
         const mergeBtn = document.getElementById('mergeBtn');
+        const mergeClearBtn = document.getElementById('merge-clear-btn');
         const mergeSuccessModal = document.getElementById('merge-success-modal');
         let mergeSortable;
+
+        mergeClearBtn.addEventListener('click', clearMergeList);
 
         document.getElementById('mergeInput').addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
@@ -2153,22 +2350,24 @@
             if (files.length) await handleMergeFiles(files);
         });
         const mergeDropZone = document.getElementById('merge-drop-zone');
+        mergeDropZone.addEventListener('click', () => document.getElementById('mergeInput').click());
         mergeDropZone.addEventListener('dragover', (e) => { e.preventDefault(); mergeDropZone.classList.add('border-blue-500', 'bg-blue-50', 'dark:border-blue-400', 'dark:bg-gray-700'); });
-        mergeDropZone.addEventListener('dragleave', (e) => { e.preventDefault(); mergeDropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dark:border-blue-400', 'dark:bg-gray-700'); });
+        mergeDropZone.addEventListener('dragleave', (e) => { e.preventDefault(); if (!mergeDropZone.contains(e.relatedTarget)) mergeDropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dark:border-blue-400', 'dark:bg-gray-700'); });
         mergeDropZone.addEventListener('drop', (e) => { e.preventDefault(); mergeDropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dark:border-blue-400', 'dark:bg-gray-700'); handleMergeFiles(e.dataTransfer.files); });
 
         async function handleMergeFiles(files) {
-            const validFiles = Array.from(files).filter(f => f.type === 'application/pdf' || f.type.startsWith('image/'));
+            const validFiles = Array.from(files).filter(f => isPdfFile(f) || (f.type && f.type.startsWith('image/')));
             for (const file of validFiles) {
                 let pageCount = 1;
-                if(file.type === 'application/pdf') {
+                const isPdf = isPdfFile(file);
+                if(isPdf) {
                     try {
                         const buff = await file.arrayBuffer();
                         const doc = await PDFDocument.load(buff, { ignoreEncryption: true });
                         pageCount = doc.getPageCount();
                     } catch(e) { console.error(e); continue; }
                 }
-                mergeFiles.push({ id: crypto.randomUUID(), file: file, isImage: file.type.startsWith('image/'), pageCount: pageCount });
+                mergeFiles.push({ id: crypto.randomUUID(), file: file, isImage: !isPdf, pageCount: pageCount });
             }
             renderMergeList();
         }
@@ -2181,7 +2380,7 @@
                 div.innerHTML = `
                     <div class="flex items-center gap-3 overflow-hidden pointer-events-none">
                         <div class="p-2 bg-gray-50 rounded-lg dark:bg-gray-700">${item.isImage ? '<i data-lucide="image" class="w-5 h-5 text-green-600 dark:text-green-400"></i>' : '<i data-lucide="file-text" class="w-5 h-5 text-red-600 dark:text-red-400"></i>'}</div>
-                        <div class="min-w-0"><p class="font-medium text-gray-700 truncate text-sm dark:text-gray-200">${item.file.name}</p><p class="text-xs text-gray-400 dark:text-gray-500">${item.pageCount} págs</p></div>
+                        <div class="min-w-0"><p class="font-medium text-gray-700 truncate text-sm dark:text-gray-200">${item.file.name}</p><p class="text-xs text-gray-400 dark:text-gray-500">${formatPageCount(item.pageCount)}</p></div>
                     </div>
                     <div class="flex items-center gap-1">
                         <button onclick="removeMergeItem(${index})" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition dark:hover:bg-red-900/30 dark:hover:text-red-400"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -2191,6 +2390,7 @@
             });
             lucide.createIcons();
             document.getElementById('merge-file-count').textContent = `${mergeFiles.length} ${mergeFiles.length === 1 ? 'archivo' : 'archivos'}`;
+            mergeClearBtn.disabled = mergeFiles.length === 0;
             mergeBtn.disabled = mergeFiles.length < 2;
             if(mergeSortable) mergeSortable.destroy();
             mergeSortable = new Sortable(mergeList, { animation: 150, ghostClass: 'merge-ghost', dragClass: 'merge-drag', onEnd: (evt) => {
@@ -2207,17 +2407,15 @@
                 for(let i=0; i<mergeFiles.length; i++) {
                     const item = mergeFiles[i];
                     showProgress(`Procesando ${item.file.name}...`, (i/mergeFiles.length)*90);
-                    const buffer = await item.file.arrayBuffer();
                     if(item.isImage) {
                         const page = mergedPdf.addPage();
-                        let img;
-                        if(item.file.type === 'image/jpeg') img = await mergedPdf.embedJpg(buffer);
-                        else img = await mergedPdf.embedPng(buffer);
+                        const img = await embedImageFileInPdf(mergedPdf, item.file);
                         const { width, height } = img.scale(1);
                         const pW = page.getWidth(), pH = page.getHeight();
                         const scale = Math.min(pW/width, pH/height);
                         page.drawImage(img, { x: (pW - width*scale)/2, y: (pH - height*scale)/2, width: width*scale, height: height*scale });
                     } else {
+                        const buffer = await item.file.arrayBuffer();
                         const pdf = await PDFDocument.load(buffer, {ignoreEncryption: true});
                         const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
                         pages.forEach(p => mergedPdf.addPage(p));
@@ -2275,6 +2473,7 @@
 
         // Universal Loader for Split
         async function loadSplitPdf(file, bytes=null, name=null) {
+            if (!file && !bytes) return;
             showProgress('Cargando PDF...', 10);
             try {
                 // RESET STATE
@@ -2283,16 +2482,23 @@
                 splitRangeInput.disabled = false;
                 splitRangeInput.classList.remove('bg-gray-100', 'text-gray-400', 'dark:bg-gray-800', 'dark:text-gray-500');
 
+                let displayFilename = 'documento.pdf';
                 if(file) {
-                    splitFilename = file.name.replace('.pdf','');
+                    displayFilename = file.name || 'documento.pdf';
                     activeSplitBytes = await file.arrayBuffer();
                 } else if (bytes) {
-                    splitFilename = name.replace('.pdf','');
+                    displayFilename = name || 'documento.pdf';
                     activeSplitBytes = bytes.buffer.slice(0); // clone
                 }
+                splitFilename = stripPdfExt(displayFilename);
 
                 const bufferForViewer = activeSplitBytes.slice(0);
                 activeSplitPdf = await pdfjsLib.getDocument(bufferForViewer).promise;
+
+                const fnEl = document.getElementById('split-filename-display');
+                fnEl.textContent = displayFilename;
+                fnEl.title = displayFilename;
+                document.getElementById('split-page-count').textContent = formatPageCount(activeSplitPdf.numPages);
 
                 document.getElementById('split-upload').classList.add('hidden');
                 document.getElementById('split-workspace').classList.remove('hidden');
@@ -2305,11 +2511,14 @@
 
         async function renderSplitGrid() {
             const grid = document.getElementById('splitGrid');
+            disconnectThumbObserver('split');
             grid.innerHTML = ''; splitSelection.clear();
+            const pdfDoc = activeSplitPdf;
+            const renderTasks = new Map();
 
-            for(let i=1; i<=activeSplitPdf.numPages; i++) {
+            for(let i=1; i<=pdfDoc.numPages; i++) {
                 const div = document.createElement('div');
-                div.className = "relative group cursor-pointer split-page-card";
+                div.className = `relative group cursor-pointer split-page-card ${i > 12 ? 'deferred-grid-card' : ''}`;
                 div.dataset.page = i;
                 div.innerHTML = `
                     <div class="absolute top-2 left-2 z-10 w-6 h-6 bg-white border-2 border-gray-300 rounded transition-colors flex items-center justify-center check-indicator dark:bg-gray-800 dark:border-gray-600">
@@ -2325,14 +2534,20 @@
                 `;
                 div.onclick = () => toggleSplitPage(i);
                 grid.appendChild(div);
-                activeSplitPdf.getPage(i).then(page => {
-                    const cvs = document.getElementById(`split-thumb-${i}`);
-                    const vp = page.getViewport({scale: 0.3});
-                    cvs.width = vp.width; cvs.height = vp.height;
-                    page.render({canvasContext: cvs.getContext('2d'), viewport: vp});
+                renderTasks.set(div, () => {
+                    if (activeSplitPdf !== pdfDoc) return;
+                    pdfDoc.getPage(i).then(page => {
+                        const cvs = document.getElementById(`split-thumb-${i}`);
+                        if (!cvs || !cvs.isConnected) return;
+                        const vp = page.getViewport({scale: 0.3});
+                        cvs.width = vp.width; cvs.height = vp.height;
+                        page.render({canvasContext: cvs.getContext('2d'), viewport: vp});
+                    }).catch(() => {});
                 });
             }
             lucide.createIcons();
+            updateSplitGridStyles();
+            observeThumbnails('split', document.getElementById('split-scroll-area'), renderTasks);
         }
 
         function toggleSplitPage(n) {
@@ -2524,8 +2739,27 @@
             } catch(e) { console.error(e); }
         }
 
-        // Enhanced Download List Modal
+        // Enhanced Download List Modal (with Object URL lifecycle cleanup)
+        let activeDownloadUrls = [];
+        const downloadResultModalEl = document.getElementById('download-result-modal');
+
+        function revokeDownloadUrls() {
+            activeDownloadUrls.forEach((url) => URL.revokeObjectURL(url));
+            activeDownloadUrls = [];
+        }
+
+        function closeDownloadResultModal() {
+            downloadResultModalEl.classList.add('hidden');
+            document.getElementById('download-list').innerHTML = '';
+            revokeDownloadUrls();
+        }
+
+        downloadResultModalEl.addEventListener('click', (e) => {
+            if (e.target === downloadResultModalEl) closeDownloadResultModal();
+        });
+
         function showDownloadList(files, singleFileMode = false) {
+            revokeDownloadUrls();
             const listContainer = document.getElementById('download-list');
             listContainer.innerHTML = '';
 
@@ -2534,23 +2768,21 @@
             if (singleFileMode) {
                 actionsDiv.classList.remove('hidden');
                 actionsDiv.classList.add('flex');
-                const bytes = new Uint8Array(2); // Mock, real one needed.
-                // NOTE: We need the ArrayBuffer from the blob for connectors.
                 const file = files[0];
                 file.blob.arrayBuffer().then(buffer => {
                     const u8 = new Uint8Array(buffer);
                     document.getElementById('res-to-org-btn').onclick = () => {
-                        document.getElementById('download-result-modal').classList.add('hidden');
+                        closeDownloadResultModal();
                         switchTab('organize');
                         loadOrganizeFromBytes(u8, file.name);
                     };
                     document.getElementById('res-to-editor-btn').onclick = () => {
-                        document.getElementById('download-result-modal').classList.add('hidden');
+                        closeDownloadResultModal();
                         switchTab('editor');
                         loadEditorPdf(null, u8, file.name);
                     };
                     document.getElementById('res-to-img-btn').onclick = () => {
-                        document.getElementById('download-result-modal').classList.add('hidden');
+                        closeDownloadResultModal();
                         switchTab('images');
                         loadImgPdf(null, u8, file.name);
                     };
@@ -2562,6 +2794,7 @@
 
             files.forEach(f => {
                 const url = URL.createObjectURL(f.blob);
+                activeDownloadUrls.push(url);
                 const item = document.createElement('div');
                 item.className = "flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600";
                 const icon = f.name.endsWith('.pdf') ? 'file-text' : 'image';
@@ -2576,12 +2809,12 @@
                 listContainer.appendChild(item);
             });
             lucide.createIcons();
-            document.getElementById('download-result-modal').classList.remove('hidden');
+            downloadResultModalEl.classList.remove('hidden');
         }
 
 
         // --- ORGANIZE LOGIC ---
-        let organizeOriginalBytes = null; let organizeFilename = ""; let organizeRotations = {}; let activeOrganizePdf = null;
+        let organizeOriginalBytes = null; let organizeFilename = ""; let organizeRotations = {}; let activeOrganizePdf = null; let organizeSortable = null;
         document.getElementById('organizeInput').onchange = (e) => {
             const file = e.target.files[0];
             e.target.value = '';
@@ -2589,26 +2822,49 @@
         };
         async function loadOrganizeFile(file) { if(!file)return; const b=await file.arrayBuffer(); loadOrganizeFromBytes(new Uint8Array(b), file.name); }
         async function loadOrganizeFromBytes(u8, name) {
-            showProgress('Cargando...', 20); organizeOriginalBytes = u8; organizeFilename = name;
-            document.getElementById('organize-filename').innerText = name;
+            showProgress('Cargando...', 20);
+            organizeOriginalBytes = u8;
+            organizeFilename = name || 'documento.pdf';
+            const fnEl = document.getElementById('organize-filename');
+            fnEl.textContent = organizeFilename;
+            fnEl.title = organizeFilename;
             document.getElementById('organize-upload').classList.add('hidden');
             document.getElementById('organize-workspace').classList.remove('hidden');
             document.getElementById('organize-workspace').classList.add('flex');
             try {
+                disconnectThumbObserver('organize');
                 activeOrganizePdf = await pdfjsLib.getDocument(organizeOriginalBytes.buffer.slice(0)).promise;
-                document.getElementById('organize-page-count').innerText = `${activeOrganizePdf.numPages} págs`;
+                const pdfDoc = activeOrganizePdf;
+                document.getElementById('organize-page-count').textContent = formatPageCount(pdfDoc.numPages);
                 const grid = document.getElementById('organizeGrid'); grid.innerHTML = ''; organizeRotations = {};
-                for(let i=1; i<=activeOrganizePdf.numPages; i++) {
+                const renderTasks = new Map();
+                for(let i=1; i<=pdfDoc.numPages; i++) {
                     const div = document.createElement('div'); div.className = "relative group cursor-grab active:cursor-grabbing bg-white p-2 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition dark:bg-gray-800 dark:border-gray-700"; div.dataset.page = i;
                     div.innerHTML = `<div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition z-10"><button onclick="event.stopPropagation(); rotateOrgPage(${i})" class="bg-white p-1.5 rounded shadow text-gray-600 hover:text-orange-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:text-orange-400"><i data-lucide="rotate-cw" class="w-4 h-4"></i></button><button onclick="event.stopPropagation(); deleteOrgPage(this)" class="bg-white p-1.5 rounded shadow text-gray-600 hover:text-red-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:text-red-400"><i data-lucide="trash" class="w-4 h-4"></i></button></div><button onclick="event.stopPropagation(); openZoomModal(${i}, 'organize')" class="absolute bottom-2 right-2 p-1.5 bg-white rounded-full shadow-sm hover:bg-gray-100 text-gray-600 transition z-20 opacity-0 group-hover:opacity-100 dark:bg-gray-700 dark:text-gray-300" title="Ver detalle"><i data-lucide="zoom-in" class="w-4 h-4"></i></button><div class="overflow-hidden h-40 flex items-center justify-center bg-gray-50 rounded dark:bg-gray-700"><canvas id="org-cvs-${i}" class="max-h-full max-w-full object-contain transition-transform duration-300 bg-white"></canvas></div><div class="text-center text-xs text-gray-400 mt-2 font-mono">${i}</div>`;
                     grid.appendChild(div);
-                    activeOrganizePdf.getPage(i).then(page => { const cvs = document.getElementById(`org-cvs-${i}`); const vp = page.getViewport({scale: 0.3}); cvs.width = vp.width; cvs.height = vp.height; page.render({canvasContext: cvs.getContext('2d'), viewport: vp}); });
+                    renderTasks.set(div, () => {
+                        if (activeOrganizePdf !== pdfDoc) return;
+                        pdfDoc.getPage(i).then(page => {
+                            const cvs = document.getElementById(`org-cvs-${i}`);
+                            if (!cvs || !cvs.isConnected) return;
+                            const vp = page.getViewport({scale: 0.3});
+                            cvs.width = vp.width; cvs.height = vp.height;
+                            page.render({canvasContext: cvs.getContext('2d'), viewport: vp});
+                        }).catch(() => {});
+                    });
                 }
-                lucide.createIcons(); new Sortable(grid, { animation: 150, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag' });
+                lucide.createIcons();
+                if (organizeSortable) organizeSortable.destroy();
+                organizeSortable = new Sortable(grid, { animation: 150, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag' });
+                observeThumbnails('organize', document.getElementById('organize-scroll-area'), renderTasks);
             } catch(e) { console.error(e); alert('Error'); } finally { hideProgress(); }
         }
         window.rotateOrgPage = (n) => { organizeRotations[n] = ((organizeRotations[n]||0)+90)%360; document.getElementById(`org-cvs-${n}`).style.transform = `rotate(${organizeRotations[n]}deg)`; };
-        window.deleteOrgPage = (btn) => btn.closest('.relative').remove();
+        window.deleteOrgPage = (btn) => {
+            btn.closest('.relative').remove();
+            const remaining = document.querySelectorAll('#organizeGrid > div').length;
+            document.getElementById('organize-page-count').textContent = formatPageCount(remaining);
+        };
         document.getElementById('organize-save-btn').onclick = async () => {
             showProgress('Guardando...', 50);
             try {
@@ -2621,13 +2877,14 @@
                 cards.forEach((c, i) => { const p = copied[i]; const r = organizeRotations[parseInt(c.dataset.page)]||0; p.setRotation(degrees((p.getRotation().angle+r)%360)); doc.addPage(p); });
                 const pdfBytes = await doc.save();
                 const blob = new Blob([pdfBytes], {type: 'application/pdf'});
+                const outName = buildOutputFilename(organizeFilename, 'organizado');
 
                 // --- SUCCESS MODAL ---
                 const successModal = document.getElementById('organize-success-modal');
-                document.getElementById('org-success-download').onclick = () => saveBlob(blob, `organizado_${organizeFilename}`);
-                document.getElementById('org-success-editor').onclick = () => { successModal.classList.add('hidden'); switchTab('editor'); loadEditorPdf(null, new Uint8Array(pdfBytes), `organizado_${organizeFilename}`); };
-                document.getElementById('org-success-img').onclick = () => { successModal.classList.add('hidden'); switchTab('images'); loadImgPdf(null, new Uint8Array(pdfBytes), `organizado_${organizeFilename}`); };
-                document.getElementById('org-success-split').onclick = () => { successModal.classList.add('hidden'); switchTab('split'); loadSplitPdf(null, new Uint8Array(pdfBytes), `organizado_${organizeFilename}`); };
+                document.getElementById('org-success-download').onclick = () => saveBlob(blob, outName);
+                document.getElementById('org-success-editor').onclick = () => { successModal.classList.add('hidden'); switchTab('editor'); loadEditorPdf(null, new Uint8Array(pdfBytes), outName); };
+                document.getElementById('org-success-img').onclick = () => { successModal.classList.add('hidden'); switchTab('images'); loadImgPdf(null, new Uint8Array(pdfBytes), outName); };
+                document.getElementById('org-success-split').onclick = () => { successModal.classList.add('hidden'); switchTab('split'); loadSplitPdf(null, new Uint8Array(pdfBytes), outName); };
                 successModal.classList.remove('hidden');
 
             } catch(e) { alert('Error al guardar'); } finally { hideProgress(); }
@@ -2665,35 +2922,56 @@
 
         // Universal Loader for Images
         async function loadImgPdf(f, bytes=null, name=null) {
+            if (!f && !bytes) return;
             showProgress('Cargando...',10);
+            try {
+                let displayFilename = 'documento.pdf';
+                if(f) {
+                    displayFilename = f.name || 'documento.pdf';
+                    activeImgPdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
+                } else if (bytes) {
+                    displayFilename = name || 'documento.pdf';
+                    activeImgPdf = await pdfjsLib.getDocument(bytes.buffer.slice(0)).promise;
+                }
+                imgName = stripPdfExt(displayFilename);
 
-            if(f) {
-                imgName=f.name.replace('.pdf','');
-                activeImgPdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
-            } else if (bytes) {
-                imgName = name.replace('.pdf','');
-                activeImgPdf = await pdfjsLib.getDocument(bytes.buffer.slice(0)).promise;
-            } else { return; }
+                const fnEl = document.getElementById('images-filename-display');
+                fnEl.textContent = displayFilename;
+                fnEl.title = displayFilename;
+                document.getElementById('images-page-count').textContent = formatPageCount(activeImgPdf.numPages);
 
-            // RESET STATE
-            document.querySelector('input[name="img-mode"][value="range"]').checked = true;
-            imgRangeInput.value = '';
-            imgRangeInput.disabled = false;
-            imgRangeInput.classList.remove('bg-gray-100', 'text-gray-400', 'dark:bg-gray-800', 'dark:text-gray-500');
+                // RESET STATE
+                document.querySelector('input[name="img-mode"][value="range"]').checked = true;
+                imgRangeInput.value = '';
+                imgRangeInput.disabled = false;
+                imgRangeInput.classList.remove('bg-gray-100', 'text-gray-400', 'dark:bg-gray-800', 'dark:text-gray-500');
 
-            document.getElementById('images-upload').classList.add('hidden'); document.getElementById('images-workspace').classList.remove('hidden'); document.getElementById('images-workspace').classList.add('flex');
+                document.getElementById('images-upload').classList.add('hidden'); document.getElementById('images-workspace').classList.remove('hidden'); document.getElementById('images-workspace').classList.add('flex');
 
-            const g = document.getElementById('imagesGrid'); g.innerHTML=''; imgSel.clear();
+                disconnectThumbObserver('images');
+                const g = document.getElementById('imagesGrid'); g.innerHTML=''; imgSel.clear();
+                const pdfDoc = activeImgPdf;
+                const renderTasks = new Map();
 
-            for(let i=1; i<=activeImgPdf.numPages; i++) {
-                const d = document.createElement('div'); d.className="relative group cursor-pointer img-page-card"; d.dataset.page = i;
-                d.innerHTML=`<div class="absolute top-2 left-2 z-10 w-6 h-6 bg-white border-2 border-gray-300 rounded transition-colors flex items-center justify-center check-indicator dark:bg-gray-800 dark:border-gray-600"><i data-lucide="check" class="w-4 h-4 text-white opacity-0 transition-opacity"></i></div><button onclick="event.stopPropagation(); openZoomModal(${i}, 'images')" class="absolute bottom-2 right-2 p-1.5 bg-white rounded-full shadow-sm hover:bg-gray-100 text-gray-600 transition z-20 dark:bg-gray-800 dark:text-gray-300" title="Ver detalle"><i data-lucide="zoom-in" class="w-4 h-4"></i></button><div class="bg-white p-2 rounded-lg shadow-sm border-2 border-transparent hover:shadow-md cursor-pointer flex flex-col items-center img-card dark:bg-gray-800 dark:hover:border-green-500"><canvas class="w-full h-auto border border-gray-100 mb-2 bg-white"></canvas><span class="text-xs text-gray-500 dark:text-gray-400">Pág ${i}</span></div>`;
-                const c = d.querySelector('canvas');
-                d.onclick=()=>toggleImgPage(i);
-                g.appendChild(d);
-                activeImgPdf.getPage(i).then(p => { const vp=p.getViewport({scale:0.3}); c.width=vp.width; c.height=vp.height; p.render({canvasContext:c.getContext('2d'), viewport:vp}); });
-            }
-            lucide.createIcons(); hideProgress(); updateImgUI();
+                for(let i=1; i<=pdfDoc.numPages; i++) {
+                    const d = document.createElement('div'); d.className=`relative group cursor-pointer img-page-card ${i > 12 ? 'deferred-grid-card' : ''}`; d.dataset.page = i;
+                    d.innerHTML=`<div class="absolute top-2 left-2 z-10 w-6 h-6 bg-white border-2 border-gray-300 rounded transition-colors flex items-center justify-center check-indicator dark:bg-gray-800 dark:border-gray-600"><i data-lucide="check" class="w-4 h-4 text-white opacity-0 transition-opacity"></i></div><button onclick="event.stopPropagation(); openZoomModal(${i}, 'images')" class="absolute bottom-2 right-2 p-1.5 bg-white rounded-full shadow-sm hover:bg-gray-100 text-gray-600 transition z-20 dark:bg-gray-800 dark:text-gray-300" title="Ver detalle"><i data-lucide="zoom-in" class="w-4 h-4"></i></button><div class="bg-white p-2 rounded-lg shadow-sm border-2 border-transparent hover:shadow-md cursor-pointer flex flex-col items-center img-card dark:bg-gray-800 dark:hover:border-green-500"><div class="h-48 w-full flex items-center justify-center mb-2 overflow-hidden"><canvas class="max-h-full max-w-full object-contain border border-gray-100 bg-white"></canvas></div><span class="text-xs text-gray-500 dark:text-gray-400">Pág ${i}</span></div>`;
+                    const c = d.querySelector('canvas');
+                    d.onclick=()=>toggleImgPage(i);
+                    g.appendChild(d);
+                    renderTasks.set(d, () => {
+                        if (activeImgPdf !== pdfDoc) return;
+                        pdfDoc.getPage(i).then(p => {
+                            if (!c || !c.isConnected) return;
+                            const vp=p.getViewport({scale:0.3}); c.width=vp.width; c.height=vp.height; p.render({canvasContext:c.getContext('2d'), viewport:vp});
+                        }).catch(() => {});
+                    });
+                }
+                lucide.createIcons();
+                updateImgUI();
+                observeThumbnails('images', document.getElementById('images-scroll-area'), renderTasks);
+            } catch(e) { console.error(e); alert('Error cargando PDF'); }
+            finally { hideProgress(); }
         }
 
         function toggleImgPage(n) {
@@ -2802,12 +3080,64 @@
         }
 
         function resetTool(t) {
+            disconnectThumbObserver(t);
             document.getElementById(`${t}-upload`).classList.remove('hidden');
             document.getElementById(`${t}-workspace`).classList.add('hidden');
             document.getElementById(`${t}-workspace`).classList.remove('flex');
             const fileInput = document.getElementById(`${t}Input`);
             if (fileInput) fileInput.value = '';
         }
+
+        // Universal Drag & Drop for Single-PDF Tools
+        setupPdfDropZone('editor-upload', 'editor-drop-zone', 'editorInput', (file) => loadEditorPdf(file), ['border-purple-500', 'bg-purple-50', 'dark:border-purple-400', 'dark:bg-gray-700']);
+        setupPdfDropZone('split-upload', 'split-drop-zone', 'splitInput', (file) => loadSplitPdf(file), ['border-indigo-500', 'bg-indigo-50', 'dark:border-indigo-400', 'dark:bg-gray-700']);
+        setupPdfDropZone('organize-upload', 'organize-drop-zone', 'organizeInput', (file) => loadOrganizeFile(file), ['border-orange-500', 'bg-orange-50', 'dark:border-orange-400', 'dark:bg-gray-700']);
+        setupPdfDropZone('images-upload', 'images-drop-zone', 'imagesInput', (file) => loadImgPdf(file), ['border-green-500', 'bg-green-50', 'dark:border-green-400', 'dark:bg-gray-700']);
+
+        // Clipboard Image Paste (Ctrl+V) in Merge & Visual Editor
+        window.addEventListener('paste', (e) => {
+            const activeEl = document.activeElement;
+            if (activeEl && (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName) || activeEl.isContentEditable)) return;
+            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
+
+            const items = Array.from(e.clipboardData?.items || []);
+            const imgItem = items.find((it) => it.kind === 'file' && it.type.startsWith('image/'));
+
+            // 1. Merge Tab: append clipboard screenshot/image directly to fusion list
+            if (document.getElementById('content-merge').classList.contains('active')) {
+                if (!imgItem) return;
+                const rawFile = imgItem.getAsFile();
+                if (!rawFile) return;
+                e.preventDefault();
+                pastedImageCounter += 1;
+                const rawExt = (rawFile.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+                const namedFile = new File([rawFile], `portapapeles_${String(pastedImageCounter).padStart(2, '0')}.${rawExt}`, { type: rawFile.type || 'image/png' });
+                handleMergeFiles([namedFile]);
+                return;
+            }
+
+            // 2. Editor Tab: insert clipboard image onto active page (coexisting with internal Fabric Ctrl+C/Ctrl+V)
+            if (document.getElementById('content-editor').classList.contains('active')) {
+                if (document.getElementById('editor-workspace').classList.contains('hidden') || !editorState.canvas) return;
+                const activeObj = editorState.canvas.getActiveObject();
+                if (activeObj && activeObj.isEditing) return;
+
+                if (imgItem && !editorState.preferFabricClipboard) {
+                    const rawFile = imgItem.getAsFile();
+                    if (rawFile) {
+                        e.preventDefault();
+                        const reader = new FileReader();
+                        reader.onload = (ev) => insertImageDataUrlToEditor(ev.target.result);
+                        reader.readAsDataURL(rawFile);
+                        return;
+                    }
+                }
+                if (editorState.clipboard) {
+                    e.preventDefault();
+                    pasteFabricClipboard();
+                }
+            }
+        });
 
         // Progressive fallback for <dialog closedby="any"> light-dismiss (e.g. Safari)
         if (!('closedBy' in HTMLDialogElement.prototype)) {
@@ -2825,7 +3155,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.2';
+        const APP_VERSION = 'v2.0.0-beta.3';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
