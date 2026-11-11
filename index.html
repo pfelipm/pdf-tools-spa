@@ -96,6 +96,14 @@
         .page-thumbnail.active { border-color: #3b82f6; background-color: #eff6ff; }
         .dark .page-thumbnail.active { border-color: #60a5fa; background-color: #1e3a8a; }
         #canvas-wrapper { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        #editor-scroll-area {
+            scroll-axis-lock: none;
+            overscroll-behavior: contain;
+        }
+        #editor-scroll-area.pan-ready,
+        #editor-scroll-area.pan-ready * { cursor: grab !important; }
+        #editor-scroll-area.pan-dragging,
+        #editor-scroll-area.pan-dragging * { cursor: grabbing !important; }
 
         /* PWA Update Toast (Popover Manual + Progressive Fallback) */
         #pwa-update-toast {
@@ -293,21 +301,21 @@
                     
                     <!-- Group 1: History & Zoom -->
                     <div class="flex items-center gap-2 border-r border-gray-200 pr-4 mr-2 dark:border-gray-600">
-                        <button onclick="editorUndo()" class="p-2 hover:bg-gray-100 rounded text-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" title="Deshacer (Ctrl+Z)"><i data-lucide="undo" class="w-4 h-4"></i></button>
-                        <button onclick="editorRedo()" class="p-2 hover:bg-gray-100 rounded text-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" title="Rehacer (Ctrl+Y)"><i data-lucide="redo" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="editorUndo()" aria-label="Deshacer" class="p-2 hover:bg-gray-100 rounded text-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" title="Deshacer (Ctrl+Z)"><i data-lucide="undo" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="editorRedo()" aria-label="Rehacer" class="p-2 hover:bg-gray-100 rounded text-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" title="Rehacer (Ctrl+Y)"><i data-lucide="redo" class="w-4 h-4"></i></button>
                         <div class="flex items-center gap-1 ml-2 bg-gray-50 rounded-lg p-1 dark:bg-gray-700">
-                            <button onclick="editorZoom(-0.1)" class="p-1 hover:bg-gray-200 rounded text-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"><i data-lucide="minus" class="w-3 h-3"></i></button>
-                            <span id="editor-zoom-display" class="text-xs font-mono w-10 text-center dark:text-gray-200">100%</span>
-                            <button onclick="editorZoom(0.1)" class="p-1 hover:bg-gray-200 rounded text-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"><i data-lucide="plus" class="w-3 h-3"></i></button>
+                            <button type="button" onclick="editorZoom(-0.1)" aria-label="Alejar documento" class="p-1 hover:bg-gray-200 rounded text-gray-600 dark:text-gray-300 dark:hover:bg-gray-600" title="Alejar documento (Ctrl+- o Ctrl+rueda)"><i data-lucide="minus" class="w-3 h-3"></i></button>
+                            <button type="button" onclick="editorResetZoom()" id="editor-zoom-display" aria-label="Restablecer zoom al 100%" class="text-xs font-mono w-12 py-0.5 rounded hover:bg-gray-200 text-center transition dark:text-gray-200 dark:hover:bg-gray-600" title="Tamaño real 100% (Ctrl+1)">100%</button>
+                            <button type="button" onclick="editorZoom(0.1)" aria-label="Acercar documento" class="p-1 hover:bg-gray-200 rounded text-gray-600 dark:text-gray-300 dark:hover:bg-gray-600" title="Acercar documento (Ctrl++ o Ctrl+rueda)"><i data-lucide="plus" class="w-3 h-3"></i></button>
                         </div>
-                        <button onclick="editorFitPage()" class="p-2 hover:bg-gray-100 rounded text-gray-600 ml-1 dark:text-gray-300 dark:hover:bg-gray-700" title="Ajustar a página"><i data-lucide="maximize" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="editorFitPage()" aria-label="Ajustar a página" class="p-2 hover:bg-gray-100 rounded text-gray-600 ml-1 dark:text-gray-300 dark:hover:bg-gray-700" title="Ajustar a página (Ctrl+0)"><i data-lucide="maximize" class="w-4 h-4"></i></button>
                     </div>
 
                     <!-- Group 2: Tools -->
                     <div class="flex items-center gap-1">
-                        <button onclick="setEditorMode('select')" id="tool-select" class="tool-btn active p-2 rounded text-purple-600 bg-purple-50 dark:text-purple-300 dark:bg-purple-900/30" title="Seleccionar"><i data-lucide="mouse-pointer-2" class="w-5 h-5"></i></button>
-                        <button onclick="setEditorMode('pixelate')" id="tool-pixelate" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Censurar / Pixelar"><i data-lucide="eye-off" class="w-5 h-5"></i></button>
-                        <button onclick="addText()" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Texto"><i data-lucide="type" class="w-5 h-5"></i></button>
+                        <button type="button" onclick="setEditorMode('select')" id="tool-select" aria-label="Seleccionar" class="tool-btn active p-2 rounded text-purple-600 bg-purple-50 dark:text-purple-300 dark:bg-purple-900/30" title="Seleccionar (V / Esc)"><i data-lucide="mouse-pointer-2" class="w-5 h-5"></i></button>
+                        <button type="button" onclick="setEditorMode('pixelate')" id="tool-pixelate" aria-label="Censurar o pixelar" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Censurar / Pixelar (X)"><i data-lucide="eye-off" class="w-5 h-5"></i></button>
+                        <button type="button" onclick="addText()" aria-label="Insertar texto" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Insertar texto (T)"><i data-lucide="type" class="w-5 h-5"></i></button>
                         <button onclick="document.getElementById('img-upload-input').click()" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Insertar Imagen"><i data-lucide="image-plus" class="w-5 h-5"></i></button>
                         <input type="file" id="img-upload-input" accept="image/png, image/jpeg, image/jpg" class="hidden" onchange="handleAddImage(this)">
                         <button onclick="addPageNumber()" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Numerar páginas"><i data-lucide="hash" class="w-5 h-5"></i></button>
@@ -329,9 +337,9 @@
                             </div>
                         </div>
 
-                        <button type="button" onclick="toggleDrawMode()" id="tool-draw" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Dibujar"><i data-lucide="pen-tool" class="w-5 h-5"></i></button>
-                        <button type="button" onclick="toggleHighlightMode()" id="tool-highlight" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Resaltador fluorescente"><i data-lucide="highlighter" class="w-5 h-5"></i></button>
-                        <button type="button" onclick="openSignatureModal()" id="tool-signature" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Firmar / Rúbrica manuscrita"><i data-lucide="signature" class="w-5 h-5"></i></button>
+                        <button type="button" onclick="toggleDrawMode()" id="tool-draw" aria-label="Dibujar" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Dibujar (D)"><i data-lucide="pen-tool" class="w-5 h-5"></i></button>
+                        <button type="button" onclick="toggleHighlightMode()" id="tool-highlight" aria-label="Resaltador fluorescente" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Resaltador fluorescente (H)"><i data-lucide="highlighter" class="w-5 h-5"></i></button>
+                        <button type="button" onclick="openSignatureModal()" id="tool-signature" aria-label="Firmar o insertar rúbrica" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Firmar / Rúbrica manuscrita (S)"><i data-lucide="signature" class="w-5 h-5"></i></button>
                     </div>
 
                     <!-- Group 3: Final Actions -->
@@ -389,7 +397,7 @@
                             <span id="editor-page-count" class="text-[11px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 dark:bg-purple-900/40 dark:text-purple-300">0 págs</span>
                         </div>
                         <div class="px-4 py-2 border-b border-gray-100 bg-amber-50/40 flex items-center justify-between gap-2 flex-none dark:bg-gray-800/80 dark:border-gray-700">
-                            <label for="global-highlights-switch" class="flex items-center gap-1.5 text-xs font-medium text-gray-700 cursor-pointer select-none dark:text-gray-300" title="Oculta o muestra todos los trazos de marcador fluorescente en pantalla y al exportar">
+                            <label for="global-highlights-switch" class="flex items-center gap-1.5 text-xs font-medium text-gray-700 cursor-pointer select-none dark:text-gray-300" title="Oculta o muestra todos los trazos de marcador fluorescente en pantalla y al exportar (Alt+H)">
                                 <i data-lucide="highlighter" class="w-3.5 h-3.5 text-amber-500 flex-shrink-0"></i>
                                 <span>Mostrar resaltados</span>
                             </label>
@@ -1520,8 +1528,17 @@
             }
 
             // 2. Update UI
+            clearTimeout(zoomRenderTimer);
+            if (activeZoomRenderTask) {
+                try { activeZoomRenderTask.cancel(); } catch (_) {}
+                activeZoomRenderTask = null;
+            }
             document.querySelectorAll('.page-thumbnail').forEach(el => el.classList.remove('active'));
-            document.getElementById(`thumb-${pageNum}`).classList.add('active');
+            const activeThumb = document.getElementById(`thumb-${pageNum}`);
+            if (activeThumb) {
+                activeThumb.classList.add('active');
+                activeThumb.scrollIntoView({ block: 'nearest' });
+            }
             editorState.currentPage = pageNum;
             
             // Reset History for new page
@@ -2316,43 +2333,193 @@
             }
         }
 
-        // --- Helper Logic (Zoom, Keys, Save) ---
-        async function applyEditorZoom() {
-            const w = editorState.baseWidth * editorState.scale;
-            const h = editorState.baseHeight * editorState.scale;
-            
-            // 1. Resize Wrapper
+        // --- Helper Logic (Zoom, Pan, Keys, Save) ---
+        let zoomRenderTimer = null;
+        let activeZoomRenderTask = null;
+        const zoomOffscreenCanvas = document.createElement('canvas');
+
+        async function renderEditorPdfBackground(targetPage, targetScale) {
+            if (!editorState.pdfJsDoc) return;
+            if (activeZoomRenderTask) {
+                try { activeZoomRenderTask.cancel(); } catch (_) {}
+                activeZoomRenderTask = null;
+            }
+            try {
+                const page = await editorState.pdfJsDoc.getPage(targetPage);
+                if (editorState.currentPage !== targetPage || Math.abs(editorState.scale - targetScale) > 0.0001) return;
+
+                const w = Math.max(1, Math.round(editorState.baseWidth * targetScale));
+                const h = Math.max(1, Math.round(editorState.baseHeight * targetScale));
+                const viewport = page.getViewport({ scale: 1.5 * targetScale });
+
+                zoomOffscreenCanvas.width = w;
+                zoomOffscreenCanvas.height = h;
+                const offCtx = zoomOffscreenCanvas.getContext('2d');
+                const task = page.render({ canvasContext: offCtx, viewport });
+                activeZoomRenderTask = task;
+                await task.promise;
+                if (activeZoomRenderTask === task) activeZoomRenderTask = null;
+
+                if (editorState.currentPage !== targetPage || Math.abs(editorState.scale - targetScale) > 0.0001) return;
+                const bgCvs = document.getElementById('pdf-render');
+                bgCvs.width = w;
+                bgCvs.height = h;
+                bgCvs.getContext('2d').drawImage(zoomOffscreenCanvas, 0, 0);
+            } catch (err) {
+                if (err && err.name !== 'RenderingCancelledException') {
+                    console.warn('Zoom render warning:', err);
+                }
+            }
+        }
+
+        function setEditorScale(nextScale, opts = {}) {
+            if (!editorState.canvas || !editorState.pdfJsDoc) return;
+            const clamped = Math.max(0.1, Math.min(5, Math.round(nextScale * 1000) / 1000));
+            const prevScale = editorState.scale || 1;
+            if (Math.abs(clamped - prevScale) < 0.0005 && !opts.force) return;
+
+            const scrollArea = document.getElementById('editor-scroll-area');
             const wrapper = document.getElementById('canvas-wrapper');
+            const areaRect = scrollArea.getBoundingClientRect();
+            const anchorX = typeof opts.anchorClientX === 'number' ? opts.anchorClientX : (areaRect.left + areaRect.width / 2);
+            const anchorY = typeof opts.anchorClientY === 'number' ? opts.anchorClientY : (areaRect.top + areaRect.height / 2);
+
+            const prevWrapperRect = wrapper.getBoundingClientRect();
+            const relX = (anchorX - prevWrapperRect.left) / prevScale;
+            const relY = (anchorY - prevWrapperRect.top) / prevScale;
+
+            editorState.scale = clamped;
+            const w = editorState.baseWidth * clamped;
+            const h = editorState.baseHeight * clamped;
+
+            // 1. Resize Wrapper & Fabric synchronously (CSS keeps existing PDF bitmap scaled without white flash)
             wrapper.style.width = `${w}px`;
             wrapper.style.height = `${h}px`;
-            
-            // 2. Resize & Zoom Fabric
             editorState.canvas.setDimensions({ width: w, height: h });
-            editorState.canvas.setZoom(editorState.scale);
-            
-            // 3. Re-render PDF Background
-            const page = await editorState.pdfJsDoc.getPage(editorState.currentPage);
-            const viewport = page.getViewport({ scale: 1.5 * editorState.scale });
-            
-            const bgCvs = document.getElementById('pdf-render');
-            bgCvs.width = w; bgCvs.height = h;
-            await page.render({ canvasContext: bgCvs.getContext('2d'), viewport: viewport }).promise;
-            
-            document.getElementById('editor-zoom-display').innerText = `${Math.round(editorState.scale*100)}%`;
+            editorState.canvas.setZoom(clamped);
+            document.getElementById('editor-zoom-display').innerText = `${Math.round(clamped * 100)}%`;
+
+            // 2. Keep document point under pointer/viewport center anchored via native scrollLeft / scrollTop
+            const newWrapperRect = wrapper.getBoundingClientRect();
+            const targetLeft = anchorX - relX * clamped;
+            const targetTop = anchorY - relY * clamped;
+            scrollArea.scrollLeft += (newWrapperRect.left - targetLeft);
+            scrollArea.scrollTop += (newWrapperRect.top - targetTop);
+
+            // 3. Re-render crisp PDF background off-screen and swap atomically
+            clearTimeout(zoomRenderTimer);
+            const pageSnapshot = editorState.currentPage;
+            if (opts.debounceRender) {
+                zoomRenderTimer = setTimeout(() => {
+                    renderEditorPdfBackground(pageSnapshot, clamped);
+                }, 110);
+            } else {
+                renderEditorPdfBackground(pageSnapshot, clamped);
+            }
+        }
+
+        function applyEditorZoom() {
+            setEditorScale(editorState.scale, { force: true });
         }
 
         function editorZoom(delta) {
-            editorState.scale = Math.max(0.1, Math.min(5, editorState.scale + delta));
-            applyEditorZoom();
+            setEditorScale(editorState.scale + delta);
         }
-        
+
+        function editorResetZoom() {
+            setEditorScale(1.0);
+        }
+
         function editorFitPage() {
+            if (!editorState.canvas || !editorState.baseWidth || !editorState.baseHeight) return;
             const container = document.getElementById('editor-scroll-area');
+            if (!container.clientWidth || !container.clientHeight) return;
             const wRatio = (container.clientWidth - 80) / editorState.baseWidth;
             const hRatio = (container.clientHeight - 80) / editorState.baseHeight;
-            editorState.scale = Math.min(1.5, Math.max(0.1, Math.min(wRatio, hRatio)));
-            applyEditorZoom();
+            const fitScale = Math.min(1.5, Math.max(0.1, Math.min(wRatio, hRatio)));
+            setEditorScale(fitScale, { force: true });
+            container.scrollLeft = 0;
+            container.scrollTop = 0;
         }
+
+        // Wheel / Trackpad Pinch Zoom & Spacebar / Middle-Button 2D Panning in Editor
+        const editorWorkspaceEl = document.getElementById('editor-workspace');
+        const editorScrollAreaEl = document.getElementById('editor-scroll-area');
+        const editorPanState = { spaceHeld: false, dragging: false, lastX: 0, lastY: 0 };
+
+        function stopEditorPan(releaseSpace = false) {
+            if (releaseSpace) {
+                editorPanState.spaceHeld = false;
+                editorScrollAreaEl.classList.remove('pan-ready');
+            }
+            editorPanState.dragging = false;
+            editorScrollAreaEl.classList.remove('pan-dragging');
+        }
+
+        editorWorkspaceEl.addEventListener('wheel', (e) => {
+            if (!(e.ctrlKey || e.metaKey)) return;
+            if (!editorState.canvas || !editorState.pdfJsDoc) return;
+            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
+
+            e.preventDefault();
+            let normDelta = e.deltaY;
+            if (e.deltaMode === 1) normDelta *= 33;
+            else if (e.deltaMode === 2) normDelta *= 300;
+            const clampedDelta = Math.max(-120, Math.min(120, normDelta));
+            if (clampedDelta === 0) return;
+
+            const factor = Math.exp(-clampedDelta * 0.0012);
+            const overScrollArea = editorScrollAreaEl.contains(e.target);
+            setEditorScale(editorState.scale * factor, {
+                anchorClientX: overScrollArea ? e.clientX : undefined,
+                anchorClientY: overScrollArea ? e.clientY : undefined,
+                debounceRender: true
+            });
+        }, { passive: false });
+
+        editorScrollAreaEl.addEventListener('mousedown', (e) => {
+            if (!editorState.canvas || !editorState.pdfJsDoc) return;
+            const isMiddleBtn = e.button === 1;
+            const isSpaceLeftBtn = editorPanState.spaceHeld && e.button === 0;
+            if (!isMiddleBtn && !isSpaceLeftBtn) return;
+
+            const rect = editorScrollAreaEl.getBoundingClientRect();
+            if (
+                e.clientX - rect.left - editorScrollAreaEl.clientLeft >= editorScrollAreaEl.clientWidth ||
+                e.clientY - rect.top - editorScrollAreaEl.clientTop >= editorScrollAreaEl.clientHeight
+            ) {
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            editorPanState.dragging = true;
+            editorPanState.lastX = e.clientX;
+            editorPanState.lastY = e.clientY;
+            editorScrollAreaEl.classList.add('pan-dragging');
+        }, true);
+
+        editorScrollAreaEl.addEventListener('auxclick', (e) => {
+            if (e.button === 1) e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!editorPanState.dragging) return;
+            e.preventDefault();
+            editorScrollAreaEl.scrollLeft -= (e.clientX - editorPanState.lastX);
+            editorScrollAreaEl.scrollTop -= (e.clientY - editorPanState.lastY);
+            editorPanState.lastX = e.clientX;
+            editorPanState.lastY = e.clientY;
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (editorPanState.dragging) stopEditorPan(false);
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Space' && editorPanState.spaceHeld) {
+                stopEditorPan(true);
+            }
+        });
         function saveHistory() {
             if(editorState.historyProcessing) return;
             if(editorState.historyUndo.length > 20) editorState.historyUndo.shift(); // Limit
@@ -2428,15 +2595,16 @@
             return true;
         }
 
-        // Reset internal clipboard preference when user switches out to copy an external screenshot/image
+        // Reset internal clipboard preference & hand-pan state when user switches window focus
         window.addEventListener('blur', () => {
             editorState.preferFabricClipboard = false;
+            stopEditorPan(true);
         });
 
         function handleEditorKeys(e) {
             if (!document.getElementById('content-editor').classList.contains('active')) return;
             if (document.getElementById('editor-workspace').classList.contains('hidden') || !editorState.canvas) return;
-            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
+            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
 
             // Ignore canvas shortcuts while typing in form inputs or editing Fabric text
             const activeEl = document.activeElement;
@@ -2447,6 +2615,33 @@
 
             const modKey = e.ctrlKey || e.metaKey;
             const key = e.key.toLowerCase();
+
+            // Spacebar + drag hand panning (yields to keyboard-focused buttons so Enter/Space accessibility stays intact)
+            if (e.code === 'Space' && !modKey && !e.altKey) {
+                if (activeEl && activeEl.tagName === 'BUTTON' && activeEl.matches(':focus-visible')) return;
+                e.preventDefault();
+                if (!editorPanState.spaceHeld) {
+                    editorPanState.spaceHeld = true;
+                    editorScrollAreaEl.classList.add('pan-ready');
+                }
+                return;
+            }
+
+            // Document Zoom & Save Shortcuts (Ctrl/Cmd + +/-/0/1/S)
+            if (modKey && !e.altKey) {
+                if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') { e.preventDefault(); editorZoom(0.1); return; }
+                if (e.key === '-' || e.key === '_' || e.code === 'NumpadSubtract') { e.preventDefault(); editorZoom(-0.1); return; }
+                if (!e.shiftKey && (e.key === '0' || e.code === 'Numpad0')) { e.preventDefault(); editorFitPage(); return; }
+                if (!e.shiftKey && (e.key === '1' || e.code === 'Numpad1')) { e.preventDefault(); editorResetZoom(); return; }
+                if (!e.shiftKey && key === 's') { e.preventDefault(); editorSave(); return; }
+            }
+
+            // Global Highlight Visibility Toggle (Alt+H)
+            if (!modKey && e.altKey && !e.shiftKey && key === 'h') {
+                e.preventDefault();
+                toggleAllHighlights(!editorState.showHighlights);
+                return;
+            }
 
             // Undo / Redo
             if (modKey && !e.shiftKey && key === 'z') { e.preventDefault(); editorUndo(); return; }
@@ -2490,6 +2685,40 @@
                 }
                 return;
             }
+
+            // Page Navigation, Escape & Quick Tool Switching (without Ctrl/Cmd/Alt)
+            if (!modKey && !e.altKey) {
+                if (e.key === 'Escape') {
+                    if (editorState.mode !== 'select') {
+                        setEditorMode('select');
+                    } else if (activeObj) {
+                        editorState.canvas.discardActiveObject();
+                        editorState.canvas.requestRenderAll();
+                    }
+                    return;
+                }
+                if (e.key === 'PageUp') {
+                    e.preventDefault();
+                    if (editorState.currentPage > 1) loadEditorPage(editorState.currentPage - 1);
+                    return;
+                }
+                if (e.key === 'PageDown') {
+                    e.preventDefault();
+                    if (editorState.pdfJsDoc && editorState.currentPage < editorState.pdfJsDoc.numPages) {
+                        loadEditorPage(editorState.currentPage + 1);
+                    }
+                    return;
+                }
+                if (!e.shiftKey && !e.repeat) {
+                    if (key === 'v') { setEditorMode('select'); return; }
+                    if (key === 'h') { toggleHighlightMode(); return; }
+                    if (key === 'd') { toggleDrawMode(); return; }
+                    if (key === 'x') { setEditorMode(editorState.mode === 'pixelate' ? 'select' : 'pixelate'); return; }
+                    if (key === 't') { e.preventDefault(); addText(); return; }
+                    if (key === 's') { e.preventDefault(); openSignatureModal(); return; }
+                }
+            }
+
             // Nudge (Arrows)
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && activeObj) {
                 e.preventDefault();
@@ -4006,7 +4235,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.4';
+        const APP_VERSION = 'v2.0.0-beta.5';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
