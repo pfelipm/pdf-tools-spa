@@ -453,6 +453,32 @@
                 background: radial-gradient(circle, var(--compress-accent) 42%, transparent 46%);
             }
         }
+
+        /* Accessible Pagination Buttons in Compress Preview */
+        .compress-page-btn {
+            min-block-size: 32px;
+            min-inline-size: 32px;
+        }
+        @media (pointer: coarse) {
+            .compress-page-btn {
+                min-block-size: 44px;
+                min-inline-size: 44px;
+            }
+        }
+        .compress-page-btn[aria-disabled="true"] {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .compress-page-btn:not([aria-disabled="true"]):hover {
+            background-color: #f0fdfa;
+            border-color: #5eead4;
+            color: #0f766e;
+        }
+        .dark .compress-page-btn:not([aria-disabled="true"]):hover {
+            background-color: rgba(19, 78, 74, 0.35);
+            border-color: #14b8a6;
+            color: #5eead4;
+        }
     </style>
 </head>
 <body class="bg-gray-50 h-screen flex flex-col font-sans text-gray-800 overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
@@ -902,16 +928,29 @@
 
             <div id="compress-workspace" class="hidden flex-1 flex h-full overflow-hidden">
                 <!-- Preview Column -->
-                <div class="flex-1 p-6 overflow-y-auto bg-gray-100 flex flex-col items-center justify-center custom-scroll dark:bg-gray-900/50">
-                    <div class="bg-white rounded-2xl shadow-md border border-gray-200 p-5 max-w-md w-full flex flex-col items-center gap-4 dark:bg-gray-800 dark:border-gray-700">
-                        <div class="w-full h-72 sm:h-80 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center overflow-hidden p-3 dark:bg-gray-900/60 dark:border-gray-700">
-                            <canvas id="compress-preview-canvas" class="max-w-full max-h-full shadow-sm rounded bg-white"></canvas>
+                <div class="flex-1 p-4 sm:p-6 overflow-hidden bg-gray-100 flex flex-col items-center justify-center dark:bg-gray-900/50">
+                    <div id="compress-preview-card" class="bg-white rounded-2xl shadow-md border border-gray-200 p-4 sm:p-5 max-w-2xl w-full h-full flex flex-col gap-3 dark:bg-gray-800 dark:border-gray-700">
+                        <div id="compress-preview-stage" class="flex-1 min-h-0 w-full bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center overflow-hidden p-3 sm:p-4 dark:bg-gray-900/60 dark:border-gray-700">
+                            <canvas id="compress-preview-canvas" class="block flex-shrink-0 shadow-md rounded bg-white"></canvas>
                         </div>
-                        <div class="w-full flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-700 dark:text-gray-400">
-                            <span>Tamaño original</span>
-                            <span id="compress-orig-size" class="font-mono font-bold text-sm text-gray-800 dark:text-gray-100">0 KB</span>
+                        <div class="flex-none w-full flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500 pt-2.5 border-t border-gray-100 dark:border-gray-700 dark:text-gray-400">
+                            <div id="compress-pagination" class="hidden flex items-center gap-1.5" role="group" aria-label="Paginación de vista previa">
+                                <button type="button" id="compress-prev-page" aria-label="Página anterior" aria-disabled="true" class="compress-page-btn inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 dark:border-gray-600 dark:bg-gray-700/70 dark:text-gray-200">
+                                    <i data-lucide="chevron-left" class="w-4 h-4" aria-hidden="true"></i>
+                                    <span class="hidden sm:inline">Anterior</span>
+                                </button>
+                                <span id="compress-page-indicator" class="font-mono font-semibold text-xs text-gray-700 px-2 tabular-nums select-none dark:text-gray-200">Pág 1 de 1</span>
+                                <button type="button" id="compress-next-page" aria-label="Página siguiente" aria-disabled="true" class="compress-page-btn inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 dark:border-gray-600 dark:bg-gray-700/70 dark:text-gray-200">
+                                    <span class="hidden sm:inline">Siguiente</span>
+                                    <i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-2 ms-auto">
+                                <span>Tamaño original</span>
+                                <span id="compress-orig-size" class="font-mono font-bold text-sm text-gray-800 dark:text-gray-100">0 KB</span>
+                            </div>
                         </div>
-                        <div id="compress-inline-summary" class="hidden w-full rounded-xl p-3 text-xs border"></div>
+                        <div id="compress-inline-summary" class="hidden flex-none w-full rounded-xl p-3 text-xs border"></div>
                     </div>
                 </div>
 
@@ -5365,7 +5404,16 @@
             pdfBytes: null,
             pdfJsDoc: null,
             filename: 'documento.pdf',
-            origSize: 0
+            origSize: 0,
+            currentPage: 1,
+            totalPages: 0,
+            pageBaseWidth: 0,
+            pageBaseHeight: 0,
+            renderTask: null,
+            renderSeq: 0,
+            wheelAccum: 0,
+            wheelLastTime: 0,
+            wheelDebounceTimer: null
         };
 
         const compressFormEl = document.getElementById('compress-form');
@@ -5373,6 +5421,13 @@
         const compressQualityInput = document.getElementById('compress-quality');
         const compressModeNoteEl = document.getElementById('compress-mode-note');
         const compressSuccessModal = document.getElementById('compress-success-modal');
+        const compressPreviewCardEl = document.getElementById('compress-preview-card');
+        const compressPreviewStageEl = document.getElementById('compress-preview-stage');
+        const compressPaginationEl = document.getElementById('compress-pagination');
+        const compressPrevPageBtn = document.getElementById('compress-prev-page');
+        const compressNextPageBtn = document.getElementById('compress-next-page');
+        const compressPageIndicatorEl = document.getElementById('compress-page-indicator');
+        const compressOffscreenCvs = document.createElement('canvas');
 
         function getSelectedCompressMode() {
             const checked = document.querySelector('input[name="compress-mode"]:checked');
@@ -5438,6 +5493,221 @@
         syncCompressQualitySlider();
         syncCompressModeUI();
 
+        function cancelPendingCompressPreview() {
+            if (compressState.wheelDebounceTimer) {
+                clearTimeout(compressState.wheelDebounceTimer);
+                compressState.wheelDebounceTimer = null;
+            }
+            compressState.wheelAccum = 0;
+            compressState.renderSeq += 1;
+            if (compressState.renderTask && typeof compressState.renderTask.cancel === 'function') {
+                try { compressState.renderTask.cancel(); } catch (_) {}
+            }
+            compressState.renderTask = null;
+        }
+
+        function syncCompressPaginationUI() {
+            const total = compressState.totalPages || 0;
+            const cur = Math.max(1, Math.min(total || 1, compressState.currentPage || 1));
+            if (compressPaginationEl) {
+                compressPaginationEl.classList.toggle('hidden', total <= 1);
+            }
+            if (compressPageIndicatorEl) {
+                compressPageIndicatorEl.textContent = `Pág ${cur} de ${Math.max(1, total)}`;
+            }
+            if (compressPrevPageBtn) {
+                compressPrevPageBtn.setAttribute('aria-disabled', cur <= 1 ? 'true' : 'false');
+            }
+            if (compressNextPageBtn) {
+                compressNextPageBtn.setAttribute('aria-disabled', cur >= total ? 'true' : 'false');
+            }
+        }
+
+        function fitCompressCanvasDisplaySize() {
+            const previewCvs = document.getElementById('compress-preview-canvas');
+            if (!compressPreviewStageEl || !previewCvs || !compressState.pageBaseWidth || !compressState.pageBaseHeight) return;
+            if (compressPreviewStageEl.clientWidth <= 0 || compressPreviewStageEl.clientHeight <= 0) return;
+            const cs = getComputedStyle(compressPreviewStageEl);
+            const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+            const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+            const availW = Math.max(140, compressPreviewStageEl.clientWidth - padX);
+            const availH = Math.max(140, compressPreviewStageEl.clientHeight - padY);
+            const fitScale = Math.min(availW / compressState.pageBaseWidth, availH / compressState.pageBaseHeight, 1.75);
+            previewCvs.style.width = `${Math.max(1, Math.round(compressState.pageBaseWidth * fitScale))}px`;
+            previewCvs.style.height = `${Math.max(1, Math.round(compressState.pageBaseHeight * fitScale))}px`;
+        }
+
+        async function renderCompressPreviewPage(pageNum) {
+            if (!compressState.pdfJsDoc) return;
+            const targetPage = Math.max(1, Math.min(compressState.totalPages, pageNum));
+            compressState.currentPage = targetPage;
+            syncCompressPaginationUI();
+
+            const seq = ++compressState.renderSeq;
+            if (compressState.renderTask && typeof compressState.renderTask.cancel === 'function') {
+                try { compressState.renderTask.cancel(); } catch (_) {}
+            }
+            compressState.renderTask = null;
+
+            let page = null;
+            try {
+                page = await compressState.pdfJsDoc.getPage(targetPage);
+                if (seq !== compressState.renderSeq) return;
+
+                const baseVp = page.getViewport({ scale: 1 });
+                const stageW = compressPreviewStageEl && compressPreviewStageEl.clientWidth > 0 ? compressPreviewStageEl.clientWidth - 32 : 560;
+                const stageH = compressPreviewStageEl && compressPreviewStageEl.clientHeight > 0 ? compressPreviewStageEl.clientHeight - 32 : 680;
+                const fitScale = Math.min(Math.max(140, stageW) / Math.max(1, baseVp.width), Math.max(140, stageH) / Math.max(1, baseVp.height), 1.75);
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const maxBackingScale = 1800 / Math.max(baseVp.width, baseVp.height, 1);
+                const renderScale = Math.max(0.5, Math.min(fitScale * dpr, maxBackingScale));
+                const vp = page.getViewport({ scale: renderScale });
+
+                compressOffscreenCvs.width = Math.max(1, Math.round(vp.width));
+                compressOffscreenCvs.height = Math.max(1, Math.round(vp.height));
+                const offCtx = compressOffscreenCvs.getContext('2d');
+                offCtx.fillStyle = '#FFFFFF';
+                offCtx.fillRect(0, 0, compressOffscreenCvs.width, compressOffscreenCvs.height);
+
+                const task = page.render({ canvasContext: offCtx, viewport: vp });
+                compressState.renderTask = task;
+                await task.promise;
+                if (seq !== compressState.renderSeq) return;
+
+                const previewCvs = document.getElementById('compress-preview-canvas');
+                const previewCtx = previewCvs.getContext('2d');
+                previewCvs.width = compressOffscreenCvs.width;
+                previewCvs.height = compressOffscreenCvs.height;
+                previewCtx.drawImage(compressOffscreenCvs, 0, 0);
+
+                compressState.pageBaseWidth = baseVp.width;
+                compressState.pageBaseHeight = baseVp.height;
+                fitCompressCanvasDisplaySize();
+            } catch (err) {
+                if (err?.name !== 'RenderingCancelledException') {
+                    console.warn('Error al renderizar vista previa en Comprimir:', err);
+                }
+            } finally {
+                if (compressState.renderTask && seq === compressState.renderSeq) {
+                    compressState.renderTask = null;
+                }
+                if (page && typeof page.cleanup === 'function') {
+                    page.cleanup();
+                }
+            }
+        }
+
+        function goToCompressPreviewPage(nextPage, debounceMs = 0) {
+            if (!compressState.pdfJsDoc || compressState.totalPages <= 1) return;
+            const clamped = Math.max(1, Math.min(compressState.totalPages, nextPage));
+            if (clamped === compressState.currentPage && !compressState.wheelDebounceTimer) return;
+            compressState.currentPage = clamped;
+            syncCompressPaginationUI();
+
+            if (compressState.wheelDebounceTimer) {
+                clearTimeout(compressState.wheelDebounceTimer);
+                compressState.wheelDebounceTimer = null;
+            }
+            if (debounceMs > 0) {
+                compressState.wheelDebounceTimer = setTimeout(() => {
+                    compressState.wheelDebounceTimer = null;
+                    renderCompressPreviewPage(compressState.currentPage);
+                }, debounceMs);
+            } else {
+                renderCompressPreviewPage(clamped);
+            }
+        }
+
+        if (compressPrevPageBtn) {
+            compressPrevPageBtn.addEventListener('click', () => {
+                if (compressPrevPageBtn.getAttribute('aria-disabled') === 'true') return;
+                goToCompressPreviewPage(compressState.currentPage - 1);
+            });
+        }
+        if (compressNextPageBtn) {
+            compressNextPageBtn.addEventListener('click', () => {
+                if (compressNextPageBtn.getAttribute('aria-disabled') === 'true') return;
+                goToCompressPreviewPage(compressState.currentPage + 1);
+            });
+        }
+
+        if (compressPreviewCardEl) {
+            compressPreviewCardEl.addEventListener('wheel', (e) => {
+                if (!compressState.pdfJsDoc || compressState.totalPages <= 1) return;
+                if (e.ctrlKey || e.metaKey || e.altKey || e.buttons !== 0) return;
+                const rawDelta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                if (rawDelta === 0) return;
+                e.preventDefault();
+
+                const normDelta = e.deltaMode === 1 ? rawDelta * 36 : (e.deltaMode === 2 ? rawDelta * 320 : rawDelta);
+                const now = performance.now();
+                if (now - compressState.wheelLastTime > 180 || (compressState.wheelAccum !== 0 && Math.sign(normDelta) !== Math.sign(compressState.wheelAccum))) {
+                    compressState.wheelAccum = 0;
+                }
+                compressState.wheelLastTime = now;
+
+                let pageDelta = 0;
+                if (Math.abs(normDelta) >= 60) {
+                    compressState.wheelAccum = 0;
+                    pageDelta = Math.sign(normDelta) * Math.max(1, Math.min(3, Math.round(Math.abs(normDelta) / 120)));
+                } else {
+                    compressState.wheelAccum += normDelta;
+                    const TRACKPAD_STEP_PX = 75;
+                    if (Math.abs(compressState.wheelAccum) >= TRACKPAD_STEP_PX) {
+                        pageDelta = Math.trunc(compressState.wheelAccum / TRACKPAD_STEP_PX);
+                        compressState.wheelAccum -= pageDelta * TRACKPAD_STEP_PX;
+                    }
+                }
+                if (pageDelta !== 0) {
+                    goToCompressPreviewPage(compressState.currentPage + pageDelta, 80);
+                }
+            }, { passive: false });
+        }
+
+        if (compressPreviewStageEl && typeof ResizeObserver === 'function') {
+            const compressResizeObserver = new ResizeObserver(() => {
+                fitCompressCanvasDisplaySize();
+            });
+            compressResizeObserver.observe(compressPreviewStageEl);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (!compressState.pdfJsDoc || compressState.totalPages <= 1) return;
+            const compressTab = document.getElementById('content-compress');
+            const ws = document.getElementById('compress-workspace');
+            if (!compressTab || !compressTab.classList.contains('active') || !ws || ws.classList.contains('hidden')) return;
+            if (document.querySelector('dialog[open]')) return;
+            const prog = document.getElementById('progressModal');
+            if (prog && !prog.classList.contains('hidden')) return;
+            const aboutEl = document.getElementById('about-modal');
+            if (aboutEl && !aboutEl.classList.contains('hidden')) return;
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+            const activeEl = document.activeElement;
+            const isFormField = activeEl && activeEl.matches('input, select, textarea, [contenteditable="true"], [role="slider"]');
+            if (e.key === 'PageDown') {
+                if (activeEl && activeEl.matches('select, textarea, [contenteditable="true"]')) return;
+                e.preventDefault();
+                goToCompressPreviewPage(compressState.currentPage + 1);
+            } else if (e.key === 'PageUp') {
+                if (activeEl && activeEl.matches('select, textarea, [contenteditable="true"]')) return;
+                e.preventDefault();
+                goToCompressPreviewPage(compressState.currentPage - 1);
+            } else if (!isFormField && e.key === 'ArrowRight') {
+                e.preventDefault();
+                goToCompressPreviewPage(compressState.currentPage + 1);
+            } else if (!isFormField && e.key === 'ArrowLeft') {
+                e.preventDefault();
+                goToCompressPreviewPage(compressState.currentPage - 1);
+            } else if (!isFormField && e.key === 'Home') {
+                e.preventDefault();
+                goToCompressPreviewPage(1);
+            } else if (!isFormField && e.key === 'End') {
+                e.preventDefault();
+                goToCompressPreviewPage(compressState.totalPages);
+            }
+        });
+
         document.getElementById('compressInput').addEventListener('change', (e) => {
             const file = e.target.files[0];
             e.target.value = '';
@@ -5458,6 +5728,7 @@
                     u8 = new Uint8Array(bytes);
                 }
 
+                cancelPendingCompressPreview();
                 if (compressState.pdfJsDoc && typeof compressState.pdfJsDoc.destroy === 'function') {
                     compressState.pdfJsDoc.destroy().catch(() => {});
                 }
@@ -5467,6 +5738,10 @@
                 compressState.pdfJsDoc = pdfDoc;
                 compressState.filename = displayFilename;
                 compressState.origSize = u8.byteLength;
+                compressState.currentPage = 1;
+                compressState.totalPages = pdfDoc.numPages;
+                compressState.pageBaseWidth = 0;
+                compressState.pageBaseHeight = 0;
 
                 const fnEl = document.getElementById('compress-filename-display');
                 fnEl.textContent = displayFilename;
@@ -5478,24 +5753,13 @@
                 inlineSummary.classList.add('hidden');
                 inlineSummary.replaceChildren();
 
-                // Render Page 1 preview
-                const firstPage = await pdfDoc.getPage(1);
-                const baseVp = firstPage.getViewport({ scale: 1 });
-                const maxDim = Math.max(baseVp.width, baseVp.height, 1);
-                const previewScale = Math.min(1.2, 460 / maxDim);
-                const vp = firstPage.getViewport({ scale: previewScale });
-                const previewCvs = document.getElementById('compress-preview-canvas');
-                const previewCtx = previewCvs.getContext('2d');
-                previewCvs.width = vp.width;
-                previewCvs.height = vp.height;
-                previewCtx.fillStyle = '#FFFFFF';
-                previewCtx.fillRect(0, 0, previewCvs.width, previewCvs.height);
-                await firstPage.render({ canvasContext: previewCtx, viewport: vp }).promise;
-
                 document.getElementById('compress-upload').classList.add('hidden');
                 const ws = document.getElementById('compress-workspace');
                 ws.classList.remove('hidden');
                 ws.classList.add('flex');
+
+                syncCompressPaginationUI();
+                await renderCompressPreviewPage(1);
             } catch (e) {
                 console.error(e);
                 alert('Error al cargar el PDF para comprimir');
@@ -6446,12 +6710,20 @@
                 resetEditorThumbnailsState();
             }
             if (t === 'compress') {
+                cancelPendingCompressPreview();
                 if (compressState.pdfJsDoc && typeof compressState.pdfJsDoc.destroy === 'function') {
                     compressState.pdfJsDoc.destroy().catch(() => {});
                 }
                 compressState.pdfBytes = null;
                 compressState.pdfJsDoc = null;
                 compressState.origSize = 0;
+                compressState.currentPage = 1;
+                compressState.totalPages = 0;
+                compressState.pageBaseWidth = 0;
+                compressState.pageBaseHeight = 0;
+                compressOffscreenCvs.width = 1;
+                compressOffscreenCvs.height = 1;
+                syncCompressPaginationUI();
                 const inlineSummary = document.getElementById('compress-inline-summary');
                 if (inlineSummary) {
                     inlineSummary.classList.add('hidden');
@@ -7035,7 +7307,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.16';
+        const APP_VERSION = 'v2.0.0-beta.17';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
