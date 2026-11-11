@@ -4,7 +4,10 @@
 
 **Una suite completa de herramientas PDF privada, instalable (PWA) y 100 % local en tu navegador.**
 
-### 🌐 Accede a la aplicación aquí: [pdftools.pablofelip.online](https://pdftools.pablofelip.online)
+### 🌐 Acceso temporal a esta versión 2.0 (Beta): [pfelipm.github.io/pdf-tools-spa](https://pfelipm.github.io/pdf-tools-spa)
+
+> [!IMPORTANT]
+> 🧪 **Release `v2.0` en fase beta:** Para probar esta nueva versión utiliza temporalmente **[https://pfelipm.github.io/pdf-tools-spa](https://pfelipm.github.io/pdf-tools-spa)**. El dominio de producción ([pdftools.pablofelip.online](https://pdftools.pablofelip.online)) mantiene por ahora la versión estable `1.5` hasta finalizar el periodo de pruebas.
 
 > Esta aplicación es la evolución web (Single Page Application / PWA) de la extensión para Chrome **[PDF Tools](https://github.com/pfelipm/pdf-tools)**.
 
