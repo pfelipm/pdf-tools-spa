@@ -432,7 +432,7 @@
                 content: "";
                 position: absolute;
                 inset-inline-start: 0.75rem;
-                inset-block-start: 0.9rem;
+                inset-block-start: 0.75rem;
                 width: 1rem;
                 height: 1rem;
                 border: 2px solid #9ca3af;
@@ -955,8 +955,8 @@
                 </div>
 
                 <!-- Controls Sidebar -->
-                <aside class="w-80 lg:w-96 bg-white border-l border-gray-200 p-5 flex flex-col shadow-lg z-10 overflow-y-auto custom-scroll dark:bg-gray-800 dark:border-gray-700">
-                    <div class="mb-4 pb-3 border-b border-gray-100 flex items-center justify-between gap-2 dark:border-gray-700">
+                <aside class="w-80 lg:w-96 bg-white border-l border-gray-200 flex flex-col min-h-0 overflow-clip shadow-lg z-10 dark:bg-gray-800 dark:border-gray-700">
+                    <div class="flex-none px-5 pt-4 pb-2.5 border-b border-gray-100 flex items-center justify-between gap-2 dark:border-gray-700">
                         <div class="flex items-center gap-2 min-w-0">
                             <i data-lucide="file-text" class="w-4 h-4 text-teal-600 flex-shrink-0 dark:text-teal-400"></i>
                             <span id="compress-filename-display" class="font-bold text-sm text-gray-700 truncate dark:text-gray-200" title="">documento.pdf</span>
@@ -964,55 +964,55 @@
                         <span id="compress-page-count" class="text-xs bg-teal-50 text-teal-700 px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 dark:bg-teal-900/40 dark:text-teal-300">0 págs</span>
                     </div>
 
-                    <form id="compress-form" action="#" method="post" novalidate class="flex-1 flex flex-col">
-                        <div class="space-y-4 flex-1">
-                            <fieldset class="space-y-2">
-                                <legend class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 dark:text-gray-400">Modo de compresión</legend>
-                                <label for="compress-mode-smart" class="compress-radio-card flex items-start gap-3 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                    <form id="compress-form" action="#" method="post" novalidate class="flex-1 min-h-0 flex flex-col">
+                        <div id="compress-options-scroll" class="flex-1 min-h-0 overflow-y-auto overscroll-contain custom-scroll px-5 py-3 space-y-3">
+                            <fieldset class="space-y-1.5">
+                                <legend class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 dark:text-gray-400">Modo de compresión</legend>
+                                <label for="compress-mode-smart" class="compress-radio-card flex items-start gap-2.5 py-2 px-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
                                     <input type="radio" id="compress-mode-smart" name="compress-mode" value="smart" checked aria-describedby="compress-mode-note" class="compress-radio mt-0.5">
-                                    <span class="block">
+                                    <span class="block leading-tight">
                                         <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Inteligente · Conserva capas</span>
-                                        <span class="block text-xs text-gray-500 dark:text-gray-400">Mantiene texto seleccionable, vectores y ediciones</span>
+                                        <span class="block text-xs text-gray-500 mt-0.5 dark:text-gray-400">Mantiene texto seleccionable, vectores y ediciones</span>
                                     </span>
                                 </label>
-                                <label for="compress-mode-raster" class="compress-radio-card flex items-start gap-3 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                                <label for="compress-mode-raster" class="compress-radio-card flex items-start gap-2.5 py-2 px-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
                                     <input type="radio" id="compress-mode-raster" name="compress-mode" value="raster" aria-describedby="compress-mode-note" class="compress-radio mt-0.5">
-                                    <span class="block">
+                                    <span class="block leading-tight">
                                         <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Rasterizado total · Aplana páginas</span>
-                                        <span class="block text-xs text-gray-500 dark:text-gray-400">Convierte cada página completa en imagen JPEG</span>
+                                        <span class="block text-xs text-gray-500 mt-0.5 dark:text-gray-400">Convierte cada página completa en imagen JPEG</span>
                                     </span>
                                 </label>
                             </fieldset>
 
-                            <fieldset class="pt-3 border-t border-gray-100 space-y-2 dark:border-gray-700">
-                                <legend class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 dark:text-gray-400">Nivel de compresión</legend>
-                                <label for="compress-preset-extreme" class="compress-radio-card flex items-start gap-3 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                            <fieldset class="pt-2.5 border-t border-gray-100 space-y-1.5 dark:border-gray-700">
+                                <legend class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 dark:text-gray-400">Nivel de compresión</legend>
+                                <label for="compress-preset-extreme" class="compress-radio-card flex items-start gap-2.5 py-2 px-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
                                     <input type="radio" id="compress-preset-extreme" name="compress-preset" value="extreme" class="compress-radio mt-0.5">
-                                    <span class="block">
+                                    <span class="block leading-tight">
                                         <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Extrema (menor peso)</span>
-                                        <span class="block text-xs text-gray-500 dark:text-gray-400">96 DPI · Calidad 50% — máxima reducción</span>
+                                        <span class="block text-xs text-gray-500 mt-0.5 dark:text-gray-400">96 DPI · Calidad 50% — máxima reducción</span>
                                     </span>
                                 </label>
-                                <label for="compress-preset-balanced" class="compress-radio-card flex items-start gap-3 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                                <label for="compress-preset-balanced" class="compress-radio-card flex items-start gap-2.5 py-2 px-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
                                     <input type="radio" id="compress-preset-balanced" name="compress-preset" value="balanced" checked class="compress-radio mt-0.5">
-                                    <span class="block">
+                                    <span class="block leading-tight">
                                         <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Recomendada (equilibrada)</span>
-                                        <span class="block text-xs text-gray-500 dark:text-gray-400">140 DPI · Calidad 65% — equilibrio ideal</span>
+                                        <span class="block text-xs text-gray-500 mt-0.5 dark:text-gray-400">140 DPI · Calidad 65% — equilibrio ideal</span>
                                     </span>
                                 </label>
-                                <label for="compress-preset-high" class="compress-radio-card flex items-start gap-3 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
+                                <label for="compress-preset-high" class="compress-radio-card flex items-start gap-2.5 py-2 px-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition dark:border-gray-600 dark:hover:bg-gray-700/60 dark:has-[:checked]:border-teal-400 dark:has-[:checked]:bg-teal-900/25">
                                     <input type="radio" id="compress-preset-high" name="compress-preset" value="high" class="compress-radio mt-0.5">
-                                    <span class="block">
+                                    <span class="block leading-tight">
                                         <span class="block text-sm font-semibold text-gray-800 dark:text-gray-100">Alta calidad</span>
-                                        <span class="block text-xs text-gray-500 dark:text-gray-400">200 DPI · Calidad 80% — conserva detalle fino</span>
+                                        <span class="block text-xs text-gray-500 mt-0.5 dark:text-gray-400">200 DPI · Calidad 80% — conserva detalle fino</span>
                                     </span>
                                 </label>
                             </fieldset>
 
-                            <div class="pt-3 border-t border-gray-100 space-y-3.5 dark:border-gray-700">
+                            <div class="pt-2.5 border-t border-gray-100 space-y-2.5 dark:border-gray-700">
                                 <div>
                                     <label for="compress-dpi" class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 dark:text-gray-400">Resolución objetivo (DPI)</label>
-                                    <select id="compress-dpi" name="compress-dpi" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <select id="compress-dpi" name="compress-dpi" class="w-full border border-gray-300 rounded-lg py-2 px-2.5 text-sm outline-none focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                         <option value="72">72 DPI (mínima / vista pantalla)</option>
                                         <option value="96">96 DPI (compacta / correo y web)</option>
                                         <option value="120">120 DPI (media-baja)</option>
@@ -1034,17 +1034,17 @@
                                     </div>
                                 </div>
 
-                                <p id="compress-mode-note" class="text-xs text-gray-500 bg-gray-50 border border-gray-200/80 rounded-xl p-3 leading-relaxed dark:bg-gray-700/40 dark:border-gray-600 dark:text-gray-400">
+                                <p id="compress-mode-note" class="text-[11px] text-gray-500 bg-gray-50 border border-gray-200/80 rounded-xl p-2.5 leading-snug dark:bg-gray-700/40 dark:border-gray-600 dark:text-gray-400">
                                     Re-escala y recomprime únicamente las imágenes internas pesadas manteniendo intactos el texto seleccionable, los vectores, los enlaces y las capas editables de PDF_Tools.
                                 </p>
                             </div>
                         </div>
 
-                        <div class="mt-5 pt-4 border-t border-gray-200 space-y-2.5 dark:border-gray-700">
-                            <button type="submit" id="compress-run-btn" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-teal-700 disabled:opacity-50 transition shadow-sm flex items-center justify-center gap-2 dark:bg-teal-500 dark:hover:bg-teal-600">
+                        <div class="flex-none px-5 pt-3 pb-3.5 border-t border-gray-200 bg-white space-y-1.5 dark:bg-gray-800 dark:border-gray-700">
+                            <button type="submit" id="compress-run-btn" class="w-full bg-teal-600 text-white font-bold py-2.5 px-4 rounded-xl hover:bg-teal-700 disabled:opacity-50 transition shadow-sm flex items-center justify-center gap-2 dark:bg-teal-500 dark:hover:bg-teal-600">
                                 <i data-lucide="minimize-2" class="w-5 h-5"></i> Comprimir PDF
                             </button>
-                            <button type="button" id="compress-cancel-btn" class="w-full text-gray-500 py-2 text-sm hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">Cancelar</button>
+                            <button type="button" id="compress-cancel-btn" class="w-full text-gray-500 py-1 text-sm hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">Cancelar</button>
                         </div>
                     </form>
                 </aside>
@@ -7312,7 +7312,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.18';
+        const APP_VERSION = 'v2.0.0-beta.19';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
