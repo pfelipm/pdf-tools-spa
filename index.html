@@ -4404,8 +4404,9 @@
             
             try {
                 const newPdf = await PDFDocument.create();
-                const srcPdf = await PDFDocument.load(editorState.pdfData.slice(0), { ignoreEncryption: true });
+                const srcPdf = await PDFDocument.load(editorState.pdfData.slice(0), { ignoreEncryption: true, updateMetadata: false });
                 const total = editorState.pdfJsDoc.numPages;
+                const allCopiedPages = await newPdf.copyPages(srcPdf, srcPdf.getPageIndices());
                 const exportScale = 2.0;
                 const zoomFactor = exportScale / 1.5;
                 
@@ -4413,7 +4414,7 @@
                     if(progressCallback) progressCallback(i, total);
                     
                     const objects = getEffectivePageObjects(i);
-                    const [copiedPage] = await newPdf.copyPages(srcPdf, [i-1]);
+                    const copiedPage = allCopiedPages[i-1];
                     
                     if(objects.length > 0) {
                         const page = await editorState.pdfJsDoc.getPage(i);
@@ -4462,7 +4463,11 @@
                     }
                     newPdf.addPage(copiedPage);
                 }
-                return await newPdf.save();
+                try {
+                    return await newPdf.save({ useObjectStreams: true, updateFieldAppearances: false });
+                } catch (_) {
+                    return await newPdf.save();
+                }
             } finally {
                 tempFabric.dispose();
             }
@@ -7307,7 +7312,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.17';
+        const APP_VERSION = 'v2.0.0-beta.18';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');

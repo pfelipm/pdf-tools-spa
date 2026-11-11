@@ -10,10 +10,7 @@
 
 ## 🚀 Demo
 
-![Demo de la aplicación](readme-files/demo.gif)
-
-> [!NOTE]
-> El GIF superior y las capturas inferiores corresponden a versiones `1.x`, previas a las novedades de la **versión 2.0** (*Comprimir PDF*, *Inspector y Limpiador de Metadatos*, *capas re-editables*, *marcador fluorescente*, *rúbrica manuscrita*, *miniaturas en vivo* y *modo PWA 100 % Offline*).
+![Demo de la aplicación](readme-files/v2/demo.gif)
 
 ## 📖 Descripción
 
@@ -56,32 +53,29 @@ Ambas ediciones comparten el mismo principio de privacidad local, adaptándose a
 
 ## 📸 Capturas de Pantalla
 
-> [!NOTE]
-> Capturas correspondientes a la versión `1.5` (pendientes de renovación con las nuevas herramientas de la versión `2.0`).
+### Unir PDFs e imágenes (y pegado con `Ctrl+V`)
+![Unir archivos PDF e imágenes](readme-files/v2/01-unir.png)
 
-### Unir archivos
-![Unir](readme-files/pdftools1.png)
+### Dividir PDF y extraer rangos personalizados
+![Dividir PDF](readme-files/v2/02-dividir.png)
 
-### Dividir PDF
-![Dividir](readme-files/pdftools2.png)
+### Organizar y enderezar páginas (modo oscuro)
+![Organizar páginas](readme-files/v2/03-organizar.png)
 
-### Organizar páginas
-![Organizar](readme-files/pdftools3.png)
+### Exportar páginas como imágenes de alta resolución
+![Exportar páginas como imágenes](readme-files/v2/04-imagenes.png)
 
-### Zoom de página
-![Imágenes](readme-files/pdftools4.png)
+### Editor visual: resaltadores, rúbrica, miniaturas en vivo y guardado re-editable
+![Editor visual y capas re-editables](readme-files/v2/05-editor-capas.png)
 
-### Exportar páginas como imágenes
-![Opciones](readme-files/pdftools5.png)
+### Editor visual: gestos y panel de atajos de teclado
+![Atajos de teclado y gestos del editor](readme-files/v2/06-editor-atajos.png)
 
-### Descarga de páginas independientes
-![Zoom](readme-files/pdftools6.png)
+### Comprimir PDF conservando texto y capas (o mediante rasterizado)
+![Comprimir PDF](readme-files/v2/07-comprimir.png)
 
-### Editor visual
-![Editor visual](readme-files/pdftools7.png)
-
-### Aplanado seguro
-![Aplanado seguro](readme-files/pdftools8.png)
+### Inspector y limpiador de metadatos (`/Info`, `XMP` y `/PieceInfo`)
+![Inspector y limpiador de metadatos](readme-files/v2/08-metadatos.png)
 
 ## 🛠️ Tecnologías
 
