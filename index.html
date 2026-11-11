@@ -424,7 +424,7 @@
                             </div>
                             <span id="editor-page-count" class="text-[11px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 dark:bg-purple-900/40 dark:text-purple-300">0 págs</span>
                         </div>
-                        <div class="px-4 py-2 border-b border-gray-100 bg-amber-50/40 flex items-center justify-between gap-2 flex-none dark:bg-gray-800/80 dark:border-gray-700">
+                        <div id="global-highlights-bar" class="hidden px-4 py-2 border-b border-gray-100 bg-amber-50/40 items-center justify-between gap-2 flex-none dark:bg-gray-800/80 dark:border-gray-700">
                             <label for="global-highlights-switch" class="flex items-center gap-1.5 text-xs font-medium text-gray-700 cursor-pointer select-none dark:text-gray-300" title="Oculta o muestra todos los trazos de marcador fluorescente en pantalla y al exportar (Alt+H)">
                                 <i data-lucide="highlighter" class="w-3.5 h-3.5 text-amber-500 flex-shrink-0"></i>
                                 <span>Mostrar resaltados</span>
@@ -1297,11 +1297,41 @@
 
         const EDITOR_SERIALIZE_PROPS = ['id', 'isGlobal', 'isNoise', 'isHighlight', 'isSignature', 'isPageNumber', 'textTemplate', 'startPage', 'startValue'];
 
+        function hasAnyHighlightsInDocument() {
+            if (editorState.canvas && editorState.canvas.getObjects().some(o => o.isHighlight)) {
+                return true;
+            }
+            if (editorState.globalObjects.some(o => o.isHighlight)) {
+                return true;
+            }
+            for (const [pKey, pageJson] of Object.entries(editorState.pagesData)) {
+                if (Number(pKey) === editorState.currentPage && editorState.canvas) continue;
+                if (pageJson && Array.isArray(pageJson.objects) && pageJson.objects.some(o => o.isHighlight)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function updateHighlightsBarVisibility() {
+            const bar = document.getElementById('global-highlights-bar');
+            if (!bar) return;
+            const hasHl = hasAnyHighlightsInDocument();
+            bar.classList.toggle('hidden', !hasHl);
+            bar.classList.toggle('flex', hasHl);
+            if (!hasHl && !editorState.showHighlights) {
+                editorState.showHighlights = true;
+                const sw = document.getElementById('global-highlights-switch');
+                if (sw) sw.checked = true;
+            }
+        }
+
         function syncCurrentEditorPage() {
             if (!editorState.canvas || !editorState.currentPage) return;
             const json = editorState.canvas.toJSON(EDITOR_SERIALIZE_PROPS);
             editorState.pagesData[editorState.currentPage] = json;
             editorState.globalObjects = json.objects.filter(o => o.isGlobal);
+            updateHighlightsBarVisibility();
         }
 
         function getEffectivePageObjects(pageNum) {
@@ -1348,6 +1378,7 @@
                 editorState.showHighlights = true;
                 const hlGlobalSwitch = document.getElementById('global-highlights-switch');
                 if (hlGlobalSwitch) hlGlobalSwitch.checked = true;
+                updateHighlightsBarVisibility();
 
                 // Update File Info Header
                 const fnDisplay = document.getElementById('editor-filename-display');
@@ -1757,8 +1788,6 @@
             editorState.showHighlights = Boolean(visible);
             const globalSw = document.getElementById('global-highlights-switch');
             if (globalSw && globalSw.checked !== editorState.showHighlights) globalSw.checked = editorState.showHighlights;
-            const panelSw = document.getElementById('panel-highlights-switch');
-            if (panelSw && panelSw.checked !== editorState.showHighlights) panelSw.checked = editorState.showHighlights;
 
             if (editorState.canvas) {
                 if (!editorState.showHighlights) {
@@ -1968,13 +1997,7 @@
                     <div class="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/70 text-xs text-amber-900 leading-relaxed dark:bg-amber-900/20 dark:border-amber-800/50 dark:text-amber-200">
                         Mantén pulsada <kbd class="px-1 py-0.5 bg-white border border-amber-300 rounded font-mono text-[10px] dark:bg-gray-800 dark:border-amber-700">Shift</kbd> al arrastrar para resaltar en <strong>línea recta horizontal</strong>.
                     </div>
-
-                    <div class="pt-2 border-t border-gray-100 flex items-center justify-between gap-2 dark:border-gray-700">
-                        <label for="panel-highlights-switch" class="text-xs font-medium text-gray-700 cursor-pointer dark:text-gray-300">Mostrar todos los resaltados</label>
-                        <input id="panel-highlights-switch" type="checkbox" switch ${editorState.showHighlights ? 'checked' : ''} onchange="toggleAllHighlights(this.checked)">
-                    </div>
                 </div>`;
-            enhanceSwitchControls(panel);
             lucide.createIcons();
         }
 
@@ -2628,6 +2651,7 @@
             if(editorState.historyUndo.length > 20) editorState.historyUndo.shift(); // Limit
             editorState.historyUndo.push(JSON.stringify(editorState.canvas.toJSON(EDITOR_SERIALIZE_PROPS)));
             editorState.historyRedo = []; // Clear redo on new action
+            updateHighlightsBarVisibility();
         }
         
         function editorUndo() {
@@ -2752,8 +2776,10 @@
 
             // Global Highlight Visibility Toggle (Alt+H)
             if (!modKey && e.altKey && !e.shiftKey && key === 'h') {
-                e.preventDefault();
-                toggleAllHighlights(!editorState.showHighlights);
+                if (hasAnyHighlightsInDocument()) {
+                    e.preventDefault();
+                    toggleAllHighlights(!editorState.showHighlights);
+                }
                 return;
             }
 
@@ -4430,7 +4456,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.6';
+        const APP_VERSION = 'v2.0.0-beta.7';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');

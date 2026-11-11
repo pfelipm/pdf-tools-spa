@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pdftools-v2.0.0-beta.6';
+const CACHE_VERSION = 'pdftools-v2.0.0-beta.7';
 
 const APP_SHELL = [
     './',
