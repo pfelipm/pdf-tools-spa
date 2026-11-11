@@ -1,0 +1,292 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" width="1200" height="340" role="img" aria-labelledby="bannerTitle bannerDesc">
+  <title id="bannerTitle">PDF Tools (SPA) — Suite PDF 100 % local y PWA Offline</title>
+  <desc id="bannerDesc">7 herramientas PDF interconectadas en el navegador: Unir, Dividir, Organizar, A imágenes, Editor por capas re-editables, Comprimir y Limpiador de Metadatos, con privacidad total sin servidor.</desc>
+
+  <defs>
+    <!-- Fondo principal -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1120"/>
+      <stop offset="52%" stop-color="#131c38"/>
+      <stop offset="100%" stop-color="#1b1740"/>
+    </linearGradient>
+
+    <!-- Brillos ambientales -->
+    <radialGradient id="glowBlue" cx="20%" cy="18%" r="52%">
+      <stop offset="0%" stop-color="#2563eb" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#2563eb" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowPurple" cx="82%" cy="35%" r="45%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowTeal" cx="84%" cy="88%" r="40%">
+      <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.24"/>
+      <stop offset="100%" stop-color="#14b8a6" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Icono oficial y acentos -->
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="spaTextGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="55%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#2dd4bf"/>
+    </linearGradient>
+    <linearGradient id="topAccentLine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0"/>
+      <stop offset="25%" stop-color="#60a5fa" stop-opacity="0.75"/>
+      <stop offset="65%" stop-color="#a855f7" stop-opacity="0.75"/>
+      <stop offset="90%" stop-color="#2dd4bf" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Trama sutil de puntos -->
+    <pattern id="dotGrid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#94a3b8" fill-opacity="0.14"/>
+    </pattern>
+
+    <!-- Recorte general y recortes internos -->
+    <clipPath id="bannerClip">
+      <rect x="0" y="0" width="1200" height="340" rx="22"/>
+    </clipPath>
+    <clipPath id="appWindowClip">
+      <rect x="742" y="36" width="396" height="268" rx="16"/>
+    </clipPath>
+
+    <!-- Sombras suaves -->
+    <filter id="cardShadow" x="-12%" y="-12%" width="128%" height="132%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#020617" flood-opacity="0.55"/>
+    </filter>
+    <filter id="floatShadow" x="-16%" y="-16%" width="136%" height="142%">
+      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#020617" flood-opacity="0.60"/>
+    </filter>
+  </defs>
+
+  <!-- Contenedor principal -->
+  <g clip-path="url(#bannerClip)">
+    <rect width="1200" height="340" fill="url(#bgGrad)"/>
+    <rect width="1200" height="340" fill="url(#glowBlue)"/>
+    <rect width="1200" height="340" fill="url(#glowPurple)"/>
+    <rect width="1200" height="340" fill="url(#glowTeal)"/>
+    <rect width="1200" height="340" fill="url(#dotGrid)"/>
+
+    <!-- Línea luminosa superior -->
+    <rect x="40" y="1" width="1120" height="2" fill="url(#topAccentLine)"/>
+
+    <!-- ========================================================= -->
+    <!-- COLUMNA IZQUIERDA: IDENTIDAD, VALOR Y HERRAMIENTAS        -->
+    <!-- ========================================================= -->
+    <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+
+      <!-- Etiqueta superior v2.0 -->
+      <rect x="54" y="34" width="268" height="28" rx="14" fill="#1e293b" fill-opacity="0.85" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1"/>
+      <circle cx="72" cy="48" r="4.5" fill="#10b981"/>
+      <circle cx="72" cy="48" r="8" fill="#10b981" fill-opacity="0.22"/>
+      <text x="86" y="52.5" font-size="11.5" font-weight="700" fill="#e0f2fe" letter-spacing="0.5">v2.0 · SUITE WEB &amp; PWA OFFLINE</text>
+
+      <!-- Icono oficial de la app + Título -->
+      <g filter="url(#floatShadow)">
+        <rect x="54" y="80" width="66" height="66" rx="16" fill="url(#iconGrad)" stroke="#93c5fd" stroke-opacity="0.35" stroke-width="1"/>
+        <g transform="translate(68, 93) scale(1.62)" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 7h-3a2 2 0 0 1-2-2V2"/>
+          <path d="M9 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h7l4 4v10a2 2 0 0 1-2 2Z"/>
+          <path d="M3 7.6v12.8A1.6 1.6 0 0 0 4.6 22h9.8"/>
+        </g>
+      </g>
+
+      <text x="136" y="131" font-size="50" font-weight="800" letter-spacing="-1" fill="#ffffff">
+        PDF Tools <tspan fill="url(#spaTextGrad)">SPA</tspan>
+      </text>
+
+      <!-- Subtítulo en 2 líneas equilibradas -->
+      <text x="54" y="177" font-size="17" font-weight="500" fill="#e2e8f0">
+        Edita por capas, une, organiza, comprime y limpia tus archivos PDF
+      </text>
+      <text x="54" y="202" font-size="14.5" font-weight="400" fill="#94a3b8">
+        100 % en la memoria de tu navegador · Sin servidores externos ni subidas a la nube
+      </text>
+
+      <!-- 4 Píldoras de valor diferencial -->
+      <!-- 1: Privacidad -->
+      <g transform="translate(54, 224)">
+        <rect width="150" height="32" rx="9" fill="#064e3b" fill-opacity="0.45" stroke="#34d399" stroke-opacity="0.40" stroke-width="1"/>
+        <path d="M18 9l6 2.5v4.2c0 3.7-2.5 6.9-6 7.8-3.5-.9-6-4.1-6-7.8v-4.2L18 9z" fill="none" stroke="#34d399" stroke-width="1.7" stroke-linejoin="round"/>
+        <path d="M15.6 16.2l1.7 1.7 3.3-3.4" fill="none" stroke="#34d399" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="31" y="20.5" font-size="12.5" font-weight="600" fill="#d1fae5">Privacidad total</text>
+      </g>
+
+      <!-- 2: PWA Offline -->
+      <g transform="translate(214, 224)">
+        <rect width="156" height="32" rx="9" fill="#1e3a8a" fill-opacity="0.45" stroke="#60a5fa" stroke-opacity="0.40" stroke-width="1"/>
+        <path d="M18 10v8m0 0l-3.2-3.2M18 18l3.2-3.2M12.5 21.5h11" fill="none" stroke="#60a5fa" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="31" y="20.5" font-size="12.5" font-weight="600" fill="#dbeafe">Instalable · Offline</text>
+      </g>
+
+      <!-- 3: Capas re-editables -->
+      <g transform="translate(380, 224)">
+        <rect width="166" height="32" rx="9" fill="#4c1d95" fill-opacity="0.45" stroke="#c084fc" stroke-opacity="0.40" stroke-width="1"/>
+        <path d="M18 10.5l6.5 3.5-6.5 3.5-6.5-3.5L18 10.5zM11.5 17.5L18 21l6.5-3.5" fill="none" stroke="#c084fc" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="31" y="20.5" font-size="12.5" font-weight="600" fill="#f3e8ff">Capas re-editables</text>
+      </g>
+
+      <!-- 4: Compresión dual -->
+      <g transform="translate(556, 224)">
+        <rect width="152" height="32" rx="9" fill="#134e4a" fill-opacity="0.50" stroke="#2dd4bf" stroke-opacity="0.40" stroke-width="1"/>
+        <path d="M14 11.5h3.5V15M22 20.5h-3.5V17M17.5 15L13 10.5M18.5 17L23 21.5" fill="none" stroke="#2dd4bf" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="30" y="20.5" font-size="12.5" font-weight="600" fill="#ccfbf1">Compresión dual</text>
+      </g>
+
+      <!-- Cinta inferior con las 7 herramientas y sus colores en la interfaz -->
+      <g transform="translate(54, 286)" font-size="12.5" font-weight="600" fill="#cbd5e1">
+        <circle cx="5" cy="6" r="4" fill="#3b82f6"/>
+        <text x="15" y="10.5">Unir</text>
+
+        <circle cx="62" cy="6" r="4" fill="#6366f1"/>
+        <text x="72" y="10.5">Dividir</text>
+
+        <circle cx="134" cy="6" r="4" fill="#f97316"/>
+        <text x="144" y="10.5">Organizar</text>
+
+        <circle cx="226" cy="6" r="4" fill="#22c55e"/>
+        <text x="236" y="10.5">A imágenes</text>
+
+        <circle cx="330" cy="6" r="4" fill="#a855f7"/>
+        <text x="340" y="10.5">Editar</text>
+
+        <circle cx="400" cy="6" r="4" fill="#14b8a6"/>
+        <text x="410" y="10.5">Comprimir</text>
+
+        <circle cx="498" cy="6" r="4" fill="#06b6d4"/>
+        <text x="508" y="10.5">Metadatos</text>
+      </g>
+    </g>
+
+    <!-- ========================================================= -->
+    <!-- COLUMNA DERECHA: ILUSTRACIÓN DE INTERFAZ Y CAPAS ACTIVAS  -->
+    <!-- ========================================================= -->
+    <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+
+      <!-- Ventana estilizada de la aplicación -->
+      <g filter="url(#cardShadow)">
+        <rect x="742" y="36" width="396" height="268" rx="16" fill="#0f172a" fill-opacity="0.92" stroke="#475569" stroke-opacity="0.55" stroke-width="1.2"/>
+      </g>
+
+      <g clip-path="url(#appWindowClip)">
+        <!-- Cabecera de ventana -->
+        <rect x="742" y="36" width="396" height="36" fill="#1e293b"/>
+        <line x1="742" y1="72" x2="1138" y2="72" stroke="#334155" stroke-width="1"/>
+        <circle cx="762" cy="54" r="4" fill="#f87171"/>
+        <circle cx="775" cy="54" r="4" fill="#fbbf24"/>
+        <circle cx="788" cy="54" r="4" fill="#34d399"/>
+
+        <!-- Mini barra de pestañas superior -->
+        <rect x="812" y="44" width="248" height="20" rx="6" fill="#0f172a"/>
+        <rect x="816" y="47" width="26" height="14" rx="4" fill="#1e293b"/>
+        <rect x="846" y="47" width="26" height="14" rx="4" fill="#1e293b"/>
+        <rect x="876" y="47" width="30" height="14" rx="4" fill="#1e293b"/>
+        <rect x="910" y="47" width="28" height="14" rx="4" fill="#1e293b"/>
+        <!-- Pestaña Editar activa -->
+        <rect x="942" y="47" width="44" height="14" rx="4" fill="#7c3aed"/>
+        <rect x="990" y="47" width="34" height="14" rx="4" fill="#134e4a"/>
+        <rect x="1028" y="47" width="28" height="14" rx="4" fill="#1e293b"/>
+
+        <!-- Botón PWA + luna en cabecera -->
+        <rect x="1074" y="46" width="36" height="16" rx="5" fill="#1d4ed8" fill-opacity="0.45" stroke="#60a5fa" stroke-opacity="0.4" stroke-width="0.8"/>
+        <circle cx="1122" cy="54" r="5" fill="#334155"/>
+
+        <!-- Barra lateral de miniaturas -->
+        <rect x="742" y="72" width="64" height="232" fill="#111827"/>
+        <line x1="806" y1="72" x2="806" y2="304" stroke="#1f2937" stroke-width="1"/>
+        <!-- Miniatura 1 -->
+        <rect x="755" y="86" width="38" height="48" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+        <rect x="761" y="94" width="20" height="4" rx="1.5" fill="#3b82f6"/>
+        <rect x="761" y="102" width="26" height="2.5" rx="1" fill="#cbd5e1"/>
+        <rect x="761" y="108" width="22" height="2.5" rx="1" fill="#cbd5e1"/>
+        <!-- Miniatura 2 (activa con resaltado en vivo) -->
+        <rect x="752" y="144" width="44" height="54" rx="6" fill="#1e3a8a" fill-opacity="0.55" stroke="#60a5fa" stroke-width="1.5"/>
+        <rect x="756" y="148" width="36" height="46" rx="3" fill="#ffffff"/>
+        <rect x="761" y="155" width="22" height="3.5" rx="1" fill="#1e293b"/>
+        <rect x="761" y="162" width="26" height="3.5" rx="1" fill="#fde047"/>
+        <rect x="761" y="169" width="24" height="10" rx="2" fill="#dbeafe"/>
+        <rect x="761" y="183" width="20" height="3" rx="1" fill="#86efac"/>
+        <!-- Miniatura 3 -->
+        <rect x="755" y="208" width="38" height="48" rx="4" fill="#ffffff" fill-opacity="0.85"/>
+        <rect x="761" y="216" width="24" height="3" rx="1" fill="#94a3b8"/>
+        <rect x="761" y="223" width="26" height="3" rx="1" fill="#cbd5e1"/>
+        <rect x="761" y="230" width="18" height="3" rx="1" fill="#cbd5e1"/>
+
+        <!-- Hoja PDF central sobre el lienzo -->
+        <g filter="url(#floatShadow)">
+          <rect x="830" y="86" width="194" height="206" rx="7" fill="#ffffff"/>
+        </g>
+
+        <!-- Contenido vectorial de la hoja PDF -->
+        <rect x="848" y="102" width="42" height="8" rx="3" fill="#2563eb"/>
+        <rect x="848" y="116" width="124" height="7" rx="3" fill="#0f172a"/>
+        <rect x="848" y="130" width="154" height="4.5" rx="2" fill="#cbd5e1"/>
+
+        <!-- Resaltado fluorescente amarillo -->
+        <rect x="846" y="139" width="138" height="9" rx="3" fill="#fde047" fill-opacity="0.78"/>
+        <rect x="848" y="141.5" width="132" height="4" rx="2" fill="#334155"/>
+
+        <!-- Bloque gráfico / tabla dentro del PDF -->
+        <rect x="848" y="156" width="156" height="50" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+        <rect x="858" y="182" width="16" height="16" rx="2.5" fill="#93c5fd"/>
+        <rect x="880" y="172" width="16" height="26" rx="2.5" fill="#60a5fa"/>
+        <rect x="902" y="164" width="16" height="34" rx="2.5" fill="#3b82f6"/>
+        <rect x="924" y="176" width="16" height="22" rx="2.5" fill="#818cf8"/>
+        <!-- Marco de selección morado en el gráfico -->
+        <rect x="898" y="161" width="24" height="40" rx="3" fill="none" stroke="#9333ea" stroke-width="1.6" stroke-dasharray="3 2"/>
+
+        <!-- Líneas inferiores + resaltado fluorescente verde -->
+        <rect x="848" y="216" width="148" height="4.5" rx="2" fill="#cbd5e1"/>
+        <rect x="846" y="225" width="118" height="9" rx="3" fill="#86efac" fill-opacity="0.75"/>
+        <rect x="848" y="227.5" width="112" height="4" rx="2" fill="#334155"/>
+        <rect x="848" y="239" width="96" height="4.5" rx="2" fill="#cbd5e1"/>
+
+        <!-- Rúbrica caligráfica azul -->
+        <path d="M944 268 C954 252, 966 254, 962 266 C959 274, 976 255, 986 263 C992 268, 1002 262, 1008 258 M938 273 Q974 269 1011 267"
+              fill="none" stroke="#1d4ed8" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <!-- Contorno nítido superior de ventana -->
+      <rect x="742" y="36" width="396" height="268" rx="16" fill="none" stroke="#64748b" stroke-opacity="0.45" stroke-width="1"/>
+
+      <!-- Tarjeta flotante 1: Capa re-editable (arriba derecha) -->
+      <g filter="url(#floatShadow)">
+        <rect x="988" y="92" width="174" height="58" rx="12" fill="#1e1b4b" stroke="#a855f7" stroke-opacity="0.75" stroke-width="1.2"/>
+        <circle cx="1008" cy="113" r="9" fill="#7c3aed" fill-opacity="0.35"/>
+        <path d="M1004.5 113l2.4 2.4 4.8-4.8" fill="none" stroke="#e9d5ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="1023" y="117" font-size="12" font-weight="700" fill="#f3e8ff">Capa re-editable</text>
+        <text x="1001" y="136" font-size="10.5" font-weight="500" fill="#c4b5fd">Texto y figuras intactos</text>
+      </g>
+      <!-- Flecha conectora hacia el objeto anotado -->
+      <path d="M988 124 C962 124, 948 142, 924 162" fill="none" stroke="#a855f7" stroke-width="1.8" stroke-dasharray="4 3" stroke-linecap="round"/>
+      <circle cx="924" cy="162" r="3.5" fill="#a855f7"/>
+
+      <!-- Tarjeta flotante 2: Resultado de compresión inteligente (abajo derecha) -->
+      <g filter="url(#floatShadow)">
+        <rect x="970" y="212" width="192" height="66" rx="12" fill="#0f292e" stroke="#2dd4bf" stroke-opacity="0.75" stroke-width="1.2"/>
+        <text x="984" y="233" font-size="11.5" font-weight="700" fill="#99f6e4">2,98 MB → 2,33 MB</text>
+        <rect x="1106" y="220" width="44" height="18" rx="9" fill="#14b8a6" fill-opacity="0.28"/>
+        <text x="1128" y="232.5" font-size="10.5" font-weight="800" fill="#5eead4" text-anchor="middle">-21,9%</text>
+        <!-- Barra de optimización -->
+        <rect x="984" y="244" width="164" height="6" rx="3" fill="#1e293b"/>
+        <rect x="984" y="244" width="128" height="6" rx="3" fill="#2dd4bf"/>
+        <text x="984" y="265" font-size="10.5" font-weight="500" fill="#94a3b8">42 imágenes · vectores intactos</text>
+      </g>
+
+      <!-- Tarjeta flotante 3: Limpieza de metadatos (abajo izquierda de la ventana) -->
+      <g filter="url(#floatShadow)">
+        <rect x="752" y="256" width="144" height="34" rx="10" fill="#083344" stroke="#22d3ee" stroke-opacity="0.75" stroke-width="1.2"/>
+        <circle cx="769" cy="273" r="5" fill="#22d3ee"/>
+        <text x="780" y="277" font-size="11" font-weight="700" fill="#ecfeff">Metadatos limpios</text>
+      </g>
+    </g>
+
+    <!-- Borde interior sutil para contraste perfecto en GitHub Dark y Light -->
+    <rect x="0.75" y="0.75" width="1198.5" height="338.5" rx="21.25" fill="none" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1.5"/>
+  </g>
+</svg>

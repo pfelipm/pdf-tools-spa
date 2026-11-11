@@ -1,6 +1,6 @@
 # PDF Tools (SPA)
 
-![PDF Tools Header](readme-files/header.svg)
+![PDF Tools Header](readme-files/v2/header.svg)
 
 **Una suite completa de herramientas PDF privada, instalable (PWA) y 100 % local en tu navegador.**
 
