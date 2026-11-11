@@ -96,7 +96,16 @@
         .page-thumbnail.active { border-color: #3b82f6; background-color: #eff6ff; }
         .dark .page-thumbnail.active { border-color: #60a5fa; background-color: #1e3a8a; }
         .page-thumbnail:focus-visible { outline: 2px solid #9333ea; outline-offset: 2px; }
-        #editor-sidebar { overscroll-behavior: contain; }
+        #editor-sidebar {
+            overscroll-behavior: contain;
+            content-visibility: auto;
+            contain-intrinsic-size: auto 192px auto 600px;
+        }
+        @supports not (content-visibility: auto) {
+            #editor-sidebar {
+                contain: layout style paint;
+            }
+        }
         #canvas-wrapper { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
         #editor-scroll-area {
             scroll-axis-lock: none;
@@ -1773,6 +1782,150 @@
         let pendingSidebarPage = null;
         let sidebarWheelLoadTimer = null;
 
+        // Live Sidebar Thumbnail Overlay State (Off-Screen Deferred + Debounced)
+        const THUMB_RENDER_SCALE = 0.25;
+        let editorDocSessionId = 0;
+        let editorPageDimsCache = {};
+        const dirtyThumbPages = new Set();
+        const skippedThumbPages = new Set();
+        let lastSyncedThumbGlobalSig = '[]';
+        let thumbRefreshTimer = null;
+        let isFlushingThumbs = false;
+        let thumbStaticFabric = null;
+        let thumbOverlayVisObserver = null;
+        const supportsContentVisibility = 'contentVisibility' in document.documentElement.style;
+
+        function ensureThumbStaticFabric() {
+            if (!thumbStaticFabric) {
+                const offCvs = document.createElement('canvas');
+                thumbStaticFabric = new fabric.StaticCanvas(offCvs, { enableRetinaScaling: false });
+            }
+            return thumbStaticFabric;
+        }
+
+        function resetEditorThumbnailsState() {
+            editorDocSessionId += 1;
+            if (thumbRefreshTimer) {
+                clearTimeout(thumbRefreshTimer);
+                thumbRefreshTimer = null;
+            }
+            dirtyThumbPages.clear();
+            skippedThumbPages.clear();
+            editorPageDimsCache = {};
+            lastSyncedThumbGlobalSig = '[]';
+            if (thumbOverlayVisObserver) {
+                thumbOverlayVisObserver.disconnect();
+                thumbOverlayVisObserver = null;
+            }
+        }
+
+        function markAllPagesThumbDirty() {
+            const total = editorState.pdfJsDoc ? editorState.pdfJsDoc.numPages : 0;
+            for (let p = 1; p <= total; p++) {
+                dirtyThumbPages.add(p);
+            }
+        }
+
+        function scheduleThumbRefresh(delayMs = 220) {
+            if (!editorState.pdfJsDoc) return;
+            if (thumbRefreshTimer) clearTimeout(thumbRefreshTimer);
+            thumbRefreshTimer = setTimeout(() => {
+                thumbRefreshTimer = null;
+                if (isDrawingShape) {
+                    scheduleThumbRefresh(150);
+                    return;
+                }
+                flushDirtyThumbnails();
+            }, delayMs);
+        }
+
+        async function renderSingleThumbOverlay(pageNum, sessionSnap) {
+            const imgEl = document.getElementById(`thumb-overlay-${pageNum}`);
+            if (!imgEl || !editorState.pdfJsDoc || sessionSnap !== editorDocSessionId) return;
+
+            const objects = getEffectivePageObjects(pageNum);
+            if (objects.length === 0) {
+                imgEl.classList.add('hidden');
+                imgEl.removeAttribute('src');
+                return;
+            }
+
+            let dims = editorPageDimsCache[pageNum];
+            if (!dims) {
+                const page = await editorState.pdfJsDoc.getPage(pageNum);
+                if (sessionSnap !== editorDocSessionId) return;
+                const vp1 = page.getViewport({ scale: 1 });
+                dims = {
+                    w1: vp1.width,
+                    h1: vp1.height,
+                    thumbW: Math.max(1, Math.round(vp1.width * THUMB_RENDER_SCALE)),
+                    thumbH: Math.max(1, Math.round(vp1.height * THUMB_RENDER_SCALE))
+                };
+                editorPageDimsCache[pageNum] = dims;
+            }
+
+            const staticFab = ensureThumbStaticFabric();
+            const zoomFactor = THUMB_RENDER_SCALE / 1.5;
+            const totalPages = editorState.pdfJsDoc.numPages;
+
+            const addedCount = await renderObjectsToStaticFabric(
+                staticFab,
+                objects,
+                pageNum,
+                totalPages,
+                dims.thumbW,
+                dims.thumbH,
+                zoomFactor
+            );
+            if (sessionSnap !== editorDocSessionId) return;
+
+            const liveImgEl = document.getElementById(`thumb-overlay-${pageNum}`);
+            if (!liveImgEl) return;
+
+            if (addedCount === 0) {
+                liveImgEl.classList.add('hidden');
+                liveImgEl.removeAttribute('src');
+                return;
+            }
+
+            liveImgEl.src = staticFab.toDataURL({ format: 'png', multiplier: 1 });
+            liveImgEl.classList.remove('hidden');
+        }
+
+        async function flushDirtyThumbnails() {
+            if (isFlushingThumbs) return;
+            isFlushingThumbs = true;
+            const sessionSnap = editorDocSessionId;
+            try {
+                while (dirtyThumbPages.size > 0 && sessionSnap === editorDocSessionId && editorState.pdfJsDoc) {
+                    let nextPage = null;
+                    if (dirtyThumbPages.has(editorState.currentPage)) {
+                        const activeCvs = document.getElementById(`thumb-cvs-${editorState.currentPage}`);
+                        if (activeCvs && activeCvs.dataset.ready === '1') {
+                            nextPage = editorState.currentPage;
+                        }
+                    }
+                    if (nextPage === null) {
+                        for (const p of dirtyThumbPages) {
+                            if (skippedThumbPages.has(p)) continue;
+                            const cvs = document.getElementById(`thumb-cvs-${p}`);
+                            if (!cvs || cvs.dataset.ready !== '1') continue;
+                            nextPage = p;
+                            break;
+                        }
+                    }
+                    if (nextPage === null) break;
+
+                    dirtyThumbPages.delete(nextPage);
+                    await renderSingleThumbOverlay(nextPage, sessionSnap);
+                    if (sessionSnap !== editorDocSessionId) break;
+                    await yieldToMain();
+                }
+            } finally {
+                isFlushingThumbs = false;
+            }
+        }
+
         function cancelPendingSidebarWheel(restoreActiveThumb = false) {
             if (sidebarWheelLoadTimer) {
                 clearTimeout(sidebarWheelLoadTimer);
@@ -1813,12 +1966,23 @@
             }
         }
 
-        function syncCurrentEditorPage() {
-            if (!editorState.canvas || !editorState.currentPage || !currentPageFullyLoaded) return;
+        function syncCurrentEditorPage({ markThumbDirty = false } = {}) {
+            if (!editorState.canvas || !editorState.currentPage || !currentPageFullyLoaded) return null;
             const json = editorState.canvas.toJSON(EDITOR_SERIALIZE_PROPS);
             editorState.pagesData[editorState.currentPage] = json;
             editorState.globalObjects = json.objects.filter(o => o.isGlobal);
             updateHighlightsBarVisibility();
+
+            const nextGlobalSig = JSON.stringify(editorState.globalObjects);
+            if (nextGlobalSig !== lastSyncedThumbGlobalSig) {
+                lastSyncedThumbGlobalSig = nextGlobalSig;
+                markAllPagesThumbDirty();
+                scheduleThumbRefresh(220);
+            } else if (markThumbDirty) {
+                dirtyThumbPages.add(editorState.currentPage);
+                scheduleThumbRefresh(220);
+            }
+            return json;
         }
 
         function getEffectivePageObjects(pageNum) {
@@ -1856,6 +2020,7 @@
                 
                 // Reset State
                 cancelPendingSidebarWheel();
+                resetEditorThumbnailsState();
                 editorPageLoadSeq += 1;
                 if (activePageRenderTask) {
                     try { activePageRenderTask.cancel(); } catch (_) {}
@@ -1963,9 +2128,14 @@
             });
             editorState.canvas.on('object:added', (e) => {
                 if(!e.target.id) e.target.id = crypto.randomUUID();
-                saveHistory();
+                saveHistory(false);
             });
-            editorState.canvas.on('object:removed', saveHistory);
+            editorState.canvas.on('object:removed', () => saveHistory(false));
+            editorState.canvas.on('text:changed', () => {
+                if (!editorState.historyProcessing) {
+                    syncCurrentEditorPage({ markThumbDirty: true });
+                }
+            });
             
             // Fix Freehand & Highlighter Stroke Scaling
             editorState.canvas.on('path:created', (e) => {
@@ -2084,38 +2254,80 @@
         async function renderEditorSidebar() {
             const container = document.getElementById('editor-sidebar');
             disconnectThumbObserver('editor');
+            if (thumbOverlayVisObserver) {
+                thumbOverlayVisObserver.disconnect();
+                thumbOverlayVisObserver = null;
+            }
             container.innerHTML = '';
             const pdfDoc = editorState.pdfJsDoc;
+            const sessionSnap = editorDocSessionId;
             const renderTasks = new Map();
+            const deferredBtns = [];
             
             for(let i=1; i<=pdfDoc.numPages; i++) {
+                const isDeferred = i > 6;
+                if (isDeferred) skippedThumbPages.add(i);
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = `page-thumbnail w-full text-left flex-shrink-0 p-2 border-2 border-transparent rounded cursor-pointer hover:bg-gray-200 transition bg-white ${i===1?'active':''} ${i > 6 ? 'deferred-sidebar-card' : ''} dark:bg-gray-700 dark:hover:bg-gray-600`;
+                btn.dataset.page = String(i);
+                btn.className = `page-thumbnail w-full text-left flex-shrink-0 p-2 border-2 border-transparent rounded cursor-pointer hover:bg-gray-200 transition bg-white ${i===1?'active':''} ${isDeferred ? 'deferred-sidebar-card' : ''} dark:bg-gray-700 dark:hover:bg-gray-600`;
                 btn.id = `thumb-${i}`;
                 btn.setAttribute('aria-label', `Ir a página ${i}`);
                 if (i === 1) btn.setAttribute('aria-current', 'page');
                 btn.innerHTML = `
-                    <div class="h-32 flex items-center justify-center bg-gray-100 overflow-hidden mb-1 rounded dark:bg-gray-800">
-                        <canvas id="thumb-cvs-${i}" class="max-w-full max-h-full"></canvas>
+                    <div class="relative h-32 w-full flex items-center justify-center bg-gray-100 overflow-hidden mb-1 rounded dark:bg-gray-800">
+                        <canvas id="thumb-cvs-${i}" class="w-full h-full object-contain"></canvas>
+                        <img id="thumb-overlay-${i}" alt="" aria-hidden="true" decoding="async" class="hidden pointer-events-none select-none absolute inset-0 w-full h-full object-contain">
                     </div>
                     <div class="text-xs text-center font-medium text-gray-500 dark:text-gray-400">Pág ${i}</div>
                 `;
                 btn.onclick = () => loadEditorPage(i);
                 container.appendChild(btn);
+                if (isDeferred) deferredBtns.push(btn);
                 
                 renderTasks.set(btn, () => {
-                    if (editorState.pdfJsDoc !== pdfDoc) return;
-                    pdfDoc.getPage(i).then(page => {
+                    if (editorState.pdfJsDoc !== pdfDoc || sessionSnap !== editorDocSessionId) return;
+                    pdfDoc.getPage(i).then(async (page) => {
+                        if (editorState.pdfJsDoc !== pdfDoc || sessionSnap !== editorDocSessionId) return;
                         const cvs = document.getElementById(`thumb-cvs-${i}`);
                         if (!cvs || !cvs.isConnected) return;
-                        const viewport = page.getViewport({ scale: 0.2 });
-                        cvs.width = viewport.width; cvs.height = viewport.height;
-                        page.render({ canvasContext: cvs.getContext('2d'), viewport: viewport });
+                        const vp1 = page.getViewport({ scale: 1 });
+                        const w = Math.max(1, Math.round(vp1.width * THUMB_RENDER_SCALE));
+                        const h = Math.max(1, Math.round(vp1.height * THUMB_RENDER_SCALE));
+                        editorPageDimsCache[i] = { w1: vp1.width, h1: vp1.height, thumbW: w, thumbH: h };
+                        cvs.width = w;
+                        cvs.height = h;
+                        const ctx = cvs.getContext('2d');
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, w, h);
+                        const viewport = page.getViewport({ scale: THUMB_RENDER_SCALE });
+                        await page.render({ canvasContext: ctx, viewport }).promise;
+                        if (!cvs.isConnected || sessionSnap !== editorDocSessionId) return;
+                        cvs.dataset.ready = '1';
+                        if (dirtyThumbPages.has(i) || getEffectivePageObjects(i).length > 0) {
+                            dirtyThumbPages.add(i);
+                            scheduleThumbRefresh(40);
+                        }
                     }).catch(() => {});
                 });
             }
             observeThumbnails('editor', container, renderTasks);
+
+            if (!supportsContentVisibility && deferredBtns.length > 0 && 'IntersectionObserver' in window) {
+                thumbOverlayVisObserver = new IntersectionObserver((entries) => {
+                    entries.forEach((entry) => {
+                        const pageNum = Number(entry.target.dataset.page);
+                        if (!pageNum) return;
+                        if (entry.isIntersecting) {
+                            skippedThumbPages.delete(pageNum);
+                            if (dirtyThumbPages.has(pageNum)) scheduleThumbRefresh(50);
+                        } else {
+                            skippedThumbPages.add(pageNum);
+                        }
+                    });
+                }, { root: container, rootMargin: '200px 0px' });
+                deferredBtns.forEach((b) => thumbOverlayVisObserver.observe(b));
+            }
         }
 
         async function loadEditorPage(pageNum, force = false) {
@@ -2133,8 +2345,12 @@
             // 1. Save PREVIOUS page state unconditionally when fully loaded (including emptied pages & globals)
             if (!force && editorState.currentPage !== pageNum && editorState.canvas && currentPageFullyLoaded) {
                 const activeEditingObj = editorState.canvas.getActiveObject();
-                if (activeEditingObj && activeEditingObj.isEditing) activeEditingObj.exitEditing();
-                syncCurrentEditorPage();
+                let wasEditingText = false;
+                if (activeEditingObj && activeEditingObj.isEditing) {
+                    wasEditingText = true;
+                    activeEditingObj.exitEditing();
+                }
+                syncCurrentEditorPage({ markThumbDirty: wasEditingText });
             }
             currentPageFullyLoaded = false;
 
@@ -2164,6 +2380,16 @@
             const baseViewport = page.getViewport({ scale: 1.5 }); 
             editorState.baseWidth = baseViewport.width;
             editorState.baseHeight = baseViewport.height;
+            if (!editorPageDimsCache[pageNum]) {
+                const w1 = baseViewport.width / 1.5;
+                const h1 = baseViewport.height / 1.5;
+                editorPageDimsCache[pageNum] = {
+                    w1,
+                    h1,
+                    thumbW: Math.max(1, Math.round(w1 * THUMB_RENDER_SCALE)),
+                    thumbH: Math.max(1, Math.round(h1 * THUMB_RENDER_SCALE))
+                };
+            }
 
             // Calculate Fit-to-Page Scale IMMEDIATELY
             const container = document.getElementById('editor-scroll-area');
@@ -2274,7 +2500,7 @@
             
             currentPageFullyLoaded = true;
             editorState.historyProcessing = false;
-            saveHistory(); // Save baseline state
+            saveHistory(true); // Save baseline state without marking unmodified page thumbnail dirty
             updateEditorProperties();
         }
 
@@ -2362,6 +2588,17 @@
                     o.evented = editorState.showHighlights;
                 }
             });
+
+            lastSyncedThumbGlobalSig = JSON.stringify(editorState.globalObjects);
+            if (editorState.pdfJsDoc) {
+                const total = editorState.pdfJsDoc.numPages;
+                for (let p = 1; p <= total; p++) {
+                    if (getEffectivePageObjects(p).some(o => o.isHighlight)) {
+                        dirtyThumbPages.add(p);
+                    }
+                }
+                if (dirtyThumbPages.size > 0) scheduleThumbRefresh(80);
+            }
         }
 
         function addText() {
@@ -3182,6 +3419,20 @@
             }, 95);
         }
 
+        editorSidebarEl.addEventListener('contentvisibilityautostatechange', (event) => {
+            if (!(event.target instanceof HTMLElement) || !event.target.classList.contains('deferred-sidebar-card')) return;
+            const pageNum = Number(event.target.dataset.page);
+            if (!pageNum) return;
+            if (event.skipped) {
+                skippedThumbPages.add(pageNum);
+            } else {
+                skippedThumbPages.delete(pageNum);
+                if (dirtyThumbPages.has(pageNum)) {
+                    scheduleThumbRefresh(50);
+                }
+            }
+        }, { capture: true });
+
         editorSidebarEl.addEventListener('wheel', (e) => {
             if (e.ctrlKey || e.metaKey) return; // Let editorWorkspaceEl handle Ctrl/Cmd+wheel zoom
             if (!editorState.canvas || !editorState.pdfJsDoc || isAnyEditorModalOpen() || e.buttons !== 0) return;
@@ -3282,10 +3533,16 @@
                 stopEditorPan(true);
             }
         });
-        function saveHistory() {
+        function saveHistory(isBaseline = false) {
             if(editorState.historyProcessing) return;
+            const isBase = isBaseline === true;
+            const json = syncCurrentEditorPage({ markThumbDirty: !isBase })
+                || editorState.canvas.toJSON(EDITOR_SERIALIZE_PROPS);
+            if (isBase) {
+                lastSyncedThumbGlobalSig = JSON.stringify(editorState.globalObjects);
+            }
             if(editorState.historyUndo.length > 20) editorState.historyUndo.shift(); // Limit
-            editorState.historyUndo.push(JSON.stringify(editorState.canvas.toJSON(EDITOR_SERIALIZE_PROPS)));
+            editorState.historyUndo.push(JSON.stringify(json));
             editorState.historyRedo = []; // Clear redo on new action
             updateHighlightsBarVisibility();
         }
@@ -3305,7 +3562,7 @@
                 });
                 editorState.canvas.renderAll();
                 editorState.historyProcessing = false;
-                syncCurrentEditorPage();
+                syncCurrentEditorPage({ markThumbDirty: true });
                 updateEditorProperties();
             });
         }
@@ -3325,7 +3582,7 @@
                 });
                 editorState.canvas.renderAll();
                 editorState.historyProcessing = false;
-                syncCurrentEditorPage();
+                syncCurrentEditorPage({ markThumbDirty: true });
                 updateEditorProperties();
             });
         }
@@ -5130,7 +5387,10 @@
         }
 
         function resetTool(t) {
-            if (t === 'editor') cancelPendingSidebarWheel();
+            if (t === 'editor') {
+                cancelPendingSidebarWheel();
+                resetEditorThumbnailsState();
+            }
             if (t === 'compress') {
                 if (compressState.pdfJsDoc && typeof compressState.pdfJsDoc.destroy === 'function') {
                     compressState.pdfJsDoc.destroy().catch(() => {});
@@ -5721,7 +5981,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.12';
+        const APP_VERSION = 'v2.0.0-beta.13';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
