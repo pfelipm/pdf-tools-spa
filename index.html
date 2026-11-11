@@ -145,6 +145,71 @@
             }
         }
 
+        /* Native Switch Control + Progressive Fallback */
+        input[type="checkbox"][switch] {
+            accent-color: #9333ea;
+            margin: 0;
+            cursor: pointer;
+        }
+        input[type="checkbox"][switch]:focus-visible {
+            outline: 2px solid #9333ea;
+            outline-offset: 2px;
+        }
+        input[type="checkbox"].switch-fallback {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 2.15rem;
+            height: 1.2rem;
+            border-radius: 9999px;
+            background-color: #cbd5e1;
+            position: relative;
+            display: inline-block;
+            vertical-align: middle;
+            flex-shrink: 0;
+            transition: background-color 0.2s ease;
+        }
+        .dark input[type="checkbox"].switch-fallback {
+            background-color: #4b5563;
+        }
+        input[type="checkbox"].switch-fallback::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: calc(1.2rem - 4px);
+            height: calc(1.2rem - 4px);
+            border-radius: 9999px;
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+            transition: transform 0.2s ease;
+        }
+        input[type="checkbox"].switch-fallback:checked {
+            background-color: #9333ea;
+        }
+        input[type="checkbox"].switch-fallback:checked::after {
+            transform: translateX(0.95rem);
+        }
+
+        /* Checkerboard pattern for transparent signature preview */
+        .bg-checkerboard {
+            background-color: #f8fafc;
+            background-image:
+                linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+                linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+                linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+        }
+        .dark .bg-checkerboard {
+            background-color: #1f2937;
+            background-image:
+                linear-gradient(45deg, #374151 25%, transparent 25%),
+                linear-gradient(-45deg, #374151 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #374151 75%),
+                linear-gradient(-45deg, transparent 75%, #374151 75%);
+        }
+
         /* Native Modal Dialogs (Scroll Containment & Backdrop) */
         dialog:modal {
             overscroll-behavior: contain;
@@ -264,7 +329,9 @@
                             </div>
                         </div>
 
-                        <button onclick="toggleDrawMode()" id="tool-draw" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Dibujar"><i data-lucide="pen-tool" class="w-5 h-5"></i></button>
+                        <button type="button" onclick="toggleDrawMode()" id="tool-draw" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Dibujar"><i data-lucide="pen-tool" class="w-5 h-5"></i></button>
+                        <button type="button" onclick="toggleHighlightMode()" id="tool-highlight" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Resaltador fluorescente"><i data-lucide="highlighter" class="w-5 h-5"></i></button>
+                        <button type="button" onclick="openSignatureModal()" id="tool-signature" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Firmar / Rúbrica manuscrita"><i data-lucide="signature" class="w-5 h-5"></i></button>
                     </div>
 
                     <!-- Group 3: Final Actions -->
@@ -312,7 +379,7 @@
                         </div>
                     </div>
 
-                    <!-- Right Sidebar (File Info + Properties) -->
+                    <!-- Right Sidebar (File Info + Highlights Switch + Properties) -->
                     <aside class="w-64 bg-white border-l border-gray-200 flex flex-col shadow-lg z-10 dark:bg-gray-800 dark:border-gray-700">
                         <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2 flex-none dark:border-gray-700">
                             <div class="flex items-center gap-2 min-w-0">
@@ -320,6 +387,13 @@
                                 <span id="editor-filename-display" class="font-bold text-xs text-gray-700 truncate dark:text-gray-200" title="">documento.pdf</span>
                             </div>
                             <span id="editor-page-count" class="text-[11px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 dark:bg-purple-900/40 dark:text-purple-300">0 págs</span>
+                        </div>
+                        <div class="px-4 py-2 border-b border-gray-100 bg-amber-50/40 flex items-center justify-between gap-2 flex-none dark:bg-gray-800/80 dark:border-gray-700">
+                            <label for="global-highlights-switch" class="flex items-center gap-1.5 text-xs font-medium text-gray-700 cursor-pointer select-none dark:text-gray-300" title="Oculta o muestra todos los trazos de marcador fluorescente en pantalla y al exportar">
+                                <i data-lucide="highlighter" class="w-3.5 h-3.5 text-amber-500 flex-shrink-0"></i>
+                                <span>Mostrar resaltados</span>
+                            </label>
+                            <input id="global-highlights-switch" type="checkbox" switch checked onchange="toggleAllHighlights(this.checked)">
                         </div>
                         <div id="editor-properties" class="flex-1 overflow-y-auto p-4 flex flex-col gap-6 custom-scroll">
                             <div class="text-center text-gray-400 mt-10 text-sm">
@@ -805,6 +879,121 @@
         </div>
     </div>
 
+    <!-- Modal Firma / Rúbrica Manuscrita (Native Dialog) -->
+    <dialog id="signature-modal" closedby="closerequest" aria-labelledby="signature-modal-title" class="bg-white rounded-2xl shadow-2xl max-w-lg w-[calc(100%-2rem)] p-6 relative animate-fade-in text-left border-0 outline-none dark:bg-gray-800">
+        <form method="dialog">
+            <button type="submit" value="close" aria-label="Cerrar" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </form>
+
+        <div class="flex items-center gap-3 mb-4">
+            <div class="bg-purple-100 p-2.5 rounded-xl text-purple-600 flex-shrink-0 dark:bg-purple-900/30 dark:text-purple-400">
+                <i data-lucide="signature" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 id="signature-modal-title" class="text-lg font-bold text-gray-800 dark:text-white">Firma manuscrita / Rúbrica</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Rúbrica visual para documentos internos o autorizaciones (sin validez criptográfica).</p>
+            </div>
+        </div>
+
+        <!-- Saved Signature Banner -->
+        <div id="sig-saved-banner" class="hidden mb-4 p-3 rounded-xl border border-purple-200 bg-purple-50/60 flex items-center justify-between gap-3 dark:bg-purple-900/20 dark:border-purple-800">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-20 h-11 rounded-lg border border-gray-200 bg-checkerboard flex items-center justify-center p-1 overflow-hidden flex-shrink-0 dark:border-gray-600">
+                    <img id="sig-saved-preview" src="" alt="Rúbrica guardada" class="max-w-full max-h-full object-contain">
+                </div>
+                <div class="min-w-0">
+                    <span class="block text-xs font-bold text-gray-800 dark:text-gray-200">Rúbrica guardada en este navegador</span>
+                    <span class="block text-[11px] text-gray-500 dark:text-gray-400">Insértala en un clic o crea una nueva debajo</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+                <button type="button" onclick="insertSavedSignature()" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg transition shadow-sm dark:bg-purple-500 dark:hover:bg-purple-600">Usar</button>
+                <button type="button" onclick="deleteSavedSignature()" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition dark:hover:bg-red-900/30 dark:hover:text-red-400" title="Borrar rúbrica guardada" aria-label="Borrar rúbrica guardada"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+        </div>
+
+        <!-- Mode Selector -->
+        <div class="flex gap-1 bg-gray-100 p-1 rounded-xl mb-4 dark:bg-gray-700">
+            <button type="button" id="sig-mode-draw-btn" onclick="switchSignatureTab('draw')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 bg-white text-purple-700 shadow-sm dark:bg-gray-600 dark:text-purple-300">
+                <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> Dibujar trazo
+            </button>
+            <button type="button" id="sig-mode-upload-btn" onclick="switchSignatureTab('upload')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Subir foto en papel
+            </button>
+        </div>
+
+        <!-- Panel 1: Draw Signature -->
+        <div id="sig-panel-draw" class="space-y-3">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Tinta:</span>
+                    <button type="button" onclick="setSignatureInk('#1d4ed8')" data-sig-ink="#1d4ed8" aria-label="Azul bolígrafo" title="Azul bolígrafo" class="sig-ink-btn w-6 h-6 rounded-full bg-blue-700 ring-2 ring-offset-2 ring-purple-500 transition dark:ring-offset-gray-800"></button>
+                    <button type="button" onclick="setSignatureInk('#111827')" data-sig-ink="#111827" aria-label="Negro" title="Negro" class="sig-ink-btn w-6 h-6 rounded-full bg-gray-900 border border-gray-400 transition dark:ring-offset-gray-800"></button>
+                    <button type="button" onclick="setSignatureInk('#dc2626')" data-sig-ink="#dc2626" aria-label="Rojo" title="Rojo" class="sig-ink-btn w-6 h-6 rounded-full bg-red-600 transition dark:ring-offset-gray-800"></button>
+                </div>
+                <div class="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg dark:bg-gray-700">
+                    <button type="button" onclick="setSignatureWidth(2)" data-sig-width="2" class="sig-width-btn px-2 py-1 text-[11px] rounded-md text-gray-600 dark:text-gray-300">Fino</button>
+                    <button type="button" onclick="setSignatureWidth(3.2)" data-sig-width="3.2" class="sig-width-btn px-2 py-1 text-[11px] rounded-md bg-white font-semibold text-purple-700 shadow-sm dark:bg-gray-600 dark:text-purple-300">Medio</button>
+                    <button type="button" onclick="setSignatureWidth(4.8)" data-sig-width="4.8" class="sig-width-btn px-2 py-1 text-[11px] rounded-md text-gray-600 dark:text-gray-300">Grueso</button>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button type="button" onclick="undoSignatureStroke()" class="px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-1 transition dark:text-gray-300 dark:hover:bg-gray-700" title="Deshacer último trazo"><i data-lucide="undo-2" class="w-3.5 h-3.5"></i> Deshacer</button>
+                    <button type="button" onclick="clearSignatureCanvas()" class="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-1 transition dark:text-red-400 dark:hover:bg-red-900/30"><i data-lucide="eraser" class="w-3.5 h-3.5"></i> Limpiar</button>
+                </div>
+            </div>
+
+            <div class="relative rounded-xl border-2 border-dashed border-gray-300 bg-white overflow-hidden dark:border-gray-600">
+                <div class="pointer-events-none absolute inset-x-8 bottom-10 border-b border-dashed border-gray-200"></div>
+                <span class="pointer-events-none absolute left-3 bottom-2 text-[11px] text-gray-300 select-none">Firma aquí encima</span>
+                <canvas id="sig-draw-canvas" class="w-full h-44 block cursor-crosshair touch-none"></canvas>
+            </div>
+        </div>
+
+        <!-- Panel 2: Upload Photo Signature -->
+        <div id="sig-panel-upload" class="hidden space-y-3">
+            <input type="file" id="sig-file-input" accept="image/*" class="hidden">
+            <div id="sig-upload-drop" class="rounded-xl border-2 border-dashed border-gray-300 hover:border-purple-500 p-5 text-center cursor-pointer transition bg-gray-50 dark:bg-gray-700/40 dark:border-gray-600 dark:hover:border-purple-400">
+                <i data-lucide="image-plus" class="w-7 h-7 mx-auto mb-1.5 text-purple-600 dark:text-purple-400"></i>
+                <p class="text-xs font-medium text-gray-700 dark:text-gray-200">Haz clic, arrastra o pega (<kbd class="px-1 py-0.5 bg-white border border-gray-300 rounded font-mono text-[10px] dark:bg-gray-800 dark:border-gray-600">Ctrl+V</kbd>) una foto de tu firma sobre papel blanco</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">JPG, PNG o WebP — el fondo claro se vuelve transparente automáticamente</p>
+            </div>
+
+            <div id="sig-upload-preview-wrap" class="hidden space-y-3">
+                <div class="h-36 rounded-xl border border-gray-200 bg-checkerboard flex items-center justify-center p-2 overflow-hidden dark:border-gray-600">
+                    <canvas id="sig-upload-canvas" class="max-w-full max-h-full object-contain"></canvas>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl space-y-2.5 border border-gray-100 dark:bg-gray-700/50 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <label for="sig-clean-bg-switch" class="text-xs font-medium text-gray-700 cursor-pointer dark:text-gray-200">Eliminar fondo blanco del papel</label>
+                        <input id="sig-clean-bg-switch" type="checkbox" switch checked onchange="processUploadedSignature()">
+                    </div>
+                    <div id="sig-threshold-row" class="flex items-center gap-3">
+                        <span class="text-[11px] text-gray-500 whitespace-nowrap dark:text-gray-400">Limpieza de papel</span>
+                        <input id="sig-threshold-range" type="range" min="130" max="248" value="208" oninput="processUploadedSignature()" class="flex-1">
+                        <span id="sig-threshold-val" class="text-[11px] font-mono text-gray-500 w-7 text-right dark:text-gray-400">208</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer: Save Locally + Actions -->
+        <div class="mt-4 pt-3 border-t border-gray-100 space-y-3 dark:border-gray-700">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+                <input id="sig-save-local-check" type="checkbox" class="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 dark:bg-gray-700 dark:border-gray-500">
+                <span class="text-xs text-gray-600 dark:text-gray-300">Guardar mi rúbrica en este navegador para reutilizarla en futuras sesiones</span>
+            </label>
+
+            <div class="flex justify-end gap-2">
+                <form method="dialog">
+                    <button type="submit" value="cancel" class="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition dark:text-gray-300 dark:hover:bg-gray-700">Cancelar</button>
+                </form>
+                <button type="button" id="sig-insert-btn" disabled onclick="confirmInsertSignature()" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5 dark:bg-purple-500 dark:hover:bg-purple-600">
+                    <i data-lucide="check" class="w-4 h-4"></i> Insertar en página
+                </button>
+            </div>
+        </div>
+    </dialog>
+
     <!-- Progress & Canvas -->
     <div id="progressModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center dark:bg-gray-800">
@@ -973,11 +1162,39 @@
         // ==========================================
         
         // --- State ---
+        const HIGHLIGHT_PRESETS = [
+            { name: 'Amarillo', hex: '#facc15' },
+            { name: 'Verde', hex: '#4ade80' },
+            { name: 'Azul', hex: '#38bdf8' },
+            { name: 'Rosa', hex: '#f472b6' },
+            { name: 'Naranja', hex: '#fb923c' }
+        ];
+
+        function hexToRgba(hex, alpha) {
+            const clean = (hex || '#facc15').replace('#', '');
+            const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean;
+            const num = parseInt(full, 16);
+            const r = (num >> 16) & 255;
+            const g = (num >> 8) & 255;
+            const b = num & 255;
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function enhanceSwitchControls(root = document) {
+            if ('switch' in HTMLInputElement.prototype) return;
+            root.querySelectorAll('input[type="checkbox"][switch]').forEach((el) => {
+                el.setAttribute('role', 'switch');
+                el.classList.add('switch-fallback');
+            });
+        }
+
         const editorState = {
             doc: null,          // PDFLib Doc
             pdfData: null,      // ArrayBuffer
             pdfJsDoc: null,     // PDF.js Doc
             canvas: null,       // Fabric Canvas
+            pencilBrush: null,  // Standard freehand brush
+            highlighterBrush: null, // Fluorescent brush with Shift horizontal lock
             filename: 'documento.pdf',
             currentPage: 1,
             scale: 1,
@@ -988,14 +1205,16 @@
             historyProcessing: false, // Flag to prevent loops
             clipboard: null,    // For copy/paste
             preferFabricClipboard: false, // Distinguishes recent internal Ctrl+C from OS clipboard images
+            showHighlights: true, // Global visibility toggle for isHighlight objects
             defaults: {         // User Style Preferences
                 shape: { fill: 'transparent', stroke: '#ff0000', strokeWidth: 3 },
                 text: { fontSize: 24, fill: '#ff0000', fontFamily: 'Arial', fontWeight: 'normal', fontStyle: 'normal', underline: false },
-                draw: { width: 5, color: '#ff0000' }
+                draw: { width: 5, color: '#ff0000' },
+                highlight: { width: 22, color: '#facc15', opacity: 0.35 }
             }
         };
 
-        const EDITOR_SERIALIZE_PROPS = ['id', 'isGlobal', 'isNoise', 'isPageNumber', 'textTemplate', 'startPage', 'startValue'];
+        const EDITOR_SERIALIZE_PROPS = ['id', 'isGlobal', 'isNoise', 'isHighlight', 'isSignature', 'isPageNumber', 'textTemplate', 'startPage', 'startValue'];
 
         function syncCurrentEditorPage() {
             if (!editorState.canvas || !editorState.currentPage) return;
@@ -1045,6 +1264,9 @@
                 editorState.currentPage = 1;
                 editorState.scale = 1; // Reset scale
                 editorState.preferFabricClipboard = false;
+                editorState.showHighlights = true;
+                const hlGlobalSwitch = document.getElementById('global-highlights-switch');
+                if (hlGlobalSwitch) hlGlobalSwitch.checked = true;
 
                 // Update File Info Header
                 const fnDisplay = document.getElementById('editor-filename-display');
@@ -1103,16 +1325,41 @@
             return new fabric.Pattern({ source: patternCanvas, repeat: 'repeat' });
         }
 
+        function createHighlighterBrush(fabricCanvas) {
+            const brush = new fabric.PencilBrush(fabricCanvas);
+            brush.strokeLineCap = 'butt';
+            brush.strokeLineJoin = 'round';
+            brush.decimate = 2;
+            const origDown = brush.onMouseDown.bind(brush);
+            const origMove = brush.onMouseMove.bind(brush);
+            let lockedY = null;
+            brush.onMouseDown = function(pointer, options) {
+                lockedY = pointer.y;
+                origDown(pointer, options);
+            };
+            brush.onMouseMove = function(pointer, options) {
+                const adj = (options && options.e && options.e.shiftKey && lockedY !== null)
+                    ? new fabric.Point(pointer.x, lockedY)
+                    : pointer;
+                origMove(adj, options);
+            };
+            return brush;
+        }
+
         function initFabric() {
             editorState.canvas = new fabric.Canvas('fabric-canvas', {
                 preserveObjectStacking: true,
                 selection: true
             });
+            editorState.pencilBrush = new fabric.PencilBrush(editorState.canvas);
+            editorState.highlighterBrush = createHighlighterBrush(editorState.canvas);
             
             // Event Listeners
             editorState.canvas.on('selection:created', updateEditorProperties);
             editorState.canvas.on('selection:updated', updateEditorProperties);
             editorState.canvas.on('selection:cleared', () => {
+                if (editorState.mode === 'draw') { renderBrushProperties(); return; }
+                if (editorState.mode === 'highlight') { renderHighlighterProperties(); return; }
                 document.getElementById('editor-properties').innerHTML = `
                     <div class="text-center text-gray-400 mt-10 text-sm">
                         <i data-lucide="mouse-pointer-click" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
@@ -1126,9 +1373,28 @@
             });
             editorState.canvas.on('object:removed', saveHistory);
             
-            // Fix Freehand Drawing Stroke Scaling
+            // Fix Freehand & Highlighter Stroke Scaling
             editorState.canvas.on('path:created', (e) => {
-                e.path.set('strokeUniform', true);
+                if (editorState.mode === 'highlight') {
+                    const hl = editorState.defaults.highlight;
+                    e.path.set({
+                        stroke: hl.color,
+                        strokeWidth: hl.width,
+                        opacity: hl.opacity,
+                        strokeUniform: true,
+                        strokeLineCap: (e.path.width < 3 && e.path.height < 3) ? 'round' : 'butt',
+                        strokeLineJoin: 'round',
+                        globalCompositeOperation: 'multiply',
+                        isHighlight: true,
+                        visible: editorState.showHighlights,
+                        selectable: editorState.showHighlights,
+                        evented: editorState.showHighlights
+                    });
+                    editorState.canvas.requestRenderAll();
+                } else {
+                    e.path.set('strokeUniform', true);
+                }
+                syncCurrentEditorPage();
                 saveHistory();
             });
 
@@ -1329,6 +1595,13 @@
                                     o.bringToFront(); 
                                 }
                             }
+                            if (o.isHighlight) {
+                                o.set({
+                                    visible: editorState.showHighlights,
+                                    selectable: editorState.showHighlights,
+                                    evented: editorState.showHighlights
+                                });
+                            }
                             editorState.canvas.add(o);
                         });
                         editorState.canvas.renderAll();
@@ -1366,14 +1639,23 @@
             editorState.mode = mode; // Store mode
             document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active', 'bg-purple-50', 'text-purple-600', 'dark:bg-purple-900/30', 'dark:text-purple-300'));
             
-            editorState.canvas.isDrawingMode = (mode === 'draw');
+            editorState.canvas.isDrawingMode = (mode === 'draw' || mode === 'highlight');
             
             if(mode === 'draw') {
                 const defaults = editorState.defaults.draw;
+                editorState.canvas.freeDrawingBrush = editorState.pencilBrush;
                 editorState.canvas.freeDrawingBrush.width = defaults.width;
                 editorState.canvas.freeDrawingBrush.color = defaults.color;
                 document.getElementById('tool-draw').classList.add('active', 'bg-purple-50', 'text-purple-600', 'dark:bg-purple-900/30', 'dark:text-purple-300');
-                renderBrushProperties(); // Show brush settings immediately
+                renderBrushProperties();
+            } else if (mode === 'highlight') {
+                if (!editorState.showHighlights) toggleAllHighlights(true);
+                const hl = editorState.defaults.highlight;
+                editorState.canvas.freeDrawingBrush = editorState.highlighterBrush;
+                editorState.canvas.freeDrawingBrush.width = hl.width;
+                editorState.canvas.freeDrawingBrush.color = hexToRgba(hl.color, hl.opacity);
+                document.getElementById('tool-highlight').classList.add('active', 'bg-purple-50', 'text-purple-600', 'dark:bg-purple-900/30', 'dark:text-purple-300');
+                renderHighlighterProperties();
             } else if (mode === 'pixelate') {
                 editorState.canvas.defaultCursor = 'crosshair';
                 editorState.canvas.selection = false; // Disable group selection while drawing
@@ -1385,7 +1667,57 @@
             }
         }
         function toggleDrawMode() {
-            setEditorMode(editorState.canvas.isDrawingMode ? 'select' : 'draw');
+            setEditorMode(editorState.mode === 'draw' ? 'select' : 'draw');
+        }
+        function toggleHighlightMode() {
+            setEditorMode(editorState.mode === 'highlight' ? 'select' : 'highlight');
+        }
+
+        function toggleAllHighlights(visible) {
+            editorState.showHighlights = Boolean(visible);
+            const globalSw = document.getElementById('global-highlights-switch');
+            if (globalSw && globalSw.checked !== editorState.showHighlights) globalSw.checked = editorState.showHighlights;
+            const panelSw = document.getElementById('panel-highlights-switch');
+            if (panelSw && panelSw.checked !== editorState.showHighlights) panelSw.checked = editorState.showHighlights;
+
+            if (editorState.canvas) {
+                if (!editorState.showHighlights) {
+                    const active = editorState.canvas.getActiveObject();
+                    if (active && (active.isHighlight || (active.type === 'activeSelection' && active._objects.some(o => o.isHighlight)))) {
+                        editorState.canvas.discardActiveObject();
+                    }
+                }
+                editorState.canvas.getObjects().forEach(o => {
+                    if (o.isHighlight) {
+                        o.set({
+                            visible: editorState.showHighlights,
+                            selectable: editorState.showHighlights,
+                            evented: editorState.showHighlights
+                        });
+                    }
+                });
+                editorState.canvas.requestRenderAll();
+                syncCurrentEditorPage();
+            }
+
+            Object.values(editorState.pagesData).forEach(pageJson => {
+                if (pageJson && Array.isArray(pageJson.objects)) {
+                    pageJson.objects.forEach(o => {
+                        if (o.isHighlight) {
+                            o.visible = editorState.showHighlights;
+                            o.selectable = editorState.showHighlights;
+                            o.evented = editorState.showHighlights;
+                        }
+                    });
+                }
+            });
+            editorState.globalObjects.forEach(o => {
+                if (o.isHighlight) {
+                    o.visible = editorState.showHighlights;
+                    o.selectable = editorState.showHighlights;
+                    o.evented = editorState.showHighlights;
+                }
+            });
         }
 
         function addText() {
@@ -1500,16 +1832,95 @@
         }
 
         function updateBrushWidth(val) {
-            editorState.canvas.freeDrawingBrush.width = val;
+            if (editorState.pencilBrush) editorState.pencilBrush.width = val;
+            if (editorState.mode === 'draw') editorState.canvas.freeDrawingBrush.width = val;
             editorState.defaults.draw.width = val;
             editorState.defaults.shape.strokeWidth = val; // Sync to shapes
             document.getElementById('brush-width-val').innerText = val;
         }
 
         function updateBrushColor(val) {
-            editorState.canvas.freeDrawingBrush.color = val;
+            if (editorState.pencilBrush) editorState.pencilBrush.color = val;
+            if (editorState.mode === 'draw') editorState.canvas.freeDrawingBrush.color = val;
             editorState.defaults.draw.color = val;
             editorState.defaults.shape.stroke = val; // Sync to shapes
+        }
+
+        function renderHighlighterProperties() {
+            const hl = editorState.defaults.highlight;
+            const panel = document.getElementById('editor-properties');
+            const swatchesHtml = HIGHLIGHT_PRESETS.map(p => {
+                const isActive = hl.color.toLowerCase() === p.hex.toLowerCase();
+                return `<button type="button" onclick="updateHighlightColor('${p.hex}', true)" title="${p.name}" aria-label="${p.name}" style="background-color: ${p.hex}" class="w-6 h-6 rounded-full border border-black/10 transition ${isActive ? 'ring-2 ring-offset-2 ring-purple-600 scale-110 dark:ring-offset-gray-800' : 'hover:scale-105'}"></button>`;
+            }).join('');
+
+            panel.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="highlighter" class="w-4 h-4 text-amber-500"></i>
+                        <label class="text-xs font-bold text-gray-500 uppercase dark:text-gray-400">Resaltador Fluorescente</label>
+                    </div>
+
+                    <div class="space-y-2">
+                        <span class="text-xs text-gray-500 block dark:text-gray-400">Colores fluorescentes</span>
+                        <div class="flex items-center justify-between gap-1.5">
+                            <div class="flex items-center gap-2">${swatchesHtml}</div>
+                            <input type="color" id="hl-custom-color" value="${hl.color}" oninput="updateHighlightColor(this.value, false)" title="Color personalizado" class="w-6 h-6 rounded cursor-pointer border border-gray-200 dark:border-gray-600">
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm dark:text-gray-300">Grosor del marcador</span>
+                            <span id="hl-width-val" class="text-xs font-mono text-gray-500 dark:text-gray-400">${hl.width}px</span>
+                        </div>
+                        <input type="range" min="8" max="60" value="${hl.width}" oninput="updateHighlightWidth(parseInt(this.value))" class="w-full">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm dark:text-gray-300">Intensidad</span>
+                            <span id="hl-opacity-val" class="text-xs font-mono text-gray-500 dark:text-gray-400">${Math.round(hl.opacity * 100)}%</span>
+                        </div>
+                        <input type="range" min="0.15" max="0.65" step="0.05" value="${hl.opacity}" oninput="updateHighlightOpacity(parseFloat(this.value))" class="w-full">
+                    </div>
+
+                    <div class="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/70 text-xs text-amber-900 leading-relaxed dark:bg-amber-900/20 dark:border-amber-800/50 dark:text-amber-200">
+                        Mantén pulsada <kbd class="px-1 py-0.5 bg-white border border-amber-300 rounded font-mono text-[10px] dark:bg-gray-800 dark:border-amber-700">Shift</kbd> al arrastrar para resaltar en <strong>línea recta horizontal</strong>.
+                    </div>
+
+                    <div class="pt-2 border-t border-gray-100 flex items-center justify-between gap-2 dark:border-gray-700">
+                        <label for="panel-highlights-switch" class="text-xs font-medium text-gray-700 cursor-pointer dark:text-gray-300">Mostrar todos los resaltados</label>
+                        <input id="panel-highlights-switch" type="checkbox" switch ${editorState.showHighlights ? 'checked' : ''} onchange="toggleAllHighlights(this.checked)">
+                    </div>
+                </div>`;
+            enhanceSwitchControls(panel);
+            lucide.createIcons();
+        }
+
+        function updateHighlightWidth(val) {
+            editorState.defaults.highlight.width = val;
+            if (editorState.highlighterBrush) editorState.highlighterBrush.width = val;
+            if (editorState.mode === 'highlight') editorState.canvas.freeDrawingBrush.width = val;
+            const lbl = document.getElementById('hl-width-val');
+            if (lbl) lbl.innerText = `${val}px`;
+        }
+
+        function updateHighlightColor(hex, rerenderSwatches = false) {
+            editorState.defaults.highlight.color = hex;
+            const rgba = hexToRgba(hex, editorState.defaults.highlight.opacity);
+            if (editorState.highlighterBrush) editorState.highlighterBrush.color = rgba;
+            if (editorState.mode === 'highlight') editorState.canvas.freeDrawingBrush.color = rgba;
+            if (rerenderSwatches && editorState.mode === 'highlight') renderHighlighterProperties();
+        }
+
+        function updateHighlightOpacity(alpha) {
+            editorState.defaults.highlight.opacity = alpha;
+            const rgba = hexToRgba(editorState.defaults.highlight.color, alpha);
+            if (editorState.highlighterBrush) editorState.highlighterBrush.color = rgba;
+            if (editorState.mode === 'highlight') editorState.canvas.freeDrawingBrush.color = rgba;
+            const lbl = document.getElementById('hl-opacity-val');
+            if (lbl) lbl.innerText = `${Math.round(alpha * 100)}%`;
         }
 
         function addShape(type) {
@@ -1656,14 +2067,20 @@
             }
             
             // 2. Shape/Path Props - Skip for Noise/Pixelate/Text/Image
-            // Logic: Line & Path (Draw) -> No Fill option, Border is Thickness.
+            // Logic: Line & Path (Draw/Highlight) -> No Fill option, Border is Thickness.
             //        Rect & Circle -> Fill option, Border is Stroke.
             if(!obj.isNoise && obj.type !== 'i-text' && obj.type !== 'text' && obj.type !== 'image') {
                 const isLineOrPath = obj.type === 'line' || obj.type === 'path';
+                const isHl = Boolean(obj.isHighlight);
+                const hlSwatches = isHl ? `
+                    <div class="flex items-center gap-1.5 pt-1">
+                        ${HIGHLIGHT_PRESETS.map(p => `<button type="button" onclick="updateActiveObj('stroke', '${p.hex}'); updateEditorProperties();" title="${p.name}" aria-label="${p.name}" style="background-color: ${p.hex}" class="w-5 h-5 rounded-full border border-black/10 ${(obj.stroke || '').toLowerCase() === p.hex.toLowerCase() ? 'ring-2 ring-offset-1 ring-purple-600 dark:ring-offset-gray-800' : ''}"></button>`).join('')}
+                    </div>` : '';
                 
                 html += `
                 <div class="space-y-3">
-                    <label class="text-xs font-bold text-gray-500 uppercase dark:text-gray-400">Estilo</label>
+                    <label class="text-xs font-bold text-gray-500 uppercase dark:text-gray-400">${isHl ? 'Resaltado Fluorescente' : 'Estilo'}</label>
+                    ${hlSwatches}
                     
                     ${!isLineOrPath ? `
                     <div class="flex items-center justify-between">
@@ -1685,12 +2102,12 @@
                          </div>
                          
                          <div class="flex items-center gap-2">
-                            <input type="range" min="1" max="50" value="${obj.strokeWidth===0 ? 1 : obj.strokeWidth}" oninput="updateActiveObj('strokeWidth', parseInt(this.value))" class="flex-1" ${!isLineOrPath && obj.strokeWidth===0 ? 'disabled' : ''}>
+                            <input type="range" min="${isHl ? 8 : 1}" max="${isHl ? 60 : 50}" value="${obj.strokeWidth===0 ? 1 : obj.strokeWidth}" oninput="updateActiveObj('strokeWidth', parseInt(this.value)); this.nextElementSibling.textContent = this.value;" class="flex-1" ${!isLineOrPath && obj.strokeWidth===0 ? 'disabled' : ''}>
                             <span class="text-xs w-6 text-center font-mono dark:text-gray-400">${obj.strokeWidth}</span>
                          </div>
                          
                          <div class="flex items-center justify-between mt-1">
-                            <span class="text-xs text-gray-400">Color trazado</span>
+                            <span class="text-xs text-gray-400">${isHl ? 'Color marcador' : 'Color trazado'}</span>
                             <input type="color" value="${obj.stroke}" oninput="updateActiveObj('stroke', this.value)" class="w-6 h-6 rounded cursor-pointer border border-gray-200 dark:border-gray-600">
                          </div>
                     </div>
@@ -1746,6 +2163,14 @@
                     // Update Defaults based on type
                     if (obj.type === 'i-text' || obj.type === 'text') {
                         if (prop in editorState.defaults.text) editorState.defaults.text[prop] = val;
+                    } else if (obj.isHighlight) {
+                        if (prop === 'stroke') editorState.defaults.highlight.color = val;
+                        if (prop === 'strokeWidth') editorState.defaults.highlight.width = val;
+                        if (prop === 'opacity') editorState.defaults.highlight.opacity = val;
+                        if (editorState.highlighterBrush) {
+                            editorState.highlighterBrush.width = editorState.defaults.highlight.width;
+                            editorState.highlighterBrush.color = hexToRgba(editorState.defaults.highlight.color, editorState.defaults.highlight.opacity);
+                        }
                     } else if (!obj.isNoise && obj.type !== 'image') {
                         // Sync Shape Defaults
                         if (prop in editorState.defaults.shape) editorState.defaults.shape[prop] = val;
@@ -1753,11 +2178,13 @@
                         // Sync Drawing Defaults & Brush if applicable
                         if (prop === 'stroke') {
                             editorState.defaults.draw.color = val;
-                            editorState.canvas.freeDrawingBrush.color = val;
+                            if (editorState.pencilBrush) editorState.pencilBrush.color = val;
+                            if (editorState.mode === 'draw') editorState.canvas.freeDrawingBrush.color = val;
                         }
                         if (prop === 'strokeWidth') {
                             editorState.defaults.draw.width = val;
-                            editorState.canvas.freeDrawingBrush.width = val;
+                            if (editorState.pencilBrush) editorState.pencilBrush.width = val;
+                            if (editorState.mode === 'draw') editorState.canvas.freeDrawingBrush.width = val;
                         }
                     }
                 }
@@ -1941,6 +2368,11 @@
             const prevState = editorState.historyUndo[editorState.historyUndo.length - 1];
             
             editorState.canvas.loadFromJSON(JSON.parse(prevState), () => {
+                editorState.canvas.getObjects().forEach(o => {
+                    if (o.isHighlight) {
+                        o.set({ visible: editorState.showHighlights, selectable: editorState.showHighlights, evented: editorState.showHighlights });
+                    }
+                });
                 editorState.canvas.renderAll();
                 editorState.historyProcessing = false;
                 syncCurrentEditorPage();
@@ -1956,6 +2388,11 @@
             editorState.historyUndo.push(nextState); // Move back to Undo
             
             editorState.canvas.loadFromJSON(JSON.parse(nextState), () => {
+                editorState.canvas.getObjects().forEach(o => {
+                    if (o.isHighlight) {
+                        o.set({ visible: editorState.showHighlights, selectable: editorState.showHighlights, evented: editorState.showHighlights });
+                    }
+                });
                 editorState.canvas.renderAll();
                 editorState.historyProcessing = false;
                 syncCurrentEditorPage();
@@ -2081,6 +2518,7 @@
 
             for (let i = 1; i <= total; i++) {
                 const objects = getEffectivePageObjects(i).filter(o => {
+                    if (o.isHighlight && !editorState.showHighlights) return false;
                     if (o.isPageNumber && o.textTemplate) {
                         return i >= (o.startPage || 1);
                     }
@@ -2111,6 +2549,8 @@
             await new Promise(resolve => {
                 fabric.util.enlivenObjects(objects, (objs) => {
                     objs.forEach(o => {
+                        if (o.isHighlight && !editorState.showHighlights) return;
+                        if (o.isHighlight) o.set('visible', true);
                         if (o.isPageNumber && o.textTemplate) {
                             const startPage = o.startPage || 1;
                             if (pageIndex < startPage) return;
@@ -3094,14 +3534,25 @@
         setupPdfDropZone('organize-upload', 'organize-drop-zone', 'organizeInput', (file) => loadOrganizeFile(file), ['border-orange-500', 'bg-orange-50', 'dark:border-orange-400', 'dark:bg-gray-700']);
         setupPdfDropZone('images-upload', 'images-drop-zone', 'imagesInput', (file) => loadImgPdf(file), ['border-green-500', 'bg-green-50', 'dark:border-green-400', 'dark:bg-gray-700']);
 
-        // Clipboard Image Paste (Ctrl+V) in Merge & Visual Editor
+        // Clipboard Image Paste (Ctrl+V) in Merge, Visual Editor & Signature Modal
         window.addEventListener('paste', (e) => {
             const activeEl = document.activeElement;
             if (activeEl && (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName) || activeEl.isContentEditable)) return;
-            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
 
             const items = Array.from(e.clipboardData?.items || []);
             const imgItem = items.find((it) => it.kind === 'file' && it.type.startsWith('image/'));
+
+            if (sigModal && sigModal.open && imgItem) {
+                const rawFile = imgItem.getAsFile();
+                if (rawFile) {
+                    e.preventDefault();
+                    switchSignatureTab('upload');
+                    loadSignatureImageFile(rawFile);
+                }
+                return;
+            }
+
+            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
 
             // 1. Merge Tab: append clipboard screenshot/image directly to fusion list
             if (document.getElementById('content-merge').classList.contains('active')) {
@@ -3139,6 +3590,406 @@
             }
         });
 
+        // ==========================================
+        // MÓDULO DE FIRMA MANUSCRITA / RÚBRICA VISUAL
+        // ==========================================
+        const SAVED_SIGNATURE_KEY = 'pdftools_saved_signature';
+        const sigModal = document.getElementById('signature-modal');
+        const sigDrawCanvas = document.getElementById('sig-draw-canvas');
+        const sigUploadCanvas = document.getElementById('sig-upload-canvas');
+        const sigInsertBtn = document.getElementById('sig-insert-btn');
+
+        const sigState = {
+            activeTab: 'draw',
+            inkColor: '#1d4ed8',
+            baseWidth: 3.2,
+            strokes: [],
+            currentStroke: null,
+            dpr: 1,
+            uploadedSourceCanvas: null,
+            hasProcessedUpload: false
+        };
+
+        sigModal.addEventListener('close', () => {
+            sigModal.returnValue = '';
+        });
+
+        function refreshSavedSignatureBanner() {
+            const banner = document.getElementById('sig-saved-banner');
+            const preview = document.getElementById('sig-saved-preview');
+            let saved = null;
+            try { saved = localStorage.getItem(SAVED_SIGNATURE_KEY); } catch (_) {}
+            if (saved && saved.startsWith('data:image/')) {
+                preview.src = saved;
+                banner.classList.remove('hidden');
+            } else {
+                preview.src = '';
+                banner.classList.add('hidden');
+            }
+        }
+
+        function updateSigInsertButtonState() {
+            const ready = sigState.activeTab === 'draw'
+                ? sigState.strokes.length > 0
+                : sigState.hasProcessedUpload;
+            sigInsertBtn.disabled = !ready;
+        }
+
+        function resizeSignatureDrawCanvas() {
+            const rect = sigDrawCanvas.getBoundingClientRect();
+            if (!rect.width || !rect.height) return;
+            const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+            sigState.dpr = dpr;
+            sigDrawCanvas.width = Math.round(rect.width * dpr);
+            sigDrawCanvas.height = Math.round(rect.height * dpr);
+            redrawSignatureCanvas();
+        }
+
+        function openSignatureModal() {
+            if (!editorState.canvas) return;
+            refreshSavedSignatureBanner();
+            document.getElementById('sig-save-local-check').checked = false;
+            sigModal.showModal();
+            switchSignatureTab('draw');
+            requestAnimationFrame(() => resizeSignatureDrawCanvas());
+        }
+
+        function switchSignatureTab(tab) {
+            sigState.activeTab = tab;
+            const drawBtn = document.getElementById('sig-mode-draw-btn');
+            const uploadBtn = document.getElementById('sig-mode-upload-btn');
+            const drawPanel = document.getElementById('sig-panel-draw');
+            const uploadPanel = document.getElementById('sig-panel-upload');
+            const activeCls = 'flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 bg-white text-purple-700 shadow-sm dark:bg-gray-600 dark:text-purple-300';
+            const inactiveCls = 'flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200';
+
+            if (tab === 'draw') {
+                drawBtn.className = activeCls;
+                uploadBtn.className = inactiveCls;
+                drawPanel.classList.remove('hidden');
+                uploadPanel.classList.add('hidden');
+                requestAnimationFrame(() => resizeSignatureDrawCanvas());
+            } else {
+                uploadBtn.className = activeCls;
+                drawBtn.className = inactiveCls;
+                uploadPanel.classList.remove('hidden');
+                drawPanel.classList.add('hidden');
+            }
+            updateSigInsertButtonState();
+        }
+
+        function setSignatureInk(hex) {
+            sigState.inkColor = hex;
+            document.querySelectorAll('.sig-ink-btn').forEach(btn => {
+                const active = btn.dataset.sigInk === hex;
+                btn.classList.toggle('ring-2', active);
+                btn.classList.toggle('ring-offset-2', active);
+                btn.classList.toggle('ring-purple-500', active);
+            });
+        }
+
+        function setSignatureWidth(w) {
+            sigState.baseWidth = w;
+            document.querySelectorAll('.sig-width-btn').forEach(btn => {
+                const active = parseFloat(btn.dataset.sigWidth) === w;
+                btn.className = active
+                    ? 'sig-width-btn px-2 py-1 text-[11px] rounded-md bg-white font-semibold text-purple-700 shadow-sm dark:bg-gray-600 dark:text-purple-300'
+                    : 'sig-width-btn px-2 py-1 text-[11px] rounded-md text-gray-600 dark:text-gray-300';
+            });
+        }
+
+        function redrawSignatureCanvas() {
+            const ctx = sigDrawCanvas.getContext('2d');
+            const dpr = sigState.dpr || 1;
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, sigDrawCanvas.width, sigDrawCanvas.height);
+            ctx.scale(dpr, dpr);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            const allStrokes = sigState.currentStroke
+                ? [...sigState.strokes, sigState.currentStroke]
+                : sigState.strokes;
+
+            allStrokes.forEach(stroke => {
+                const pts = stroke.points;
+                if (!pts.length) return;
+                ctx.strokeStyle = stroke.color;
+                ctx.fillStyle = stroke.color;
+
+                if (pts.length === 1) {
+                    ctx.beginPath();
+                    ctx.arc(pts[0].x, pts[0].y, stroke.width * 0.55, 0, Math.PI * 2);
+                    ctx.fill();
+                    return;
+                }
+
+                for (let i = 1; i < pts.length; i++) {
+                    const p0 = pts[i - 1];
+                    const p1 = pts[i];
+                    const prevMidX = i === 1 ? p0.x : (pts[i - 2].x + p0.x) * 0.5;
+                    const prevMidY = i === 1 ? p0.y : (pts[i - 2].y + p0.y) * 0.5;
+                    const midX = (p0.x + p1.x) * 0.5;
+                    const midY = (p0.y + p1.y) * 0.5;
+
+                    ctx.beginPath();
+                    ctx.lineWidth = p1.w || stroke.width;
+                    ctx.moveTo(prevMidX, prevMidY);
+                    ctx.quadraticCurveTo(p0.x, p0.y, midX, midY);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function getSigCanvasPoint(ev) {
+            const rect = sigDrawCanvas.getBoundingClientRect();
+            return {
+                x: ev.clientX - rect.left,
+                y: ev.clientY - rect.top,
+                t: ev.timeStamp || performance.now()
+            };
+        }
+
+        sigDrawCanvas.addEventListener('pointerdown', (e) => {
+            if (e.button !== undefined && e.button !== 0) return;
+            e.preventDefault();
+            sigDrawCanvas.setPointerCapture(e.pointerId);
+            const pt = getSigCanvasPoint(e);
+            pt.w = sigState.baseWidth;
+            sigState.currentStroke = {
+                color: sigState.inkColor,
+                width: sigState.baseWidth,
+                points: [pt]
+            };
+            redrawSignatureCanvas();
+        });
+
+        sigDrawCanvas.addEventListener('pointermove', (e) => {
+            if (!sigState.currentStroke) return;
+            e.preventDefault();
+            const events = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
+            const pts = sigState.currentStroke.points;
+            const baseW = sigState.currentStroke.width;
+
+            for (const ev of events) {
+                const next = getSigCanvasPoint(ev);
+                const last = pts[pts.length - 1];
+                const dist = Math.hypot(next.x - last.x, next.y - last.y);
+                if (dist < 1.2) continue;
+                const dt = Math.max(1, next.t - last.t);
+                const velocity = dist / dt; // px per ms
+                const targetFactor = Math.max(0.72, Math.min(1.15, 1.15 - velocity * 0.18));
+                next.w = (last.w || baseW) * 0.7 + (baseW * targetFactor) * 0.3;
+                pts.push(next);
+            }
+            redrawSignatureCanvas();
+        });
+
+        function finishSignatureStroke(e) {
+            if (!sigState.currentStroke) return;
+            if (e && sigDrawCanvas.hasPointerCapture && sigDrawCanvas.hasPointerCapture(e.pointerId)) {
+                sigDrawCanvas.releasePointerCapture(e.pointerId);
+            }
+            sigState.strokes.push(sigState.currentStroke);
+            sigState.currentStroke = null;
+            redrawSignatureCanvas();
+            updateSigInsertButtonState();
+        }
+        sigDrawCanvas.addEventListener('pointerup', finishSignatureStroke);
+        sigDrawCanvas.addEventListener('pointercancel', finishSignatureStroke);
+
+        function undoSignatureStroke() {
+            if (!sigState.strokes.length) return;
+            sigState.strokes.pop();
+            redrawSignatureCanvas();
+            updateSigInsertButtonState();
+        }
+
+        function clearSignatureCanvas() {
+            sigState.strokes = [];
+            sigState.currentStroke = null;
+            redrawSignatureCanvas();
+            updateSigInsertButtonState();
+        }
+
+        // Photo Upload & White-Paper Background Removal
+        const sigFileInput = document.getElementById('sig-file-input');
+        const sigUploadDrop = document.getElementById('sig-upload-drop');
+        sigUploadDrop.addEventListener('click', () => sigFileInput.click());
+        sigUploadDrop.addEventListener('dragover', (e) => { e.preventDefault(); sigUploadDrop.classList.add('border-purple-500', 'bg-purple-50', 'dark:bg-gray-700'); });
+        sigUploadDrop.addEventListener('dragleave', (e) => { e.preventDefault(); if (!sigUploadDrop.contains(e.relatedTarget)) sigUploadDrop.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-gray-700'); });
+        sigUploadDrop.addEventListener('drop', (e) => {
+            e.preventDefault();
+            sigUploadDrop.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-gray-700');
+            const imgFile = Array.from(e.dataTransfer?.files || []).find(f => f.type && f.type.startsWith('image/'));
+            if (imgFile) loadSignatureImageFile(imgFile);
+        });
+        sigFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            e.target.value = '';
+            if (file) loadSignatureImageFile(file);
+        });
+
+        function loadSignatureImageFile(file) {
+            const objUrl = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                URL.revokeObjectURL(objUrl);
+                const maxDim = 960;
+                const scale = Math.min(1, maxDim / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+                const w = Math.max(1, Math.round((img.naturalWidth || img.width) * scale));
+                const h = Math.max(1, Math.round((img.naturalHeight || img.height) * scale));
+                const srcCvs = document.createElement('canvas');
+                srcCvs.width = w;
+                srcCvs.height = h;
+                srcCvs.getContext('2d').drawImage(img, 0, 0, w, h);
+                sigState.uploadedSourceCanvas = srcCvs;
+                document.getElementById('sig-upload-preview-wrap').classList.remove('hidden');
+                processUploadedSignature();
+            };
+            img.onerror = () => URL.revokeObjectURL(objUrl);
+            img.src = objUrl;
+        }
+
+        function processUploadedSignature() {
+            const src = sigState.uploadedSourceCanvas;
+            if (!src) return;
+            const cleanBg = document.getElementById('sig-clean-bg-switch').checked;
+            const threshold = parseInt(document.getElementById('sig-threshold-range').value, 10);
+            document.getElementById('sig-threshold-val').textContent = threshold;
+            document.getElementById('sig-threshold-row').classList.toggle('opacity-40', !cleanBg);
+            document.getElementById('sig-threshold-range').disabled = !cleanBg;
+
+            sigUploadCanvas.width = src.width;
+            sigUploadCanvas.height = src.height;
+            const outCtx = sigUploadCanvas.getContext('2d');
+            outCtx.drawImage(src, 0, 0);
+
+            if (cleanBg) {
+                const imgData = outCtx.getImageData(0, 0, src.width, src.height);
+                const data = imgData.data;
+                const feather = 28;
+                const hardFloor = threshold - feather;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+                    if (a === 0) continue;
+                    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                    const chroma = Math.max(r, g, b) - Math.min(r, g, b);
+                    const effectiveLum = lum - chroma * 0.45;
+
+                    if (effectiveLum >= threshold) {
+                        data[i + 3] = 0;
+                    } else if (effectiveLum > hardFloor) {
+                        const ratio = (threshold - effectiveLum) / feather;
+                        data[i + 3] = Math.round(a * ratio);
+                    } else {
+                        // Subtle ink contrast boost so phone photos look crisp
+                        data[i] = Math.max(0, Math.round(r * 0.88));
+                        data[i + 1] = Math.max(0, Math.round(g * 0.88));
+                        data[i + 2] = Math.max(0, Math.round(b * 0.88));
+                    }
+                }
+                outCtx.putImageData(imgData, 0, 0);
+            }
+
+            sigState.hasProcessedUpload = true;
+            updateSigInsertButtonState();
+        }
+
+        function cropCanvasToContent(sourceCanvas, pad = 8) {
+            const w = sourceCanvas.width;
+            const h = sourceCanvas.height;
+            if (!w || !h) return null;
+            const ctx = sourceCanvas.getContext('2d');
+            const data = ctx.getImageData(0, 0, w, h).data;
+            let minX = w, minY = h, maxX = -1, maxY = -1;
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const alpha = data[(y * w + x) * 4 + 3];
+                    if (alpha > 12) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+            if (maxX < minX || maxY < minY) return null;
+
+            const x0 = Math.max(0, minX - pad);
+            const y0 = Math.max(0, minY - pad);
+            const cw = Math.min(w - x0, (maxX - minX + 1) + pad * 2);
+            const ch = Math.min(h - y0, (maxY - minY + 1) + pad * 2);
+
+            const maxOutWidth = 900;
+            const scale = cw > maxOutWidth ? maxOutWidth / cw : 1;
+            const outCvs = document.createElement('canvas');
+            outCvs.width = Math.max(1, Math.round(cw * scale));
+            outCvs.height = Math.max(1, Math.round(ch * scale));
+            outCvs.getContext('2d').drawImage(sourceCanvas, x0, y0, cw, ch, 0, 0, outCvs.width, outCvs.height);
+            return outCvs;
+        }
+
+        function insertSignatureToEditor(dataUrl) {
+            if (!editorState.canvas || !dataUrl) return;
+            fabric.Image.fromURL(dataUrl, (img) => {
+                if (!img || !editorState.canvas) return;
+                const logicalW = editorState.baseWidth || editorState.canvas.getWidth();
+                const logicalH = editorState.baseHeight || editorState.canvas.getHeight();
+                const maxW = logicalW * 0.28;
+                const maxH = 140;
+                const scale = Math.min(1, maxW / img.width, maxH / img.height);
+                const finalW = img.width * scale;
+                const finalH = img.height * scale;
+
+                img.set({
+                    left: Math.max(40, (logicalW - finalW) / 2),
+                    top: Math.max(40, Math.min(logicalH - finalH - 40, logicalH * 0.72)),
+                    scaleX: scale,
+                    scaleY: scale,
+                    isSignature: true
+                });
+
+                editorState.canvas.add(img);
+                editorState.canvas.setActiveObject(img);
+                setEditorMode('select');
+                syncCurrentEditorPage();
+                saveHistory();
+            });
+        }
+
+        function confirmInsertSignature() {
+            const srcCanvas = sigState.activeTab === 'draw' ? sigDrawCanvas : sigUploadCanvas;
+            const cropped = cropCanvasToContent(srcCanvas, 10);
+            if (!cropped) {
+                alert('No se ha detectado ningún trazo visible en la rúbrica.');
+                return;
+            }
+            const dataUrl = cropped.toDataURL('image/png');
+            if (document.getElementById('sig-save-local-check').checked) {
+                try { localStorage.setItem(SAVED_SIGNATURE_KEY, dataUrl); } catch (err) { console.warn('No se pudo guardar la rúbrica en localStorage:', err); }
+            }
+            insertSignatureToEditor(dataUrl);
+            sigModal.close('inserted');
+        }
+
+        function insertSavedSignature() {
+            let saved = null;
+            try { saved = localStorage.getItem(SAVED_SIGNATURE_KEY); } catch (_) {}
+            if (!saved) return;
+            insertSignatureToEditor(saved);
+            sigModal.close('inserted');
+        }
+
+        function deleteSavedSignature() {
+            try { localStorage.removeItem(SAVED_SIGNATURE_KEY); } catch (_) {}
+            refreshSavedSignatureBanner();
+        }
+
+        enhanceSwitchControls();
+
         // Progressive fallback for <dialog closedby="any"> light-dismiss (e.g. Safari)
         if (!('closedBy' in HTMLDialogElement.prototype)) {
             const outside = (e, dialog) => {
@@ -3155,7 +4006,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.3';
+        const APP_VERSION = 'v2.0.0-beta.4';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
