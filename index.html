@@ -554,10 +554,10 @@
             <!-- Editor Interface -->
             <div id="editor-workspace" class="hidden flex flex-col h-full w-full">
                 <!-- Toolbar -->
-                <div class="h-14 bg-white border-b border-gray-200 flex items-center px-4 justify-between shadow-sm z-20 dark:bg-gray-800 dark:border-gray-700">
+                <div class="h-14 bg-white border-b border-gray-200 flex items-center px-4 justify-between lg:grid lg:grid-cols-[1fr_auto_1fr] shadow-sm z-20 dark:bg-gray-800 dark:border-gray-700">
                     
                     <!-- Group 1: History & Zoom -->
-                    <div class="flex items-center gap-2 border-r border-gray-200 pr-4 mr-2 dark:border-gray-600">
+                    <div class="flex items-center gap-2 border-r border-gray-200 pr-4 mr-2 lg:mr-0 lg:justify-self-start dark:border-gray-600">
                         <button type="button" onclick="editorUndo()" aria-label="Deshacer" class="p-2 hover:bg-gray-100 rounded text-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" title="Deshacer (Ctrl+Z)"><i data-lucide="undo" class="w-4 h-4"></i></button>
                         <button type="button" onclick="editorRedo()" aria-label="Rehacer" class="p-2 hover:bg-gray-100 rounded text-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" title="Rehacer (Ctrl+Y)"><i data-lucide="redo" class="w-4 h-4"></i></button>
                         <div class="flex items-center gap-1 ml-2 bg-gray-50 rounded-lg p-1 dark:bg-gray-700">
@@ -570,7 +570,7 @@
                     </div>
 
                     <!-- Group 2: Tools -->
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-1 lg:justify-self-center xl:pe-16">
                         <button type="button" onclick="setEditorMode('select')" id="tool-select" aria-label="Seleccionar" class="tool-btn active p-2 rounded text-purple-600 bg-purple-50 dark:text-purple-300 dark:bg-purple-900/30" title="Seleccionar (V / Esc)"><i data-lucide="mouse-pointer-2" class="w-5 h-5"></i></button>
                         <button type="button" onclick="setEditorMode('pixelate')" id="tool-pixelate" aria-label="Censurar o pixelar" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Censurar / Pixelar (X)"><i data-lucide="eye-off" class="w-5 h-5"></i></button>
                         <button type="button" onclick="addText()" aria-label="Insertar texto" class="tool-btn p-2 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" title="Insertar texto (T)"><i data-lucide="type" class="w-5 h-5"></i></button>
@@ -601,7 +601,7 @@
                     </div>
 
                     <!-- Group 3: Final Actions -->
-                    <div class="flex items-center gap-2 border-l border-gray-200 pl-4 ml-2 dark:border-gray-600">
+                    <div class="flex items-center gap-2 border-l border-gray-200 pl-4 ml-2 lg:ml-0 lg:justify-self-end dark:border-gray-600">
                         <div class="relative group">
                             <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center gap-2 dark:bg-purple-500 dark:hover:bg-purple-600">
                                 <i data-lucide="save" class="w-4 h-4"></i> Guardar <i data-lucide="chevron-down" class="w-3 h-3 ml-1"></i>
@@ -7312,7 +7312,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v2.0.0-beta.19';
+        const APP_VERSION = 'v2.0.0-beta.20';
         const APP_BUILD_DATE = '11/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
