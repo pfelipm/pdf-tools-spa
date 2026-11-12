@@ -80,6 +80,9 @@ Ambas ediciones comparten el mismo principio de privacidad local, adaptándose a
 ### Inspector y limpiador de metadatos (`/Info`, `XMP` y `/PieceInfo`)
 ![Inspector y limpiador de metadatos](readme-files/v2/08-metadatos.png)
 
+### Aplicación instalada en escritorio (modo PWA independiente y 100 % Offline)
+![Aplicación instalada como PWA de escritorio](readme-files/v2/09-pwa.png)
+
 ## 🛠️ Tecnologías
 
 *   **HTML5 / JavaScript (ES6+):** Arquitectura *Single-File SPA* en Vanilla JS sin *frameworks* ni pasos de compilación, utilizando elementos nativos modernos (`<dialog>`, `Popover API`, `CompressionStream` / `DecompressionStream`).
