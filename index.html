@@ -155,7 +155,8 @@
             background: transparent;
             opacity: 0;
             transform: translateY(0.75rem);
-            transition: opacity 0.25s ease, transform 0.25s ease, display 0.25s ease allow-discrete, overlay 0.25s ease allow-discrete;
+            transition: opacity 0.25s ease, transform 0.25s ease, display 0.25s ease, overlay 0.25s ease;
+            transition-behavior: allow-discrete;
         }
         #pwa-update-toast:is(:popover-open, .\:popover-open),
         #pwa-update-toast.pwa-toast-fallback-open {
@@ -167,6 +168,29 @@
             #pwa-update-toast:is(:popover-open, .\:popover-open) {
                 opacity: 0;
                 transform: translateY(0.75rem);
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #pwa-update-toast {
+                transform: none;
+                transition: none;
+            }
+            @starting-style {
+                #pwa-update-toast:is(:popover-open, .\:popover-open) {
+                    opacity: 1;
+                    transform: none;
+                }
+            }
+        }
+        #pwa-update-apply-btn[aria-disabled="true"],
+        #pwa-modal-update-btn[aria-disabled="true"] {
+            opacity: 0.65;
+            cursor: wait;
+        }
+        @media (forced-colors: active) {
+            #info-update-dot {
+                background-color: Highlight;
+                outline: 1px solid CanvasText;
             }
         }
         [popover] + [popover] { margin-top: 1rem; }
@@ -524,8 +548,9 @@
                 <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
                 <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
             </button>
-            <button type="button" id="about-btn" aria-label="Sobre este proyecto" class="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-blue-400" title="Sobre este proyecto">
+            <button type="button" id="about-btn" aria-label="Sobre este proyecto" class="relative text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-blue-400" title="Sobre este proyecto">
                 <i data-lucide="info" class="w-5 h-5"></i>
+                <span id="info-update-dot" hidden aria-hidden="true" class="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-800 pointer-events-none"></span>
             </button>
         </div>
     </header>
@@ -1122,28 +1147,29 @@
 
     </main>
 
-    <!-- Modal About -->
-    <div id="about-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative animate-fade-in dark:bg-gray-800">
-            <button id="close-about-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
-            <div class="text-center">
-                <img src="https://drive.google.com/thumbnail?id=1pbNyTrnZeZvfWLu2Lm66f9tVQ3OqTKHx&sz=w500-h500" alt="Pablo Felip" referrerpolicy="no-referrer" onerror="this.style.display='none'" class="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-lg mb-4 object-cover dark:border-gray-700">
-                <h2 class="text-xl font-bold text-gray-800 dark:text-white">Pablo Felip</h2>
-                <p class="text-sm text-gray-500 mb-4 dark:text-gray-400">Docente de Formación Profesional y Universidad, TICnológicamente inquieto.</p>
-                <p class="text-sm text-gray-600 mb-6 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100 text-left dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
-                    Esta aplicación web progresiva (PWA) de <strong>PDF_Tools</strong> ofrece una alternativa visual completa a quienes prefieren no instalar extensiones. La privacidad es absoluta (el procesamiento es 100% local en tu navegador) y, tras cargarla una primera vez, funciona también <strong>sin conexión a Internet</strong> e incluso puede instalarse en tu dispositivo.
-                </p>
-                <div class="space-y-3 text-left">
-                    <a href="https://www.linkedin.com/in/pfelipm/" target="_blank" rel="noopener noreferrer" class="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"><i data-lucide="linkedin" class="w-5 h-5 mr-3"></i><span class="font-medium">Perfil de LinkedIn</span></a>
-                    <a href="https://github.com/pfelipm/pdf-tools-spa" target="_blank" rel="noopener noreferrer" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-gray-700 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"><i data-lucide="github" class="w-5 h-5 mr-3"></i><span class="font-medium">Repositorio SPA (GitHub)</span></a>
-                    <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-2 text-left dark:border-gray-700">
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Basado en la extensión <a href="https://chromewebstore.google.com/detail/pdftools/amfbkjdnaalliclaenmafeohionnkmoa" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold dark:text-blue-400">PDF_Tools</a>.</p>
-                        <span id="app-version-badge" class="text-xs font-mono px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"></span>
-                    </div>
-                </div>
+    <!-- Modal About (Native Dialog) -->
+    <dialog id="about-modal" closedby="any" aria-labelledby="about-modal-title" class="bg-white rounded-2xl shadow-2xl max-w-md w-[calc(100%-2rem)] p-6 relative animate-fade-in text-center border-0 outline-none dark:bg-gray-800">
+        <form method="dialog">
+            <button type="submit" value="close" id="close-about-btn" autofocus aria-label="Cerrar información" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </form>
+        <img src="https://drive.google.com/thumbnail?id=1pbNyTrnZeZvfWLu2Lm66f9tVQ3OqTKHx&sz=w500-h500" alt="Pablo Felip" referrerpolicy="no-referrer" onerror="this.style.display='none'" class="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-lg mb-4 object-cover dark:border-gray-700">
+        <h2 id="about-modal-title" class="text-xl font-bold text-gray-800 dark:text-white">Pablo Felip</h2>
+        <p class="text-sm text-gray-500 mb-3 dark:text-gray-400">Docente de Formación Profesional y Universidad, TICnológicamente inquieto.</p>
+        <div class="mb-4 flex flex-wrap items-center justify-center gap-2">
+            <span id="app-version-badge" class="text-xs font-mono px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"></span>
+            <button type="button" id="pwa-modal-update-btn" hidden class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors">Actualizar versión</button>
+        </div>
+        <p class="text-sm text-gray-600 mb-6 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100 text-left dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
+            Esta aplicación web progresiva (PWA) de <strong>PDF_Tools</strong> ofrece una alternativa visual completa a quienes prefieren no instalar extensiones. La privacidad es absoluta (el procesamiento es 100% local en tu navegador) y, tras cargarla una primera vez, funciona también <strong>sin conexión a Internet</strong> e incluso puede instalarse en tu dispositivo.
+        </p>
+        <div class="space-y-3 text-left">
+            <a href="https://www.linkedin.com/in/pfelipm/" target="_blank" rel="noopener noreferrer" class="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"><i data-lucide="linkedin" class="w-5 h-5 mr-3"></i><span class="font-medium">Perfil de LinkedIn</span></a>
+            <a href="https://github.com/pfelipm/pdf-tools-spa" target="_blank" rel="noopener noreferrer" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-gray-700 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"><i data-lucide="github" class="w-5 h-5 mr-3"></i><span class="font-medium">Repositorio SPA (GitHub)</span></a>
+            <div class="mt-4 pt-4 border-t border-gray-100 text-center dark:border-gray-700">
+                <p class="text-xs text-gray-500 dark:text-gray-400">Basado en la extensión <a href="https://chromewebstore.google.com/detail/pdftools/amfbkjdnaalliclaenmafeohionnkmoa" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold dark:text-blue-400">PDF_Tools</a>.</p>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <!-- Modal Resultados -->
     <div id="download-result-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
@@ -1628,22 +1654,26 @@
     </div>
     <canvas id="exportCanvas" class="hidden"></canvas>
 
-    <!-- Toast de Actualización PWA (Popover Manual) -->
-    <div id="pwa-update-toast" popover="manual" role="status" aria-live="polite">
-        <div class="bg-white border border-blue-200 rounded-xl shadow-2xl p-4 max-w-sm flex items-start gap-3 dark:bg-gray-800 dark:border-blue-800">
-            <div class="bg-blue-50 text-blue-600 p-2 rounded-lg flex-shrink-0 dark:bg-blue-900/40 dark:text-blue-400">
-                <i data-lucide="rotate-cw" class="w-5 h-5"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-bold text-gray-800 dark:text-white">Nueva versión disponible</p>
-                <p class="text-xs text-gray-500 mt-0.5 mb-3 dark:text-gray-400">Actualiza para aplicar las últimas mejoras cuando termines tu tarea.</p>
-                <div class="flex items-center gap-2">
-                    <button id="pwa-update-apply-btn" type="button" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition shadow-sm dark:bg-blue-500 dark:hover:bg-blue-600">
-                        Actualizar ahora
-                    </button>
-                    <button id="pwa-update-close-btn" type="button" popovertarget="pwa-update-toast" popovertargetaction="hide" class="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700">
-                        Más tarde
-                    </button>
+    <!-- Región de Notificaciones Toast PWA (Popover Manual + Anunciador Accesible) -->
+    <div id="pwa-toast-region" role="region" aria-label="Notificaciones de la aplicación">
+        <p class="sr-only">Avisos de la aplicación</p>
+        <div id="pwa-toast-announcer" class="sr-only" aria-live="polite"></div>
+        <div id="pwa-update-toast" popover="manual" hidden>
+            <div class="bg-white border border-blue-200 rounded-xl shadow-2xl p-4 max-w-sm flex items-start gap-3 dark:bg-gray-800 dark:border-blue-800">
+                <div class="bg-blue-50 text-blue-600 p-2 rounded-lg flex-shrink-0 dark:bg-blue-900/40 dark:text-blue-400">
+                    <i data-lucide="rotate-cw" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="pwa-update-title" class="text-sm font-bold text-gray-800 dark:text-white">Nueva versión disponible</p>
+                    <p id="pwa-update-desc" class="text-xs text-gray-500 mt-0.5 mb-3 dark:text-gray-400">Actualiza para aplicar las últimas mejoras cuando termines tu tarea.</p>
+                    <div class="flex items-center gap-2">
+                        <button id="pwa-update-apply-btn" type="button" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition shadow-sm dark:bg-blue-500 dark:hover:bg-blue-600">
+                            Actualizar ahora
+                        </button>
+                        <button id="pwa-update-close-btn" type="button" popovertarget="pwa-update-toast" popovertargetaction="hide" class="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700">
+                            Más tarde
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3907,7 +3937,7 @@
         let sidebarWheelLastTime = 0;
 
         function isAnyEditorModalOpen() {
-            return Boolean(document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)'));
+            return Boolean(document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #progressModal:not(.hidden)'));
         }
 
         function normalizeWheelDeltaY(e) {
@@ -4020,7 +4050,7 @@
         editorWorkspaceEl.addEventListener('wheel', (e) => {
             if (!(e.ctrlKey || e.metaKey)) return;
             if (!editorState.canvas || !editorState.pdfJsDoc) return;
-            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
+            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #progressModal:not(.hidden)')) return;
 
             e.preventDefault();
             let normDelta = e.deltaY;
@@ -4172,7 +4202,7 @@
         function handleEditorKeys(e) {
             if (!document.getElementById('content-editor').classList.contains('active')) return;
             if (document.getElementById('editor-workspace').classList.contains('hidden') || !editorState.canvas) return;
-            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
+            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #zoom-modal:not(.hidden), #progressModal:not(.hidden)')) return;
 
             // Ignore canvas shortcuts while typing in editable inputs, selects, range sliders, or editing Fabric text
             const activeEl = document.activeElement;
@@ -4615,9 +4645,13 @@
         }
 
         const aboutModal = document.getElementById('about-modal');
-        document.getElementById('about-btn').onclick = () => aboutModal.classList.remove('hidden');
-        document.getElementById('close-about-btn').onclick = () => aboutModal.classList.add('hidden');
-        aboutModal.onclick = (e) => { if(e.target === aboutModal) aboutModal.classList.add('hidden'); };
+        const aboutBtn = document.getElementById('about-btn');
+        aboutBtn.addEventListener('click', () => {
+            if (typeof isPwaUpdateToastOpen === 'function' && isPwaUpdateToastOpen()) {
+                deferPwaUpdateToastForModal();
+            }
+            if (!aboutModal.open) aboutModal.showModal();
+        });
 
         function showProgress(text, percent) {
             document.getElementById('progressModal').classList.remove('hidden');
@@ -5684,8 +5718,6 @@
             if (document.querySelector('dialog[open]')) return;
             const prog = document.getElementById('progressModal');
             if (prog && !prog.classList.contains('hidden')) return;
-            const aboutEl = document.getElementById('about-modal');
-            if (aboutEl && !aboutEl.classList.contains('hidden')) return;
             if (e.ctrlKey || e.metaKey || e.altKey) return;
 
             const activeEl = document.activeElement;
@@ -6776,7 +6808,7 @@
                 return;
             }
 
-            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #about-modal:not(.hidden), #progressModal:not(.hidden)')) return;
+            if (document.querySelector('dialog[open], #flatten-modal:not(.hidden), #editor-success-modal:not(.hidden), #organize-success-modal:not(.hidden), #download-result-modal:not(.hidden), #progressModal:not(.hidden)')) return;
 
             // 1. Merge Tab: append clipboard screenshot/image directly to fusion list
             if (document.getElementById('content-merge').classList.contains('active')) {
@@ -7298,7 +7330,6 @@
         // Progressive fallback for <dialog closedby="any"> light-dismiss (e.g. Safari)
         if (!('closedBy' in HTMLDialogElement.prototype)) {
             const outside = (e, dialog) => {
-                if (e.target !== dialog) return false;
                 const r = dialog.getBoundingClientRect();
                 return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
             };
@@ -7312,7 +7343,7 @@
         // ==========================================
         // VERSIÓN Y MÓDULO PWA (OFFLINE + ACTUALIZACIÓN)
         // ==========================================
-        const APP_VERSION = 'v3.0.0-beta.20';
+        const APP_VERSION = 'v3.0.0-beta.21';
         const APP_BUILD_DATE = '15/11/2026';
 
         const versionBadge = document.getElementById('app-version-badge');
@@ -7346,61 +7377,259 @@
             pwaInstallBtn.classList.remove('inline-flex');
         });
 
-        // PWA Update Toast Helpers (Popover API + Legacy Fallback)
+        // Notificación persistente de actualización de Service Worker (popover="manual" + acción permanente en #about-modal)
+        const infoUpdateDot = document.getElementById('info-update-dot');
+        const pwaModalUpdateBtn = document.getElementById('pwa-modal-update-btn');
+        const pwaToastAnnouncer = document.getElementById('pwa-toast-announcer');
         const pwaUpdateToast = document.getElementById('pwa-update-toast');
+        const pwaUpdateTitle = document.getElementById('pwa-update-title');
+        const pwaUpdateDesc = document.getElementById('pwa-update-desc');
         const pwaUpdateApplyBtn = document.getElementById('pwa-update-apply-btn');
         const pwaUpdateCloseBtn = document.getElementById('pwa-update-close-btn');
-        let waitingServiceWorker = null;
+        const supportsNativePopover = Object.hasOwn(HTMLElement.prototype, 'popover');
 
-        function showPwaUpdateToast(worker) {
-            waitingServiceWorker = worker;
-            if ('popover' in HTMLElement.prototype && typeof pwaUpdateToast.showPopover === 'function') {
-                if (!pwaUpdateToast.matches(':popover-open')) {
-                    pwaUpdateToast.showPopover();
+        let waitingServiceWorker = null;
+        let pendingSwToast = false;
+        let toastPriorFocus = null;
+        let toastHadFocusOnClose = false;
+        let suppressNextToastFocusRestore = false;
+        let reloadOnSwControllerChange = false;
+        let swUpdateDetected = false;
+        let pendingToastModalObserver = null;
+
+        function isAnyAppModalOpen() {
+            return isAnyEditorModalOpen();
+        }
+
+        function isPwaUpdateToastOpen() {
+            if (!pwaUpdateToast || pwaUpdateToast.hidden) return false;
+            if (supportsNativePopover) {
+                try {
+                    return pwaUpdateToast.matches(':popover-open');
+                } catch (e) {
+                    return false;
                 }
+            }
+            return pwaUpdateToast.classList.contains('pwa-toast-fallback-open');
+        }
+
+        function announcePwaToast(message) {
+            if (!message) return;
+            if (typeof document.ariaNotify === 'function') {
+                document.ariaNotify(message);
+            } else if (pwaToastAnnouncer) {
+                pwaToastAnnouncer.textContent = message;
+            }
+        }
+
+        function restoreFocusAfterToast() {
+            const targetFocus = (toastPriorFocus && toastPriorFocus.isConnected && toastPriorFocus !== pwaUpdateToast && !pwaUpdateToast.contains(toastPriorFocus))
+                ? toastPriorFocus
+                : aboutBtn;
+            if (targetFocus && typeof targetFocus.focus === 'function') {
+                targetFocus.focus();
+            }
+        }
+
+        function stopWatchingModalsForPendingToast() {
+            if (pendingToastModalObserver) {
+                pendingToastModalObserver.disconnect();
+                pendingToastModalObserver = null;
+            }
+        }
+
+        function flushPendingSwToastIfIdle() {
+            if (!pendingSwToast || !waitingServiceWorker || isAnyAppModalOpen()) return;
+            pendingSwToast = false;
+            stopWatchingModalsForPendingToast();
+            showPwaUpdateToast();
+        }
+
+        function watchModalsForPendingToast() {
+            if (pendingToastModalObserver || typeof MutationObserver !== 'function') return;
+            const legacyModals = ['#flatten-modal', '#editor-success-modal', '#organize-success-modal', '#download-result-modal', '#zoom-modal', '#progressModal']
+                .map((sel) => document.querySelector(sel))
+                .filter(Boolean);
+            if (legacyModals.length === 0) return;
+            pendingToastModalObserver = new MutationObserver(() => {
+                flushPendingSwToastIfIdle();
+            });
+            for (const modalEl of legacyModals) {
+                pendingToastModalObserver.observe(modalEl, { attributes: true, attributeFilter: ['class'] });
+            }
+        }
+
+        function showPwaUpdateToast() {
+            if (!pwaUpdateToast) return;
+            if (isAnyAppModalOpen()) {
+                pendingSwToast = true;
+                watchModalsForPendingToast();
+                return;
+            }
+            suppressNextToastFocusRestore = false;
+            toastHadFocusOnClose = false;
+            toastPriorFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            pwaUpdateToast.hidden = false;
+            if (supportsNativePopover && typeof pwaUpdateToast.showPopover === 'function') {
+                try {
+                    if (!pwaUpdateToast.matches(':popover-open')) {
+                        pwaUpdateToast.showPopover();
+                    }
+                } catch (e) {}
             } else {
-                pwaUpdateToast.classList.remove('hidden');
                 pwaUpdateToast.classList.add('pwa-toast-fallback-open', 'fixed');
             }
+            const titleText = pwaUpdateTitle ? pwaUpdateTitle.textContent.trim() : 'Nueva versión disponible';
+            const descText = pwaUpdateDesc ? pwaUpdateDesc.textContent.trim() : '';
+            const visibleText = descText ? `${titleText}. ${descText}` : titleText;
+            announcePwaToast(`${visibleText} Acciones disponibles.`);
         }
 
-        function hidePwaUpdateToast() {
-            if ('popover' in HTMLElement.prototype && typeof pwaUpdateToast.hidePopover === 'function') {
-                if (pwaUpdateToast.matches(':popover-open')) {
-                    pwaUpdateToast.hidePopover();
+        function hidePwaUpdateToast({ restoreFocus = true } = {}) {
+            if (!pwaUpdateToast) return;
+            const focusWasInside = toastHadFocusOnClose || pwaUpdateToast.contains(document.activeElement);
+            let nativeWillFireToggle = false;
+            if (supportsNativePopover && typeof pwaUpdateToast.hidePopover === 'function') {
+                try {
+                    if (pwaUpdateToast.matches(':popover-open')) {
+                        nativeWillFireToggle = true;
+                        suppressNextToastFocusRestore = !restoreFocus;
+                        toastHadFocusOnClose = focusWasInside;
+                        pwaUpdateToast.hidePopover();
+                    }
+                } catch (e) {}
+            }
+            pwaUpdateToast.classList.remove('pwa-toast-fallback-open');
+            pwaUpdateToast.hidden = true;
+            if (!nativeWillFireToggle) {
+                if (restoreFocus && focusWasInside) {
+                    restoreFocusAfterToast();
                 }
-            } else {
-                pwaUpdateToast.classList.add('hidden');
-                pwaUpdateToast.classList.remove('pwa-toast-fallback-open');
+                toastHadFocusOnClose = false;
+                suppressNextToastFocusRestore = false;
+                toastPriorFocus = null;
             }
         }
 
-        if (!('popover' in HTMLElement.prototype)) {
-            pwaUpdateCloseBtn.addEventListener('click', hidePwaUpdateToast);
+        function deferPwaUpdateToastForModal() {
+            pendingSwToast = true;
+            hidePwaUpdateToast({ restoreFocus: false });
+            watchModalsForPendingToast();
         }
 
-        pwaUpdateApplyBtn.addEventListener('click', () => {
-            if (waitingServiceWorker) {
-                pwaUpdateApplyBtn.disabled = true;
-                pwaUpdateApplyBtn.textContent = 'Actualizando...';
+        function handleWaitingServiceWorker(worker) {
+            if (!worker) return;
+            const isSameWorker = worker === waitingServiceWorker;
+            waitingServiceWorker = worker;
+            if (!isSameWorker) {
+                if (pwaUpdateApplyBtn) {
+                    pwaUpdateApplyBtn.removeAttribute('aria-disabled');
+                    pwaUpdateApplyBtn.textContent = 'Actualizar ahora';
+                }
+                if (pwaModalUpdateBtn) {
+                    pwaModalUpdateBtn.removeAttribute('aria-disabled');
+                    pwaModalUpdateBtn.textContent = 'Actualizar versión';
+                }
+            }
+            if (infoUpdateDot) infoUpdateDot.hidden = false;
+            if (pwaModalUpdateBtn) pwaModalUpdateBtn.hidden = false;
+            if (aboutBtn) {
+                aboutBtn.setAttribute('aria-label', 'Sobre este proyecto (nueva versión disponible)');
+                aboutBtn.title = 'Sobre este proyecto — Nueva versión disponible';
+            }
+            showPwaUpdateToast();
+        }
+
+        function applyPendingSwUpdate(event) {
+            if (event && event.currentTarget && event.currentTarget.getAttribute('aria-disabled') === 'true') {
+                event.preventDefault();
+                return;
+            }
+            if (!waitingServiceWorker || reloadOnSwControllerChange) return;
+            if (
+                (pwaUpdateApplyBtn && pwaUpdateApplyBtn.getAttribute('aria-disabled') === 'true') ||
+                (pwaModalUpdateBtn && pwaModalUpdateBtn.getAttribute('aria-disabled') === 'true')
+            ) {
+                return;
+            }
+            reloadOnSwControllerChange = true;
+            pendingSwToast = false;
+            stopWatchingModalsForPendingToast();
+            if (pwaUpdateApplyBtn) {
+                pwaUpdateApplyBtn.setAttribute('aria-disabled', 'true');
+                pwaUpdateApplyBtn.textContent = 'Actualizando…';
+            }
+            if (pwaModalUpdateBtn) {
+                pwaModalUpdateBtn.setAttribute('aria-disabled', 'true');
+                pwaModalUpdateBtn.textContent = 'Actualizando…';
+            }
+            try {
                 waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
-            }
-        });
+            } catch (e) {}
+            hidePwaUpdateToast();
+        }
 
-        if ('serviceWorker' in navigator) {
+        if (aboutModal) {
+            aboutModal.addEventListener('close', () => {
+                aboutModal.returnValue = '';
+                flushPendingSwToastIfIdle();
+            });
+        }
+        document.addEventListener('close', () => {
+            flushPendingSwToastIfIdle();
+        }, true);
+
+        if (pwaUpdateToast) {
+            pwaUpdateToast.addEventListener('focusin', (event) => {
+                if (event.relatedTarget instanceof HTMLElement && !pwaUpdateToast.contains(event.relatedTarget)) {
+                    toastPriorFocus = event.relatedTarget;
+                }
+            });
+            pwaUpdateToast.addEventListener('beforetoggle', (event) => {
+                if (event.newState === 'closed') {
+                    toastHadFocusOnClose = pwaUpdateToast.contains(document.activeElement);
+                }
+            });
+            pwaUpdateToast.addEventListener('toggle', (event) => {
+                if (event.newState === 'closed') {
+                    const shouldRestoreFocus = !suppressNextToastFocusRestore && (toastHadFocusOnClose || pwaUpdateToast.contains(document.activeElement));
+                    suppressNextToastFocusRestore = false;
+                    toastHadFocusOnClose = false;
+                    pwaUpdateToast.classList.remove('pwa-toast-fallback-open');
+                    pwaUpdateToast.hidden = true;
+                    if (shouldRestoreFocus) {
+                        restoreFocusAfterToast();
+                    }
+                    toastPriorFocus = null;
+                }
+            });
+        }
+        if (pwaUpdateCloseBtn && !supportsNativePopover) {
+            pwaUpdateCloseBtn.addEventListener('click', () => hidePwaUpdateToast());
+        }
+        if (pwaUpdateApplyBtn) pwaUpdateApplyBtn.addEventListener('click', applyPendingSwUpdate);
+        if (pwaModalUpdateBtn) pwaModalUpdateBtn.addEventListener('click', applyPendingSwUpdate);
+
+        const isSwOriginEligible = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname === '[::1]');
+        if (isSwOriginEligible) {
+            const hadControllerAtLoad = Boolean(navigator.serviceWorker.controller);
             let isRefreshing = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 if (isRefreshing) return;
+                if (!reloadOnSwControllerChange && !(hadControllerAtLoad && swUpdateDetected)) return;
                 isRefreshing = true;
                 window.location.reload();
             });
 
             window.addEventListener('load', async () => {
                 try {
-                    const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+                    const reg = await navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' });
 
-                    if (reg.waiting) {
-                        showPwaUpdateToast(reg.waiting);
+                    if (reg.waiting && navigator.serviceWorker.controller) {
+                        swUpdateDetected = true;
+                        handleWaitingServiceWorker(reg.waiting);
+                    } else if (navigator.serviceWorker.controller && typeof reg.update === 'function') {
+                        reg.update().catch(() => {});
                     }
 
                     reg.addEventListener('updatefound', () => {
@@ -7408,15 +7637,23 @@
                         if (!newWorker) return;
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                showPwaUpdateToast(newWorker);
+                                swUpdateDetected = true;
+                                handleWaitingServiceWorker(newWorker);
                             }
                         });
                     });
 
-                    // Check for updates immediately when recovering Internet connection or returning to tab
-                    window.addEventListener('online', () => reg.update().catch(() => {}));
+                    // Check for updates on reconnect or tab visibility (throttled to 60 s)
+                    let lastSwUpdateCheck = Date.now();
+                    window.addEventListener('online', () => {
+                        if (typeof reg.update === 'function') {
+                            lastSwUpdateCheck = Date.now();
+                            reg.update().catch(() => {});
+                        }
+                    });
                     document.addEventListener('visibilitychange', () => {
-                        if (document.visibilityState === 'visible' && navigator.onLine) {
+                        if (document.visibilityState === 'visible' && navigator.onLine && typeof reg.update === 'function' && Date.now() - lastSwUpdateCheck >= 60000) {
+                            lastSwUpdateCheck = Date.now();
                             reg.update().catch(() => {});
                         }
                     });
