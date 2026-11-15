@@ -1,19 +1,19 @@
 # PDF Tools (SPA)
 
-![PDF Tools Header](readme-files/v2/header.svg)
+![PDF Tools Header](readme-files/v3/header.svg)
 
 **Una suite completa de herramientas PDF privada, instalable (PWA) y 100 % local en tu navegador.**
 
-### 🌐 Acceso temporal a esta versión 2.0 (Beta): [pfelipm.github.io/pdf-tools-spa](https://pfelipm.github.io/pdf-tools-spa)
+### 🌐 Acceso temporal a esta versión 3.0 (Beta): [pfelipm.github.io/pdf-tools-spa](https://pfelipm.github.io/pdf-tools-spa)
 
 > [!IMPORTANT]
-> 🧪 **Release `v2.0` en fase beta:** Para probar esta nueva versión utiliza temporalmente **[https://pfelipm.github.io/pdf-tools-spa](https://pfelipm.github.io/pdf-tools-spa)**. El dominio de producción ([pdftools.pablofelip.online](https://pdftools.pablofelip.online)) mantiene por ahora la versión estable `1.5` hasta finalizar el periodo de pruebas.
+> 🧪 **Release `v3.0` en fase beta:** Para probar esta nueva versión utiliza temporalmente **[https://pfelipm.github.io/pdf-tools-spa](https://pfelipm.github.io/pdf-tools-spa)**. El dominio de producción ([pdftools.pablofelip.online](https://pdftools.pablofelip.online)) mantiene por ahora la versión estable `2.0` hasta finalizar el periodo de pruebas.
 
 > Esta aplicación es la evolución web (Single Page Application / PWA) de la extensión para Chrome **[PDF Tools](https://github.com/pfelipm/pdf-tools)**.
 
 ## 🚀 Demo
 
-![Demo de la aplicación](readme-files/v2/demo.gif)
+![Demo de la aplicación](readme-files/v3/demo.gif)
 
 ## 📖 Descripción
 
@@ -57,31 +57,31 @@ Ambas ediciones comparten el mismo principio de privacidad local, adaptándose a
 ## 📸 Capturas de Pantalla
 
 ### Unir PDFs e imágenes (y pegado con `Ctrl+V`)
-![Unir archivos PDF e imágenes](readme-files/v2/01-unir.png)
+![Unir archivos PDF e imágenes](readme-files/v3/01-unir.png)
 
 ### Dividir PDF y extraer rangos personalizados
-![Dividir PDF](readme-files/v2/02-dividir.png)
+![Dividir PDF](readme-files/v3/02-dividir.png)
 
 ### Organizar y enderezar páginas (modo oscuro)
-![Organizar páginas](readme-files/v2/03-organizar.png)
+![Organizar páginas](readme-files/v3/03-organizar.png)
 
 ### Exportar páginas como imágenes de alta resolución
-![Exportar páginas como imágenes](readme-files/v2/04-imagenes.png)
+![Exportar páginas como imágenes](readme-files/v3/04-imagenes.png)
 
 ### Editor visual: resaltadores, rúbrica, miniaturas en vivo y guardado re-editable
-![Editor visual y capas re-editables](readme-files/v2/05-editor-capas.png)
+![Editor visual y capas re-editables](readme-files/v3/05-editor-capas.png)
 
 ### Editor visual: gestos y panel de atajos de teclado
-![Atajos de teclado y gestos del editor](readme-files/v2/06-editor-atajos.png)
+![Atajos de teclado y gestos del editor](readme-files/v3/06-editor-atajos.png)
 
 ### Comprimir PDF conservando texto y capas (o mediante rasterizado)
-![Comprimir PDF](readme-files/v2/07-comprimir.png)
+![Comprimir PDF](readme-files/v3/07-comprimir.png)
 
 ### Inspector y limpiador de metadatos (`/Info`, `XMP` y `/PieceInfo`)
-![Inspector y limpiador de metadatos](readme-files/v2/08-metadatos.png)
+![Inspector y limpiador de metadatos](readme-files/v3/08-metadatos.png)
 
 ### Aplicación instalada en escritorio (modo PWA independiente y 100 % Offline)
-![Aplicación instalada como PWA de escritorio](readme-files/v2/09-pwa.png)
+![Aplicación instalada como PWA de escritorio](readme-files/v3/09-pwa.png)
 
 ## 🛠️ Tecnologías
 
